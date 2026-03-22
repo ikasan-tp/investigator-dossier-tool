@@ -817,70 +817,131 @@ body::before{
 /* ══ MOBILE ══ */
 @media (max-width: 600px) {
   /* ヘッダー */
-  .site-header{padding:0 14px;gap:8px;height:auto;min-height:54px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
-  .header-stamp{font-size:8px;letter-spacing:2px;padding:2px 7px}
-  .header-sub{display:none}
-  .hstat{font-size:8px;letter-spacing:1px}
+  .site-header{
+    padding:6px 10px;gap:6px;height:auto;min-height:52px;
+    flex-wrap:wrap;align-items:center;
+  }
+  .header-stamp{font-size:7px;letter-spacing:1px;padding:2px 5px;transform:rotate(0deg)}
+  .site-title{font-size:14px;letter-spacing:1px}
+  .site-title em{display:none}
+  .hstat{font-size:7px;letter-spacing:1px;padding-left:8px;border-left:none}
+  /* ナビゲーション */
+  .site-nav{
+    margin-left:0;padding-left:0;border-left:none;
+    order:10;width:100%;
+    display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    padding-bottom:2px;
+  }
+  .nav-link{font-size:8px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+  /* ヘッダーボタン群 */
+  .site-header .btn{font-size:7px;padding:4px 8px;letter-spacing:1px}
+  .btn-rerender{font-size:15px;padding:3px 5px}
 
   /* メインコンテンツ */
-  .main-content{padding:14px 10px}
+  .app{padding:14px 10px}
 
-  /* 一覧：横長リスト */
+  /* ── 一覧：横長リスト ── */
   .chars-grid{grid-template-columns:1fr;gap:8px}
   .char-card{display:flex;flex-direction:row;align-items:stretch}
-  .card-photo{width:80px;min-width:80px;height:80px;flex-shrink:0;border-bottom:none;border-right:1px solid var(--rule-light)}
-  .card-body{flex:1;padding:10px 12px;display:flex;flex-direction:column;justify-content:center}
-  .card-body::before{display:none}
+  .card-photo{width:76px;min-width:76px;height:76px;flex-shrink:0;border-bottom:none;border-right:1px solid var(--rule-light)}
+  .card-body{flex:1;padding:8px 10px;display:flex;flex-direction:column;justify-content:center}
   .card-name{font-size:14px}
-  .add-card{min-height:64px;flex-direction:row;gap:10px;padding:0 20px}
+  .card-meta{font-size:10px}
+  .add-card{min-height:60px;flex-direction:row;gap:10px;padding:0 18px}
 
-  /* 詳細：縦積み */
+  /* ── 詳細：縦積み ── */
   .case-inner{flex-direction:column}
   .portrait-col{
     width:100%;flex-direction:row;align-items:center;
     border-right:none;border-bottom:1px solid var(--rule-light);
-    padding:12px 14px;gap:12px;justify-content:flex-start;
+    padding:10px 12px;gap:10px;justify-content:flex-start;
   }
-  .photo-frame{width:80px;height:100px;flex-shrink:0}
+  .photo-frame{width:76px;height:96px;flex-shrink:0}
   .portrait-label{display:none}
   .upload-under-btn{width:auto;font-size:7px;padding:3px 6px}
 
-  .case-data{padding:12px 14px}
-  .case-name{font-size:20px;word-break:break-all}
-  .case-stamp{font-size:6px;top:10px;right:10px;letter-spacing:2px}
-  .case-fields{gap:10px 18px}
-  .case-field-v{font-size:13px}
+  .case-data{padding:10px 12px}
+  .case-name{font-size:18px;word-break:break-all}
+  .case-ruby{font-size:9px}
+  .case-stamp{font-size:6px;top:8px;right:8px;letter-spacing:1px;opacity:.25}
+  .case-fields-row{gap:8px 16px}
+  .case-field-v{font-size:12px}
 
   .case-actions{
-    flex-direction:row;border-left:none;
+    flex-direction:row;flex-wrap:wrap;border-left:none;
     border-top:1px solid var(--rule-light);
-    padding:8px 14px;justify-content:flex-end;gap:8px;background:var(--paper-warm);
+    padding:6px 10px;justify-content:flex-end;gap:6px;
+    background:var(--paper-warm);
   }
+  .case-actions .btn{padding:5px 10px;font-size:7px;letter-spacing:1px}
 
-  /* 能力値 */
-  .stats-block{padding:10px 12px}
+  /* ── 能力値 ── */
+  .stats-block{padding:8px 10px}
   .stats-8{grid-template-columns:repeat(4,1fr);gap:3px}
   .stats-4{grid-template-columns:repeat(2,1fr);gap:3px}
-  .sbox-in{font-size:15px}
+  .sbox{padding:4px 2px}
+  .sbox-key{font-size:6px;letter-spacing:0}
+  .sbox-in{font-size:14px}
+  .ssbox{padding:5px 7px}
+  .ssbox-in.cur{font-size:18px;width:32px}
+  .ssbox-in.max{font-size:11px;width:26px}
 
-  /* タブ */
-  .tabs-row{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
-  .tab-btn{padding:8px 12px 9px;font-size:7px;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
-  .tab-content{padding:12px 10px}
+  /* ── タブ ── */
+  .tabs-row{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;scrollbar-width:none}
+  .tabs-row::-webkit-scrollbar{display:none}
+  .tab-btn{padding:8px 10px 9px;font-size:7px;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+  .tab-body{padding:12px 10px}
 
-  /* 差分グリッド */
+  /* ── 差分タブ ── */
+  .expr-toolbar{gap:4px}
+  .expr-search{font-size:11px;padding:6px 8px}
   .expr-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-  .filter-wrap{flex-wrap:wrap;gap:4px}
-  .filter-btn{font-size:7px;padding:3px 7px;letter-spacing:1px}
-  .sort-btn{font-size:7px;padding:3px 7px}
+  .filter-wrap{flex-wrap:wrap;gap:3px}
+  .filter-btn,.sort-btn{font-size:7px;padding:3px 6px;letter-spacing:0}
+  .bulk-bar{padding:5px 8px;gap:6px}
+  .bulk-bar-txt{font-size:7px}
 
-  /* 背景情報 */
+  /* ── 技能タブ ── */
+  .skills-pt-bar{gap:12px;padding:8px 10px}
+  .skills-pt-group{gap:10px}
+  .skills-pt-val{font-size:20px}
+  .skills-toolbar{gap:5px}
+  .skills-ver-badge{padding:5px 10px;font-size:8px}
+  .ver-switch-btn{padding:5px 12px;font-size:11px}
+
+  /* ── 背景情報 ── */
   .bg-grid{grid-template-columns:1fr}
 
-  /* モーダル */
-  .modal{padding:18px 14px;margin:8px;max-height:95vh}
+  /* ── 戦闘カード ── */
+  .combat-card{padding:8px 10px 10px}
+  .combat-card-fields{flex-wrap:wrap}
+  .combat-field{min-width:calc(50% - 4px)}
+  .combat-field-lg{min-width:100%;width:100%}
+  .combat-field-full{margin-top:4px}
+
+  /* ── 所持品・資産 ── */
+  .items-asset-row{gap:12px;padding:8px 10px}
+
+  /* ── モーダル ── */
+  .modal-overlay{padding:8px}
+  .modal{padding:16px 12px;max-height:96vh;max-width:100%}
+  .modal-title{font-size:14px;margin-bottom:14px;padding-bottom:8px}
   .form-g4{grid-template-columns:repeat(2,1fr)}
   .form-g2{grid-template-columns:1fr}
+  .modal-actions{gap:6px;flex-wrap:wrap}
+  .modal-actions .btn{flex:1;text-align:center;padding:8px 6px;font-size:8px}
+
+  /* ── CCFOLIA モーダル ── */
+  .ccfolia-status-grid{grid-template-columns:repeat(2,1fr)}
+  .ccfolia-face-row{flex-wrap:wrap;gap:6px}
+  .ccfolia-face-url-input{min-width:100%;order:3}
+
+  /* ── メモ ── */
+  .memo-wrap{padding:12px 10px}
+  .memo-ta{font-size:13px}
+
+  /* ── トースト ── */
+  .toast{right:10px;bottom:14px;padding:8px 14px;font-size:8px}
 }
 /* ══ 閲覧モード ══ */
 .view-mode-badge{
@@ -1144,10 +1205,69 @@ body.readonly .add-card{display:none}
   font-size:15px;font-weight:bold;color:var(--ink-dark);
 }
 @media(max-width:700px){
-  .th-grow,.th-etc,.td-grow,.td-etc{display:none;}
-  .th-occ,.th-int{width:50px;}
-  .skill-pts-in{width:44px;font-size:14px;}
-  .td-name-cell{font-size:12px;padding:8px 4px 8px 8px;}
+  /* 技能テーブル：横スクロールなしで収める */
+  .skills-category{overflow-x:visible;}
+  .skills-table{min-width:0;width:100%;table-layout:fixed;}
+
+  /* 列幅を極限まで詰める */
+  .th-name{width:auto;}
+  .th-base{width:34px;}
+  .th-occ,.th-int,.th-grow,.th-etc{width:38px;}
+  .th-chk{width:24px;}
+  .th-act{width:22px;}
+
+  /* ヘッダー文字 */
+  .skills-table thead th{
+    font-size:7px;letter-spacing:0;padding:5px 1px;
+  }
+
+  /* 技能名セル */
+  .td-name-cell{
+    font-size:11px;padding:7px 2px 7px 6px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    max-width:0; /* table-layout:fixed で効く */
+  }
+
+  /* 初期値 */
+  .td-base{font-size:10px;padding:7px 1px;}
+
+  /* 数値入力 */
+  .td-pts{padding:4px 1px;}
+  .skill-pts-in{
+    width:100%;max-width:36px;
+    font-size:12px;padding:2px 1px;
+    border-bottom-width:1px;
+  }
+
+  /* 合計値 */
+  .td-total{font-size:12px;padding:7px 1px;}
+
+  /* チェック・削除 */
+  .td-chk-cell{padding:7px 1px;}
+  .skill-occ-chk{width:14px;height:14px;}
+  .td-act{padding:3px 2px;}
+  .skill-del-btn{font-size:8px;padding:2px;}
+
+  /* ポイントバー */
+  .skills-pt-bar{gap:10px;flex-wrap:wrap;padding:8px 10px;}
+  .skills-pt-val{font-size:20px;}
+  .skills-pt-label{font-size:7px;letter-spacing:1px;}
+  .skills-pt-sub{font-size:8px;}
+
+  /* ツールバー */
+  .skills-toolbar{gap:4px;}
+  .skills-ver-badge{padding:4px 8px;font-size:8px;}
+  .skills-search{font-size:9px;padding:5px 8px;}
+  .btn-skill-add{font-size:8px;padding:5px 10px;}
+  .skills-cat-add{font-size:7px;padding:3px 8px;}
+  .ver-switch-btn{padding:5px 10px;font-size:10px;}
+}
+@media(max-width:480px){
+  /* さらに小さい画面：初期値列を非表示にして名前列を広げる */
+  .th-base,.td-base{display:none;}
+  .th-occ,.th-int,.th-grow,.th-etc{width:36px;}
+  .skill-pts-in{font-size:11px;}
+  .td-name-cell{font-size:10px;}
 }
 /* 版切り替えスイッチ */
 .ver-switch{

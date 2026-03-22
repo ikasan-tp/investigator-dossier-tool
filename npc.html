@@ -266,6 +266,85 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   padding:3px 6px;outline:none;
 }
 .expr-label-input:focus{border-bottom-color:var(--pen-body);}
+
+/* ══ MOBILE ══ */
+@media (max-width: 600px) {
+  /* ── ヘッダー ── */
+  .site-header{
+    padding:6px 10px;height:auto;min-height:52px;
+    gap:6px;flex-wrap:wrap;align-items:center;
+  }
+  .header-stamp{font-size:7px;letter-spacing:1px;padding:2px 5px;transform:rotate(0deg)}
+  .site-title{font-size:14px;letter-spacing:1px}
+  .site-title em{display:none}
+  .hstat{font-size:7px;letter-spacing:1px;padding-left:8px;border-left:none}
+  .site-nav{
+    margin-left:0;padding-left:0;border-left:none;
+    order:10;width:100%;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    display:flex;gap:2px;padding-bottom:2px;scrollbar-width:none;
+  }
+  .site-nav::-webkit-scrollbar{display:none}
+  .nav-link{font-size:8px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+  .site-header .btn{font-size:7px;padding:4px 8px;letter-spacing:1px}
+
+  /* ── メインコンテンツ ── */
+  .app{padding:14px 10px}
+
+  /* ── 一覧：横長カード ── */
+  .npc-grid{grid-template-columns:1fr;gap:8px}
+  .npc-card{display:flex;flex-direction:row;align-items:stretch}
+  .card-color-line{width:4px;height:auto;min-height:72px;flex-shrink:0}
+  .card-photo{width:72px;min-width:72px;height:72px;flex-shrink:0;border-bottom:none;border-right:1px solid var(--rule-light)}
+  .card-body{flex:1;padding:8px 10px;display:flex;flex-direction:column;justify-content:center}
+  .card-name{font-size:14px}
+  .card-meta{font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .add-card{min-height:60px;flex-direction:row;gap:10px;padding:0 18px}
+
+  /* ── シナリオフォルダ ── */
+  .scenario-folder-head{padding:6px 10px;gap:6px}
+  .scenario-folder-name{font-size:12px;letter-spacing:1px}
+  .scenario-folder-add{font-size:7px;padding:3px 8px}
+
+  /* ── NPC詳細 ── */
+  .npc-inner{flex-direction:column}
+  .npc-portrait-col{
+    width:100%;flex-direction:row;align-items:center;
+    border-right:none;border-bottom:1px solid var(--rule-light);
+    padding:10px 12px;gap:10px;justify-content:flex-start;
+  }
+  .photo-frame{width:72px;height:90px;flex-shrink:0}
+  .portrait-label{display:none}
+  .upload-under-btn{width:auto;font-size:7px;padding:3px 6px}
+  .npc-data{padding:10px 12px}
+  .npc-name{font-size:20px;gap:6px}
+  .npc-stamp{font-size:6px;top:8px;right:8px;opacity:.22;letter-spacing:1px}
+  .npc-memo{font-size:12px}
+  .npc-actions{
+    flex-direction:row;flex-wrap:wrap;border-left:none;
+    border-top:1px solid var(--rule-light);
+    padding:6px 10px;gap:6px;justify-content:flex-end;
+    background:var(--paper-warm);
+  }
+  .npc-actions .btn{padding:5px 10px;font-size:7px;letter-spacing:1px}
+
+  /* ── 差分グリッド ── */
+  .expr-section{padding:12px 10px}
+  .expr-section-head{margin-bottom:10px;padding-bottom:8px;gap:6px}
+  .expr-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+
+  /* ── モーダル ── */
+  .modal-overlay{padding:8px}
+  .modal{padding:16px 12px;max-height:96vh;max-width:100%}
+  .modal-title{font-size:14px;margin-bottom:12px;padding-bottom:8px}
+
+  /* ── トースト ── */
+  .toast{font-size:11px;padding:10px 18px}
+}
+
+@media (max-width: 380px) {
+  .expr-grid{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
