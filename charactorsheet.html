@@ -1077,6 +1077,10 @@ body.readonly .add-card{display:none}
 /* 値が入っている列を強調 */
 .skill-tr.has-occ{border-left:3px solid #5a7a3a;}
 .skill-tr.has-occ .td-name-cell{padding-left:9px;}
+/* 職業チェックなしなのに職業ポイントが振られている行 */
+.skill-tr.occ-mismatch{border-left:3px solid var(--danger);}
+.skill-tr.occ-mismatch .td-name-cell{padding-left:9px;color:var(--danger);}
+.skill-tr.occ-mismatch .td-occ .skill-pts-in{color:var(--danger);border-bottom-color:var(--danger);}
 
 /* 技能名セル */
 .td-name-cell{
@@ -2776,8 +2780,9 @@ function renderSkillsPane(c){
         const isOcc=!!sk.isOcc;
         const total=base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
         const hasAny=!!activeSub&&(occ!==''||int_!==''||grow!==''||etc!=='');
+        const occMismatch=!isOcc&&(parseInt(sk.occ)||0)>0;
         const tr=document.createElement('tr');
-        tr.className='skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'');
+        tr.className='skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'')+(occMismatch?' occ-mismatch':'');
         // 職チェック（左端）
         const tdCk=document.createElement('td');tdCk.className='td-chk-cell';
         const ck=document.createElement('input');ck.type='checkbox';ck.className='skill-occ-chk';ck.checked=isOcc;
@@ -2821,8 +2826,9 @@ function renderSkillsPane(c){
       const total=base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
       const hasAny=occ!==''||int_!==''||grow!==''||etc!=='';
       const isCustom=!!def.isCustom;
+      const occMismatch=!isOcc&&(parseInt(sk.occ)||0)>0;
       const tr=document.createElement('tr');
-      tr.className='skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'');
+      tr.className='skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'')+(occMismatch?' occ-mismatch':'');
       // 職チェック（左端）
       const tdCk=document.createElement('td');tdCk.className='td-chk-cell';
       const ck=document.createElement('input');ck.type='checkbox';ck.className='skill-occ-chk';ck.checked=isOcc;
