@@ -324,6 +324,54 @@ body::before{
 .img-reset-btn:hover { color: var(--seal-body); }
 
 
+
+/* ══ MOBILE ══ */
+@media (max-width: 640px) {
+  .site-header{padding:6px 10px;height:auto;min-height:52px;gap:6px;flex-wrap:wrap;align-items:center;}
+  .header-stamp{font-size:7px;letter-spacing:1px;padding:2px 5px;transform:rotate(0deg)}
+  .site-title{font-size:14px;letter-spacing:1px}
+  .site-title em{display:none}
+  .site-nav{margin-left:0;padding-left:0;border-left:none;order:10;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;display:flex;gap:2px;padding-bottom:2px;scrollbar-width:none;}
+  .site-nav::-webkit-scrollbar{display:none}
+  .nav-link{font-size:8px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+  .app{padding:14px 10px}
+  .edit-layout{flex-direction:column;gap:14px}
+  .sidebar{width:100%;padding:14px 12px}
+  .main-area{width:100%;min-width:0}
+  .group-panel{top:52px;padding:8px 12px;margin-bottom:10px}
+  .group-panel-txt{font-size:9px;margin-bottom:6px}
+  .log-container{padding:12px 10px}
+  .log-line{gap:8px;margin-bottom:12px;padding-bottom:12px}
+  .log-icon{width:48px;height:60px;flex-shrink:0}
+  .log-icon::after{font-size:6px;letter-spacing:0}
+  .log-content{min-width:0}
+  .log-meta{gap:4px;margin-bottom:4px}
+  .log-name{font-size:12px;gap:4px}
+  .log-tab{font-size:8px;padding:1px 4px}
+  .log-text{font-size:12px;line-height:1.7}
+  .log-actions{gap:4px}
+  .log-foot{margin-top:5px}
+  .expr-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .expr-name{font-size:9px;padding:4px}
+  .img-adjust-wrap{padding:6px}
+  .img-adjust-body{gap:6px}
+  .img-preview-frame{width:56px;height:70px}
+  .img-adjust-controls{gap:3px}
+  .modal-overlay{padding:8px}
+  .modal{padding:16px 12px;max-height:96vh;max-width:100%}
+  .modal-title{font-size:14px;margin-bottom:12px;padding-bottom:8px}
+  .btn{padding:7px 12px;font-size:9px;letter-spacing:1px}
+  .btn-sm{padding:4px 8px;font-size:8px}
+  .panel-head{font-size:9px}
+  .conf-flex{gap:6px}
+  .anchor-item{font-size:11px;padding:5px 6px}
+  .saved-member-row{padding:7px 8px;gap:7px}
+  .saved-member-name{font-size:10px}
+}
+@media (max-width: 380px) {
+  .expr-grid{grid-template-columns:repeat(2,1fr)}
+  .log-icon{width:40px;height:50px}
+}
 </style>
 </head>
 <body>

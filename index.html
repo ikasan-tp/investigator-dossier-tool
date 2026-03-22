@@ -142,6 +142,40 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .recent-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-dim);letter-spacing:1px;white-space:nowrap;}
 .recent-color{width:3px;height:1.2em;flex-shrink:0;border-radius:1px;}
 .recent-empty{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:3px;padding:20px 0;text-align:center;}
+
+/* ══ MOBILE ══ */
+@media(max-width:600px){
+  .site-header{padding:6px 10px;height:auto;min-height:52px;gap:6px;flex-wrap:wrap;align-items:center;}
+  .header-stamp{font-size:7px;letter-spacing:1px;padding:2px 5px;transform:rotate(0deg)}
+  .site-title{font-size:14px;letter-spacing:1px}
+  .site-title em{display:none}
+  .site-nav{margin-left:0;padding-left:0;border-left:none;order:10;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;display:flex;gap:2px;padding-bottom:2px;scrollbar-width:none;}
+  .site-nav::-webkit-scrollbar{display:none}
+  .nav-link{font-size:8px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+  .app{padding:20px 12px}
+  .db-status{padding:7px 10px;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+  .db-url-txt{font-size:8px;letter-spacing:1px;min-width:0}
+  .db-setup-link{font-size:7px;padding:2px 6px}
+  .hero{padding:32px 0 28px;margin-bottom:28px}
+  .hero::before{font-size:52px}
+  .hero-brand{font-size:8px;letter-spacing:4px;margin-bottom:10px}
+  .hero-title{font-size:24px;letter-spacing:2px;margin-bottom:6px}
+  .hero-sub{font-size:8px;letter-spacing:1px}
+  .tools-grid{margin-bottom:28px;gap:10px}
+  .tool-card{padding:18px 16px 14px;gap:8px}
+  .tool-stamp{font-size:7px;letter-spacing:2px;padding:2px 6px}
+  .tool-name{font-size:17px}
+  .tool-desc{font-size:12px;line-height:1.8}
+  .tool-meta{font-size:8px;padding-top:8px}
+  .recent-grid{gap:14px}
+  .recent-section{padding:14px}
+  .recent-head{padding-bottom:6px;margin-bottom:10px}
+  .recent-title{font-size:10px;letter-spacing:2px}
+  .recent-row{padding:6px 0;gap:8px}
+  .recent-thumb{width:28px;height:35px}
+  .recent-name{font-size:12px}
+  .recent-sub{font-size:7px}
+}
 </style>
 </head>
 <body>
