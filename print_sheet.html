@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>探索者記録簿 — 印刷用</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#faf8f4;--warm:#f2ede4;--aged:#e8e0d0;
+  --rule:#c8bca8;--rule2:#a89880;
+  --ink:#1a1410;--ink2:#2e2820;--ink3:#4a4038;--ink4:#7a6e60;--ink5:#a89e90;
+  --red:#8a1818;--red2:#b82020;--blue:#1a3050;--border:#b0a090;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:#999;color:var(--ink2);
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+@page{size:A4 portrait;margin:0;}
+@media print{
+  html,body{background:white;margin:0;padding:0}
+  .no-print{display:none!important}
+  .page{box-shadow:none;margin:0;}
+  .pb{page-break-before:always}
+}
+
+/* ページ：A4固定・overflow:hidden で絶対はみ出さない */
+.page{
+  width:210mm; height:297mm;
+  background:var(--paper);
+  margin:0 auto;
+  padding:6mm 8mm 5mm 8mm;
+  box-shadow:0 3px 24px rgba(0,0,0,.3);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.page+.page{margin-top:8px}
+
+.no-print{width:210mm;margin:10px auto 6px;display:flex;align-items:center;gap:10px;}
+.pbtn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  padding:7px 16px;cursor:pointer;border-radius:0;
+  background:#1a2a3a;border:1px solid #3a5a7a;color:#c8e0f0;}
+.pbtn:hover{background:#2a3a4a}
+.phint{font-size:7pt;color:#555;font-family:'Share Tech Mono',monospace;letter-spacing:1px}
+
+/* ヘッダ・フッタ：flex-shrink:0 で固定 */
+.ptitle{font-family:'Share Tech Mono',monospace;font-size:5.5pt;letter-spacing:3px;
+  color:var(--ink5);border-bottom:0.8px solid var(--rule);
+  padding-bottom:1.5px;margin-bottom:3px;text-align:center;flex-shrink:0;}
+.pfoot{font-family:'Share Tech Mono',monospace;font-size:5pt;letter-spacing:1px;
+  color:var(--ink5);border-top:0.8px solid var(--rule);
+  padding-top:1.5px;margin-top:auto; /* 常にページ下端へ */
+  display:flex;justify-content:space-between;flex-shrink:0;}
+
+/* セクション見出し */
+.sh{font-family:'Share Tech Mono',monospace;font-size:5pt;letter-spacing:2.5px;
+  color:var(--red);border-bottom:1.5px solid var(--red2);
+  padding-bottom:1px;margin-bottom:1mm;margin-top:3.5mm;flex-shrink:0;}
+.sh::before{content:'§ '}
+
+/* ── P1 ── */
+.p1-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+
+/* キャラ情報 */
+.p1top{display:flex;gap:4mm;flex-shrink:0;margin-bottom:2mm}
+.photo-wrap{flex-shrink:0;width:24mm}
+.photo-frame{width:24mm;height:30mm;border:0.8px solid var(--border);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--aged);}
+.photo-frame img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.photo-lbl{font-size:3.8pt;color:var(--ink5);font-family:'Share Tech Mono',monospace;
+  letter-spacing:1px;text-align:center;margin-top:0.6mm}
+.info-wrap{flex:1;min-width:0}
+.cname{font-family:'Noto Serif JP',serif;font-size:17pt;font-weight:700;
+  color:var(--ink);line-height:1.1;margin-bottom:0.5px}
+.cruby{font-size:5.5pt;color:var(--ink4);letter-spacing:2px;
+  font-family:'Share Tech Mono',monospace;margin-bottom:0.8mm}
+.scen{font-size:6pt;color:var(--ink3);margin-bottom:0.8mm}
+.scen-k{font-family:'Share Tech Mono',monospace;font-size:4pt;color:var(--ink5);margin-right:2px}
+.ifrow{display:flex;flex-wrap:wrap;gap:0.5mm 3mm;margin-bottom:1.2mm}
+.ifc{min-width:16mm}
+.ifk{font-family:'Share Tech Mono',monospace;font-size:3.8pt;color:var(--red);
+  display:block;border-bottom:0.4px solid var(--rule);margin-bottom:0.2mm}
+.ifv{font-family:'Noto Serif JP',serif;font-size:8.5pt;color:var(--ink2)}
+.tags-row{display:flex;flex-wrap:wrap;gap:1.5px;margin-bottom:0.8mm}
+.tag{font-size:3.8pt;padding:0 3px 1px;border:0.4px solid var(--rule);color:var(--ink4)}
+/* QUOTE：改行を反映 */
+.qline{font-style:italic;font-size:7.5pt;color:var(--ink3);
+  border-left:1.5px solid var(--rule);padding-left:2.5px;
+  font-family:'Noto Serif JP',serif;line-height:1.5;
+  white-space:pre-wrap; /* ← 改行を反映 */}
+
+/* 能力値 */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:1mm;margin-bottom:1mm;flex-shrink:0;}
+.sbox{border:0.6px solid var(--border);background:var(--warm);display:flex}
+.sl{flex:1;padding:0.8mm 1.2mm;border-right:0.4px solid var(--rule)}
+.sk{font-family:'Share Tech Mono',monospace;font-size:4.5pt;font-weight:bold;
+  color:var(--red);display:block;margin-bottom:0.2mm}
+.sv{font-family:'Share Tech Mono',monospace;font-size:14pt;font-weight:bold;
+  color:var(--ink);line-height:1}
+.sr{width:14mm;padding:0.8mm 1.2mm;display:flex;flex-direction:column;gap:0.1mm}
+.srk{font-family:'Share Tech Mono',monospace;font-size:4pt;color:var(--ink5)}
+.srv{font-family:'Share Tech Mono',monospace;font-size:7.5pt;color:var(--ink3)}
+
+/* 二次ステータス */
+.sec4{display:grid;grid-template-columns:repeat(4,1fr);gap:1mm;margin-bottom:1mm;flex-shrink:0;}
+.s4b{border:0.6px solid var(--border);background:var(--warm);padding:1mm 2mm}
+.s4k{font-family:'Share Tech Mono',monospace;font-size:4.5pt;font-weight:bold;
+  display:block;margin-bottom:0.5px}
+.s4v{font-family:'Share Tech Mono',monospace;font-size:11.5pt;font-weight:bold;color:var(--ink)}
+.s4sl,.s4mx{font-size:6.5pt;color:var(--ink4)}
+
+/* P1下段 */
+.p1bot{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+.p1bot-2col{display:grid;grid-template-columns:1fr 1fr;gap:3mm;flex:1;min-height:0;overflow:hidden;}
+.p1bot-left{display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.p1bot-right{display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+/* 右カラムの背景情報は1カラム縦並び */
+.p1bot-right .bg-list{grid-template-columns:1fr;}
+
+/* 武器・所持品 */
+.wtbl,.itmtbl{width:100%;border-collapse:collapse;flex-shrink:0;}
+.wtbl{margin-bottom:0.8mm}.itmtbl{margin-bottom:0.8mm}
+.wtbl th,.itmtbl th{font-family:'Share Tech Mono',monospace;font-size:4.5pt;color:var(--ink4);
+  background:var(--warm);border:0.4px solid var(--border);padding:1.5px 2px;text-align:center}
+.wtbl th.L,.itmtbl th.L{text-align:left}
+.wtbl td{border:0.4px solid var(--rule);padding:0.8px 1.5px;text-align:center;
+  font-family:'Share Tech Mono',monospace;font-size:5.5pt;color:var(--ink2);height:4.8mm}
+.wtbl td.L{text-align:left;font-family:'Noto Sans JP',sans-serif;font-size:5.5pt}
+.itmtbl td{border:0.4px solid var(--rule);padding:0.8px 1.5px;
+  font-size:6pt;color:var(--ink2);height:4.8mm}
+.itmtbl td.L{text-align:left}
+.wtbl tr:nth-child(even) td,.itmtbl tr:nth-child(even) td{background:var(--warm)}
+.wcb{width:2.2mm;height:2.2mm;border:0.6px solid var(--border);display:inline-block;background:white}
+.asrow{display:flex;gap:1.2mm;margin-bottom:0.8mm;flex-shrink:0}
+.asbox{flex:1;border:0.4px solid var(--border);padding:1.2mm 2mm;background:var(--warm)}
+.ask{font-family:'Share Tech Mono',monospace;font-size:4.5pt;color:var(--red);
+  display:block;margin-bottom:1px}
+.asv{font-family:'Share Tech Mono',monospace;font-size:9.5pt;font-weight:bold;color:var(--ink2)}
+
+/* 背景情報：縦並び、各ブロックは最低高さ確保 */
+.bg-list{display:grid;grid-template-columns:1fr 1fr;gap:1mm;flex-shrink:0;}
+.bgbox{border:0.4px solid var(--border);padding:1mm;min-height:9mm;overflow:hidden;}
+.bgk{font-family:'Share Tech Mono',monospace;font-size:4.5pt;color:var(--ink4);
+  display:block;border-bottom:0.4px solid var(--rule);padding-bottom:0.5px;margin-bottom:0.5mm}
+.bgv{font-size:7pt;color:var(--ink2);line-height:1.6}
+
+/* セッションメモ */
+.memo-box{
+  height:28mm;flex-shrink:0;
+  border:0.4px solid var(--border);
+  padding:1.5mm;
+  overflow:hidden;
+  /* 横罫線 */
+  background-image:repeating-linear-gradient(
+    180deg,transparent,transparent 5.8mm,var(--rule) 5.8mm,var(--rule) 6mm
+  );
+  background-color:var(--paper);
+  position:relative;
+}
+.memo-text{font-size:6pt;color:var(--ink2);line-height:1.5;white-space:pre-wrap;}
+
+/* ── P2: 技能 ── */
+.p2-body{
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:0 2mm;
+  min-height:0;
+  overflow:hidden;
+  align-content:start;
+}
+/* P2のsh（grid外に出す） */
+.p2-sh-wrap{flex-shrink:0;}
+
+/* 各カラム */
+.scol{
+  display:flex;flex-direction:column;
+  overflow:hidden;min-height:0;max-height:100%;
+}
+/* 技能行：高さをCSS変数で制御 */
+.skill-row{
+  display:flex;align-items:center;
+  border-bottom:0.3px solid var(--rule);
+  gap:1px;
+  flex-shrink:0;
+}
+.scb{width:2.8mm;height:2.8mm;border:0.6px solid var(--border);
+  flex-shrink:0;background:white}
+.sname{flex:1;color:var(--ink2);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;padding:0 1px;}
+.sbase{font-family:'Share Tech Mono',monospace;color:var(--ink5);
+  width:8mm;text-align:right;flex-shrink:0;}
+.sval{font-family:'Share Tech Mono',monospace;font-weight:bold;color:var(--blue);
+  width:8mm;text-align:right;flex-shrink:0;}
+.scat{
+  font-family:'Share Tech Mono',monospace;
+  letter-spacing:2px;color:var(--red);
+  background:var(--warm);
+  padding:0 3px;
+  border-bottom:0.7px solid var(--rule2);
+  border-top:0.7px solid var(--rule2);
+  flex-shrink:0;
+  display:flex;align-items:center;
+}
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="pbtn" onclick="window.print()">🖨 印刷 / PDF保存</button>
+  <span class="phint">印刷ダイアログ → 余白:なし → 背景のグラフィック:ON → 倍率:100%</span>
+</div>
+
+<div id="pages">
+  <div style="padding:40px;text-align:center;font-family:monospace;font-size:10px;color:#888;letter-spacing:3px">LOADING...</div>
+</div>
+
+<script>
+const P=new URLSearchParams(location.search);
+const SU=P.get('url')||'',SK=P.get('key')||'',CID=P.get('char')||'';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+const D6=[
+  {cat:'戦闘',name:'こぶし',base:50},{cat:'戦闘',name:'キック',base:25},
+  {cat:'戦闘',name:'回避',bx:'DEX*2'},{cat:'戦闘',name:'組み付き',base:25},
+  {cat:'戦闘',name:'頭突き',base:10},{cat:'戦闘',name:'投擲',base:25},
+  {cat:'戦闘',name:'マーシャルアーツ',base:1},{cat:'戦闘',name:'拳銃',base:20},
+  {cat:'戦闘',name:'マシンガン',base:15},{cat:'戦闘',name:'サブマシンガン',base:15},
+  {cat:'戦闘',name:'ショットガン',base:30},{cat:'戦闘',name:'ライフル',base:25},
+  {cat:'探索',name:'目星',base:25},{cat:'探索',name:'聞き耳',base:25},
+  {cat:'探索',name:'図書館',base:25},{cat:'探索',name:'応急手当',base:30},
+  {cat:'探索',name:'精神分析',base:1},{cat:'探索',name:'隠す',base:15},
+  {cat:'探索',name:'隠れる',base:10},{cat:'探索',name:'忍び歩き',base:10},
+  {cat:'探索',name:'鍵開け',base:1},{cat:'探索',name:'写真術',base:10},
+  {cat:'探索',name:'追跡',base:10},{cat:'探索',name:'ナビゲート',base:10},
+  {cat:'探索',name:'登攀',base:40},{cat:'探索',name:'跳躍',base:25},
+  {cat:'行動',name:'製作',base:5},{cat:'行動',name:'運転',base:20},
+  {cat:'行動',name:'操縦',base:1},{cat:'行動',name:'機械修理',base:20},
+  {cat:'行動',name:'電気修理',base:10},{cat:'行動',name:'重機械操作',base:1},
+  {cat:'行動',name:'乗馬',base:5},{cat:'行動',name:'水泳',base:25},{cat:'行動',name:'変装',base:1},
+  {cat:'交渉',name:'信用',base:15},{cat:'交渉',name:'説得',base:15},
+  {cat:'交渉',name:'言いくるめ',base:5},{cat:'交渉',name:'値切り',base:5},
+  {cat:'交渉',name:'母国語',bx:'EDU*5'},
+  {cat:'知識',name:'医学',base:5},{cat:'知識',name:'オカルト',base:5},
+  {cat:'知識',name:'心理学',base:5},{cat:'知識',name:'芸術',base:5},
+  {cat:'知識',name:'経理',base:10},{cat:'知識',name:'歴史',base:20},
+  {cat:'知識',name:'法律',base:5},{cat:'知識',name:'コンピューター',base:1},
+  {cat:'知識',name:'化学',base:1},{cat:'知識',name:'人類学',base:1},
+  {cat:'知識',name:'生物学',base:1},{cat:'知識',name:'地質学',base:1},
+  {cat:'知識',name:'天文学',base:1},{cat:'知識',name:'博物学',base:10},
+  {cat:'知識',name:'物理学',base:1},{cat:'知識',name:'電子工学',base:1},
+  {cat:'知識',name:'薬学',base:1},{cat:'知識',name:'考古学',base:1},
+  {cat:'知識',name:'クトゥルフ神話',base:0},
+];
+const D7=[
+  {cat:'戦闘',name:'近接戦闘',base:25},{cat:'戦闘',name:'射撃',base:20},
+  {cat:'戦闘',name:'回避',bx:'DEX/2'},{cat:'戦闘',name:'投擲',base:20},
+  {cat:'探索',name:'目星',base:25},{cat:'探索',name:'聞き耳',base:20},
+  {cat:'探索',name:'図書館',base:20},{cat:'探索',name:'応急手当',base:30},
+  {cat:'探索',name:'精神分析',base:1},{cat:'探索',name:'鑑定',base:5},
+  {cat:'行動',name:'鍵開け',base:1},{cat:'行動',name:'変装',base:5},
+  {cat:'行動',name:'運転',base:20},{cat:'行動',name:'操縦',base:1},
+  {cat:'行動',name:'乗馬',base:5},{cat:'行動',name:'水泳',base:20},
+  {cat:'行動',name:'跳躍',base:20},{cat:'行動',name:'登攀',base:20},
+  {cat:'行動',name:'追跡',base:10},{cat:'行動',name:'ナビゲート',base:10},
+  {cat:'行動',name:'隠密',base:20},{cat:'行動',name:'手さばき',base:10},
+  {cat:'行動',name:'サバイバル',base:10},
+  {cat:'交渉',name:'母国語',bx:'EDU'},{cat:'交渉',name:'言いくるめ',base:5},
+  {cat:'交渉',name:'説得',base:10},{cat:'交渉',name:'威圧',base:15},{cat:'交渉',name:'魅惑',base:15},
+  {cat:'知識',name:'芸術',base:5},{cat:'知識',name:'製作',base:5},
+  {cat:'知識',name:'機械修理',base:10},{cat:'知識',name:'電気修理',base:10},
+  {cat:'知識',name:'重機械操作',base:1},{cat:'知識',name:'コンピューター',base:5},
+  {cat:'知識',name:'電子工学',base:1},{cat:'知識',name:'医学',base:1},
+  {cat:'知識',name:'科学',base:1},{cat:'知識',name:'自然',base:10},
+  {cat:'知識',name:'経理',base:5},{cat:'知識',name:'考古学',base:1},
+  {cat:'知識',name:'オカルト',base:5},{cat:'知識',name:'心理学',base:10},
+  {cat:'知識',name:'人類学',base:1},{cat:'知識',name:'法律',base:5},
+  {cat:'知識',name:'歴史',base:5},{cat:'知識',name:'他の言語',base:1},
+  {cat:'知識',name:'クトゥルフ神話',base:0},{cat:'知識',name:'ヒプノーシス',base:1},
+];
+
+function cbv(def,st){
+  if(def.bx===undefined)return def.base||0;
+  const s=st||{},e=def.bx;
+  const m1=e.match(/^([A-Z]+)$/);if(m1)return parseInt(s[m1[1]])||0;
+  const m2=e.match(/^([A-Z]+)\/(\d+)$/);if(m2)return Math.floor((parseInt(s[m2[1]])||0)/parseInt(m2[2]));
+  const m3=e.match(/^([A-Z]+)\*(\d+)$/);if(m3)return Math.floor((parseInt(s[m3[1]])||0)*parseInt(m3[2]));
+  return 0;
+}
+const emR=(n,c)=>Array(n).fill(0).map(()=>`<tr>${Array(c).fill('<td></td>').join('')}</tr>`).join('');
+
+async function go(){
+  if(!SU||!SK||!CID){
+    document.getElementById('pages').innerHTML='<div style="padding:40px;text-align:center;font-family:monospace;font-size:10px;color:#a82020">URLパラメータ不足 — charactorsheet.html の 📄 PDF ボタンから開いてください</div>';
+    return;
+  }
+  try{
+    const r=await fetch(`${SU}/rest/v1/characters?id=eq.${CID}&limit=1`,{headers:H});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const rows=await r.json();
+    if(!rows.length)throw new Error('キャラクター未発見');
+    draw({...rows[0].data,id:rows[0].id});
+  }catch(e){
+    document.getElementById('pages').innerHTML=`<div style="padding:40px;text-align:center;font-family:monospace;color:#a82020">${esc(e.message)}</div>`;
+  }
+}
+
+function draw(c){
+  const st=c.stats||{},sec=c.secondary||{},sk=c.skills||{},ov=c.skillBaseOverrides||{};
+  const wp=c.weapons||[],ar=c.armors||[],it=c.items||[],as=c.assets||{},bg=c.bg||{};
+  const ver=c.skillVer||'6';
+  const defs=[...(ver==='7'?D7:D6),...(c.customSkills||[])];
+
+  const STR=parseInt(st.STR)||0,CON=parseInt(st.CON)||0,POW=parseInt(st.POW)||0;
+  const DEX=parseInt(st.DEX)||0,APP=parseInt(st.APP)||0,SIZ=parseInt(st.SIZ)||0;
+  const INT=parseInt(st.INT)||0,EDU=parseInt(st.EDU)||0;
+
+  const hpMax=parseInt((sec.hp||{}).max)||Math.floor((CON+SIZ)/2);
+  const hpCur=parseInt((sec.hp||{}).cur)||hpMax;
+  const mpMax=parseInt((sec.mp||{}).max)||POW;
+  const mpCur=parseInt((sec.mp||{}).cur)||mpMax;
+  const sanMax=parseInt((sec.san||{}).max)||POW*5;
+  const sanCur=parseInt((sec.san||{}).cur)||sanMax;
+  const luk=parseInt((sec.luk||{}).cur)||(POW*5);
+
+  let db='+0';const ss=STR+SIZ;
+  if(ss<=12)db='-1D6';else if(ss<=16)db='-1D4';else if(ss<=24)db='+0';
+  else if(ss<=32)db='+1D4';else if(ss<=40)db='+1D6';else db='+2D6';
+
+  const bustUrl=c.bust_path?`${SU}/storage/v1/object/public/images/${c.bust_path}`:'';
+
+  function scard(k,v,l1,v1,l2,v2){
+    return `<div class="sbox"><div class="sl"><span class="sk">${k}</span><span class="sv">${v||'—'}</span></div>`
+      +`<div class="sr">`+(l1?`<span class="srk">${l1}</span><span class="srv">${v1}</span>`:'')
+      +(l2?`<span class="srk" style="margin-top:0.3mm">${l2}</span><span class="srv">${v2}</span>`:'')
+      +`</div></div>`;
+  }
+
+  /* 技能リスト */
+  const catOrder=['戦闘','探索','行動','交渉','知識'];
+  const skillList=defs.map(d=>{
+    const base=(ov[d.name]!==undefined)?ov[d.name]:cbv(d,st);
+    const s=sk[d.name]||{};
+    const occ=parseInt(s.occ)||0,int_=parseInt(s.int)||0,grow=parseInt(s.grow)||0,etc=parseInt(s.etc)||0;
+    const total=base+occ+int_+grow+etc;
+    return {name:d.name,base,total,active:!!(occ||int_||grow||etc||s.isOcc),cat:d.cat||'その他'};
+  });
+  const allCats=[...catOrder,...[...new Set(skillList.filter(s=>!catOrder.includes(s.cat)).map(s=>s.cat))]];
+  const flatArr=[];
+  for(const cat of allCats){
+    const cs=skillList.filter(s=>s.cat===cat);
+    if(!cs.length)continue;
+    flatArr.push({type:'cat',cat});
+    cs.forEach(s=>flatArr.push({type:'skill',s}));
+  }
+
+  // 3カラム均等分割（カテゴリ先頭で区切る）
+  const tot=flatArr.length;
+  function bestSplit(target){
+    for(let i=target;i>=Math.max(0,target-6);i--)
+      if(flatArr[i]&&flatArr[i].type==='cat')return i;
+    return target;
+  }
+  const s1=bestSplit(Math.round(tot/3));
+  const s2=bestSplit(Math.round(tot*2/3));
+  const cols=[flatArr.slice(0,s1),flatArr.slice(s1,s2),flatArr.slice(s2)];
+
+  // 行高さは固定（読みやすいサイズ）
+  // はみ出た分は .page の overflow:hidden で自然にカット
+  const rowH_mm = 7.2;
+  const catH_mm = 5.8;
+  const fs_pt  = 8.0;
+  const fsb_pt = 6.2;
+  const fsv_pt = 8.5;
+
+  function renderCol(arr){
+    return arr.map(item=>{
+      if(item.type==='cat')
+        return `<div class="scat" style="height:${catH_mm}mm;font-size:${fsb_pt}pt">${esc(item.cat)}</div>`;
+      const s=item.s;
+      return `<div class="skill-row" style="height:${rowH_mm}mm">`
+        +`<div class="scb"></div>`
+        +`<div class="sname" style="font-size:${fs_pt}pt">${esc(s.name)}</div>`
+        +`<div class="sbase" style="font-size:${fsb_pt}pt">(${s.base}%)</div>`
+        +`<div class="sval" style="font-size:${fsv_pt}pt">${(s.active&&s.total>s.base)?s.total:''}</div>`
+        +`</div>`;
+    }).join('');
+  }
+
+  /* 武器行 */
+  const wrows=wp.map(w=>`<tr><td><div class="wcb"></div></td><td class="L">${esc(w.name)}</td>`
+    +`<td>${esc(w.hit)}</td><td class="L">${esc(w.damage)}</td>`
+    +`<td>${esc(w.mal)}</td><td>${esc(w.range)}</td><td>${esc(w.shots)}</td>`
+    +`<td>${esc(w.ammo)}</td><td>${esc(w.hp)}</td></tr>`).join('')
+    +emR(Math.max(0,3-wp.length),9);
+
+  const arows=ar.map(a=>`<tr><td class="L">${esc(a.name)}</td><td>${esc(a.location)}</td>`
+    +`<td>${esc(a.armor)}</td><td>${esc(a.hp)}</td><td class="L">${esc(a.note)}</td></tr>`).join('')
+    +emR(Math.max(0,2-ar.length),5);
+
+  const irows=it.map(i=>`<tr><td class="L">${esc(i.name)}</td><td>${esc(i.price)}</td>`
+    +`<td>${esc(i.qty)}</td><td>${i.total?'¥'+esc(i.total):''}</td><td class="L">${esc(i.note)}</td></tr>`).join('')
+    +emR(Math.max(0,3-it.length),5);
+
+  const bgDefs=[
+    {k:'出身・居住地',v:bg.origin},{k:'信念・イデオロギー',v:bg.belief},
+    {k:'重要な人物',v:bg.person},{k:'意味のある場所',v:bg.place},
+    {k:'宝物・大切なもの',v:bg.treasure},{k:'特徴・癖',v:bg.trait}
+  ];
+
+  const fieldsHtml=[
+    {k:'職業',v:c.job},{k:'性別',v:c.gender},{k:'年齢',v:c.age},
+    {k:'誕生日',v:c.birthday},{k:'身長',v:c.height},{k:'体重',v:c.weight}
+  ].filter(f=>f.v).map(f=>`<div class="ifc"><span class="ifk">${f.k}</span><span class="ifv">${esc(String(f.v))}</span></div>`).join('');
+
+  /* ════ P1 ════ */
+  const p1=`<div class="page">
+<div class="ptitle">INVESTIGATOR'S DOSSIER — ${esc(c.name||'')}</div>
+<div class="p1-body">
+
+<div class="p1top">
+  <div class="photo-wrap">
+    <div class="photo-frame">${bustUrl?`<img src="${bustUrl}" crossorigin="anonymous">`:''}  </div>
+    <div class="photo-lbl">BUST UP</div>
+  </div>
+  <div class="info-wrap">
+    <div class="cname">${esc(c.name||'')}</div>
+    ${c.ruby?`<div class="cruby">${esc(c.ruby)}</div>`:''}
+    ${c.scenario?`<div class="scen"><span class="scen-k">SCENARIO </span>${esc(c.scenario)}</div>`:''}
+    <div class="ifrow">${fieldsHtml}</div>
+    ${(c.tags&&c.tags.length)?`<div class="tags-row">${c.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+    ${c.quote?`<div class="qline">「${esc(c.quote)}」</div>`:''}
+  </div>
+</div>
+
+<div class="sh">能力値</div>
+<div class="sg">
+  ${scard('STR',STR,'×5',STR*5,'','')}
+  ${scard('CON',CON,'×5',CON*5,'','')}
+  ${scard('POW',POW,'×5',POW*5,'幸運',luk)}
+  ${scard('DEX',DEX,'×5',DEX*5,'','')}
+  ${scard('APP',APP,'×5',APP*5,'','')}
+  ${scard('SIZ',SIZ,'×5',SIZ*5,'','')}
+  ${scard('INT',INT,'×5',INT*5,'アイデア',INT*5)}
+  ${scard('EDU',EDU,'×5',EDU*5,'知識',EDU*5)}
+</div>
+<div class="sec4">
+  <div class="s4b" style="border-left:2px solid var(--red)"><span class="s4k" style="color:var(--red)">HP 耐久力</span><span class="s4v">${hpCur}<span class="s4sl"> / </span><span class="s4mx">${hpMax}</span></span></div>
+  <div class="s4b" style="border-left:2px solid var(--blue)"><span class="s4k" style="color:var(--blue)">MP マジックP</span><span class="s4v">${mpCur}<span class="s4sl"> / </span><span class="s4mx">${mpMax}</span></span></div>
+  <div class="s4b" style="border-left:2px solid #5a4a10"><span class="s4k" style="color:#5a4a10">SAN 正気度</span><span class="s4v">${sanCur}<span class="s4sl"> / </span><span class="s4mx">${sanMax}</span></span></div>
+  <div class="s4b" style="border-left:2px solid #444"><span class="s4k" style="color:#444">ダメージボーナス</span><span class="s4v" style="font-size:9.5pt">${db}</span></div>
+</div>
+
+<div class="p1bot">
+  <div class="sh">武器</div>
+  <table class="wtbl">
+    <thead><tr><th style="width:3mm"></th><th class="L" style="width:22mm">武器名</th><th style="width:10mm">成功率</th><th class="L" style="width:18mm">ダメージ</th><th style="width:9mm">故障</th><th style="width:9mm">射程</th><th style="width:9mm">回数</th><th style="width:9mm">装弾</th><th style="width:8mm">耐久</th></tr></thead>
+    <tbody>${wrows}</tbody>
+  </table>
+  ${ar.length?`<div class="sh">防具</div>
+  <table class="wtbl">
+    <thead><tr><th class="L" style="width:28mm">防具名</th><th style="width:20mm">箇所</th><th style="width:14mm">装甲</th><th style="width:14mm">耐久</th><th class="L">備考</th></tr></thead>
+    <tbody>${arows}</tbody>
+  </table>`:''}
+  <div class="sh">所持品・財産</div>
+  <div class="asrow">
+    ${[{k:'現金',v:as.cash},{k:'資産',v:as.wealth},{k:'借金',v:as.debt}].map(f=>`<div class="asbox"><span class="ask">${f.k}</span><span class="asv">${f.v?'¥'+esc(String(f.v)):'—'}</span></div>`).join('')}
+  </div>
+  <table class="itmtbl" style="margin-bottom:1mm">
+    <thead><tr><th class="L" style="width:34mm">名称</th><th style="width:15mm">単価</th><th style="width:11mm">個数</th><th style="width:15mm">合計</th><th class="L">備考</th></tr></thead>
+    <tbody>${irows}</tbody>
+  </table>
+  <div class="sh">背景情報</div>
+  <div class="bg-list">
+    ${bgDefs.map(f=>`<div class="bgbox"><span class="bgk">${f.k}</span><div class="bgv">${esc(f.v||'')}</div></div>`).join('')}
+  </div>
+  <div class="sh">セッションメモ</div>
+  <div class="memo-box">${c.memo?`<div class="memo-text">${esc(c.memo)}</div>`:''}</div>
+</div>
+
+</div>
+<div class="pfoot"><span>${esc(c.name||'')} — 探索者記録簿</span><span>1 / 2</span></div>
+</div>`;
+
+  /* ════ P2: 技能 ════ */
+  const p2=`<div class="page pb">
+<div class="ptitle">INVESTIGATOR'S DOSSIER — ${esc(c.name||'')} — 技能一覧</div>
+<div class="sh" style="margin-top:0">探索者の技能 <span style="font-size:3.5pt;color:var(--ink5);letter-spacing:1px">□成長チェック ／ (初期値%) ／ 合計値</span></div>
+<div class="p2-body">
+  <div class="scol">${renderCol(cols[0])}</div>
+  <div class="scol">${renderCol(cols[1])}</div>
+  <div class="scol">${renderCol(cols[2])}</div>
+</div>
+<div class="pfoot"><span>${esc(c.name||'')} — 探索者記録簿</span><span>2 / 2</span></div>
+</div>`;
+
+  document.getElementById('pages').innerHTML=p1+p2;
+  document.title=`${c.name||'探索者'} — 印刷用`;
+}
+
+go();
+</script>
+</body>
+</html>

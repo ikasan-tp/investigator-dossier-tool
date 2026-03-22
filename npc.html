@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>探索者記録簿 - NPC管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Crect width='1024' height='1024' fill='%238a1818'/%3E%3Cpath fill='%23f4efe6' d='M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32zM668 345.9L621.5 312 572 347.4V124h96z'/%3E%3C/svg%3E">
+<style>
+:root {
+  /* ── 紙 ── */
+  --paper-base:   #f4efe6;
+  --paper-warm:   #ede5d8;
+  --paper-aged:   #e4d8c4;
+  --paper-dark:   #d8c9b0;
+  --paper-shadow: #c8b89a;
+  --paper-deep:   #b8a480;
+
+  /* ── テキスト階層 ── */
+  --ink-black:    #1a1612;  /* 見出し・名前 */
+  --ink-dark:     #2e2820;  /* 本文強調 */
+  --ink-body:     #3c3428;  /* 本文 */
+  --ink-muted:    #6a5e4e;  /* 補助テキスト */
+  --ink-dim:      #9a8e7e;  /* ラベル・メタ */
+  --ink-faint:    #c4b8a8;  /* プレースホルダー */
+
+  /* ── ブランド色（装飾のみ） ── */
+  --brand:        #a82020;  /* ヘッダー上線・スタンプ */
+  --brand-dark:   #6a1010;
+  --brand-mid:    #8a1818;
+  --brand-bright: #c83030;
+
+  /* ── 操作色（ボタン・リンク・フォーカス） ── */
+  --action:       #2a5080;
+  --action-dark:  #1a2a3a;
+  --action-mid:   #1e3a5a;
+  --action-light: #3a6898;
+
+  /* ── 危険操作（削除のみ） ── */
+  --danger:       #8a1818;
+  --danger-bg:    rgba(106,16,16,.06);
+
+  /* ── 状態色 ── */
+  --state-hidden: #6a5e4e;  /* 非表示バッジ */
+
+  /* ── 枠線 ── */
+  --rule-dark:    #8a7a68;
+  --rule-mid:     #b0a088;
+  --rule-light:   #cfc0a8;
+  --rule-faint:   #e0d4c0;
+
+  /* 後方互換エイリアス */
+  --seal-dark:    var(--brand-dark);
+  --seal-mid:     var(--brand-mid);
+  --seal-body:    var(--brand);
+  --seal-bright:  var(--brand-bright);
+  --pen-dark:     var(--action-dark);
+  --pen-mid:      var(--action-mid);
+  --pen-body:     var(--action);
+  --pen-bright:   var(--action-light);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper-aged);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.3'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.06'/%3E%3C/svg%3E"),radial-gradient(ellipse 80% 30% at 50% 0%,#c8b898 0%,transparent 70%),radial-gradient(ellipse 40% 20% at 0% 50%,#d0c4a8 0%,transparent 50%);min-height:100vh;font-family:'Noto Serif JP',serif;color:var(--ink-body);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:repeating-linear-gradient(180deg,transparent,transparent 27px,rgba(160,144,120,.12) 28px);}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--paper-warm)}::-webkit-scrollbar-thumb{background:var(--rule-dark)}
+
+.site-header{position:sticky;top:0;z-index:100;background:var(--paper-warm);border-bottom:2px solid var(--rule-dark);border-top:3px solid var(--seal-body);padding:0 32px;display:flex;align-items:center;gap:16px;height:64px;box-shadow:0 2px 12px rgba(100,80,50,.15);}
+.site-header::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--rule-mid);}
+.header-stamp{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--seal-body);border:1.5px solid var(--seal-body);padding:3px 8px;transform:rotate(-.8deg);flex-shrink:0;font-weight:bold;}
+.site-title{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--ink-black);letter-spacing:2px;}
+.site-title em{font-size:12px;font-weight:400;font-style:italic;color:var(--ink-muted);margin-left:10px;letter-spacing:1px;}
+.hfill{flex:1}
+.hstat{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink-dim);letter-spacing:2px;border-left:1px solid var(--rule-light);padding-left:16px;}
+.site-nav{display:flex;align-items:center;gap:2px;margin-left:8px;padding-left:16px;border-left:1px solid var(--rule-light);}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink-dim);text-decoration:none;padding:4px 10px;border:1px solid transparent;transition:all .2s;text-transform:uppercase;white-space:nowrap;}
+.nav-link:hover{color:var(--ink-body);border-color:var(--rule-mid);background:var(--paper-aged)}
+.nav-link.current{color:var(--action);border-color:var(--action-mid);background:var(--paper-base)}
+
+.app{max-width:1200px;margin:0 auto;padding:32px 26px;position:relative;z-index:1}
+.view{display:none;animation:emerge .3s ease}.view.active{display:block}
+@keyframes emerge{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+.sec-head{margin-bottom:24px;display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--rule-dark);padding-bottom:8px;}
+.sec-head::before{content:'§';font-family:'Libre Baskerville',serif;font-size:14px;color:var(--seal-mid);}
+.sh-title{font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700;color:var(--ink-dark);letter-spacing:3px}
+.sh-fill{flex:1}.sh-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:2px}
+
+.btn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 18px;cursor:pointer;border-radius:0;transition:all .2s;white-space:nowrap;display:inline-block;text-transform:uppercase;text-align:center}
+.btn-primary{background:var(--action-dark);border:1px solid var(--action-mid);color:#d8e8f4;}
+.btn-primary:hover{background:var(--action-mid);color:#e8f2fc}
+.btn-primary:disabled{background:var(--ink-muted);border-color:var(--ink-dim);cursor:not-allowed}
+.btn-ghost{background:transparent;border:1px solid var(--rule-mid);color:var(--ink-muted)}
+.btn-ghost:hover{border-color:var(--rule-dark);color:var(--ink-body);background:var(--paper-warm)}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn-danger:hover{background:var(--danger-bg);border-color:var(--danger);color:var(--danger)}
+.btn-sm{padding:5px 12px;font-size:9px}
+
+/* GRID */
+.npc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:18px}
+.npc-card{
+  background:var(--paper-base);
+  border:1px solid var(--rule-mid);
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:box-shadow .25s,transform .25s;
+  /* 写真/書類コーナーの折れ */
+  box-shadow:2px 3px 10px rgba(100,80,50,.18);
+}
+.npc-card::after{
+  content:'';position:absolute;top:0;right:0;
+  width:0;height:0;border-style:solid;
+  border-width:0 20px 20px 0;
+  border-color:transparent var(--paper-aged) transparent transparent;
+  transition:border-width .2s;
+}
+.npc-card:hover{
+  transform:translateY(-3px);
+  box-shadow:3px 8px 24px rgba(100,80,50,.28);
+}
+.npc-card:hover::after{border-width:0 28px 28px 0;}
+.card-color-line{height:3px;width:100%;}
+.npc-container{display:flex;flex-direction:column;gap:0;}
+.card-photo{
+  width:100%;height:230px;
+  background:var(--paper-dark);overflow:hidden;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  border-bottom:1px solid var(--rule-light);
+}
+.card-photo::before{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  box-shadow:inset 0 0 18px rgba(100,80,50,.2);
+}
+.card-photo::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,transparent 55%,rgba(180,160,130,.5) 100%);
+}
+.card-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:transform .5s}
+.npc-card:hover .card-photo img{transform:scale(1.04)}
+.card-photo-ph{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--ink-faint);letter-spacing:3px;text-transform:uppercase;
+}
+.card-body{
+  padding:10px 12px 13px;
+  background:var(--paper-base);
+}
+.card-body::before{display:none}
+.card-name{font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700;color:var(--ink-black);letter-spacing:.3px;margin-bottom:3px;line-height:1.3}
+.card-meta{font-family:'Noto Serif JP',serif;font-size:11px;color:var(--ink-muted);margin-bottom:0;font-weight:300}
+.add-card{
+  background:var(--paper-warm);border:1px dashed var(--rule-mid);min-height:330px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;gap:12px;color:var(--ink-faint);transition:all .25s;
+  box-shadow:1px 2px 6px rgba(100,80,50,.1);
+}
+.add-card:hover{border-color:var(--rule-dark);color:var(--ink-muted);background:var(--paper-base);}
+.add-ico{font-size:28px;color:var(--ink-faint);transition:color .25s}.add-card:hover .add-ico{color:var(--seal-mid)}
+.add-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;text-transform:uppercase}
+
+/* DETAIL */
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--ink-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;cursor:pointer;padding:0 0 18px;transition:color .2s;text-transform:uppercase}
+.back-btn:hover{color:var(--ink-body)}
+.npc-casefile{background:var(--paper-base);border:1px solid var(--rule-mid);border-top:3px solid var(--seal-mid);margin-bottom:0;position:relative;overflow:hidden;box-shadow:2px 3px 12px rgba(100,80,50,.15);}
+.npc-inner{display:flex;align-items:stretch}
+.npc-portrait-col{width:140px;flex-shrink:0;border-right:1px solid var(--rule-light);background:var(--paper-warm);display:flex;flex-direction:column;align-items:center;padding:16px 12px 14px;gap:8px;}
+.photo-frame{width:112px;height:140px;border:2px solid var(--rule-mid);overflow:hidden;background:var(--paper-aged);display:flex;align-items:center;justify-content:center;position:relative;box-shadow:inset 0 0 10px rgba(100,80,50,.15);}
+.photo-frame img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.photo-frame-ph{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:2px;text-align:center;line-height:1.8;text-transform:uppercase;}
+.upload-under-btn{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:4px 8px;background:transparent;border:1px dashed var(--rule-light);color:var(--ink-dim);cursor:pointer;transition:all .2s;text-transform:uppercase;width:100%;text-align:center;}
+.upload-under-btn:hover{border-color:var(--rule-dark);color:var(--ink-body);}
+.portrait-label{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:3px;color:var(--ink-faint);text-transform:uppercase;text-align:center;}
+.npc-data{flex:1;padding:20px 24px;min-width:0;display:flex;flex-direction:column;justify-content:space-between;position:relative;background-image:repeating-linear-gradient(180deg,transparent,transparent 27px,rgba(160,144,120,.15) 28px);background-attachment:local;}
+.npc-stamp{position:absolute;top:14px;right:14px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--seal-body);border:1.5px solid var(--seal-body);padding:2px 9px;opacity:.35;transform:rotate(-8deg);font-weight:bold;pointer-events:none;white-space:nowrap;}
+.npc-name{font-family:'Libre Baskerville',serif;font-size:30px;font-weight:700;color:var(--ink-black);letter-spacing:1px;line-height:1.1;margin-bottom:4px;display:flex;align-items:center;gap:10px;}
+.npc-color-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:1px solid rgba(0,0,0,.15);}
+.npc-memo-area{margin-top:12px;}
+.npc-memo{width:100%;min-height:60px;background:transparent;border:none;border-left:3px solid var(--rule-mid);padding-left:10px;font-family:'Noto Serif JP',serif;font-size:13px;color:var(--ink-body);line-height:1.8;outline:none;resize:vertical;caret-color:var(--pen-body);}
+.npc-memo::placeholder{color:var(--ink-faint);font-style:italic;}
+.npc-memo-label{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:3px;color:var(--seal-mid);text-transform:uppercase;margin-bottom:4px;display:block;}
+.npc-actions{border-left:1px solid var(--rule-light);padding:16px 12px;display:flex;flex-direction:column;gap:7px;background:var(--paper-warm);flex-shrink:0;}
+
+/* EXPR */
+.expr-section{background:var(--paper-base);border:1px solid var(--rule-mid);border-top:none;padding:20px;box-shadow:1px 3px 10px rgba(100,80,50,.08);}
+.expr-section-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;border-bottom:1px solid var(--rule-light);padding-bottom:10px;}
+.expr-section-title{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--seal-mid);text-transform:uppercase;}
+.expr-count-badge{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:1px;}
+.expr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;}
+.expr-card{background:var(--paper-warm);border:1px solid var(--rule-light);transition:transform .2s,border-color .2s;}
+.expr-card:hover{transform:translateY(-2px);border-color:var(--rule-dark);}
+.expr-img{width:100%;aspect-ratio:3/4;overflow:hidden;background:var(--paper-aged);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--rule-light);}
+.expr-img img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+.expr-img-ph{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);letter-spacing:2px;}
+.expr-name{padding:5px 6px 3px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dark);word-break:break-all;}
+.expr-del{display:block;width:100%;background:none;border:none;border-top:1px dashed var(--rule-light);font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);cursor:pointer;padding:3px 0;text-align:center;transition:color .15s,background .15s;text-transform:uppercase;}
+.expr-del:hover{color:var(--seal-body);background:rgba(168,32,32,.05);}
+.expr-empty{text-align:center;padding:30px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:3px;grid-column:1/-1;}
+
+/* FORM / MODAL */
+.form-row{margin-bottom:12px}
+.form-lbl{display:block;font-family:'Share Tech Mono',monospace;font-size:8px;font-weight:bold;letter-spacing:3px;color:var(--ink-dim);margin-bottom:5px;text-transform:uppercase}
+.form-input{width:100%;padding:8px 11px;background:var(--paper-warm);border:none;border-bottom:2px solid var(--rule-mid);border-left:3px solid var(--rule-mid);color:var(--ink-body);font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:1px;outline:none;transition:border-color .2s;border-radius:0;}
+.form-input:focus{border-bottom-color:var(--action);border-left-color:var(--action)}
+.drop-zone{border:1px dashed var(--rule-mid);padding:14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--paper-warm);}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--pen-mid);background:rgba(26,42,58,.04);}
+.drop-zone-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:2px;text-transform:uppercase;line-height:1.8;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(60,40,20,.6);backdrop-filter:blur(3px);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--paper-base);border:1px solid var(--rule-mid);border-top:3px solid var(--seal-mid);padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:4px 8px 40px rgba(60,40,20,.35);animation:emerge .3s ease;}
+.modal::before{content:'NPC FILE';position:absolute;top:12px;right:14px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--seal-body);border:1.5px solid var(--seal-body);padding:2px 7px;opacity:.35;transform:rotate(1.5deg);font-weight:bold;}
+.modal-title{font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:var(--ink-dark);margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--rule-light);letter-spacing:1px}
+.modal-close{position:absolute;top:12px;left:14px;background:none;border:none;color:var(--ink-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:color .2s;text-transform:uppercase}
+.modal-close:hover{color:var(--ink-body)}
+.in-color-picker{width:28px;height:28px;padding:0;border:1px solid var(--rule-mid);background:none;cursor:pointer;flex-shrink:0;}
+.in-color-picker::-webkit-color-swatch-wrapper{padding:0;}.in-color-picker::-webkit-color-swatch{border:none;}
+.setup-box{background:var(--paper-warm);border:1px solid var(--rule-mid);padding:24px;max-width:520px;margin:0 auto;}
+.setup-status{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;margin-top:10px;min-height:16px;color:var(--seal-body);}
+#db-loading{text-align:center;padding:60px 20px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink-dim);letter-spacing:4px;}
+.toast{position:fixed;top:20px;left:50%;transform:translate(-50%,-20px);background:var(--seal-dark);color:var(--paper-base);border:2px solid var(--seal-bright);padding:12px 28px;font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;opacity:0;transition:all .3s cubic-bezier(.175,.885,.32,1.275);z-index:9999;box-shadow:0 6px 16px rgba(0,0,0,.4);pointer-events:none;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+
+/* SCENARIO FOLDER */
+.scenario-folder{margin-bottom:32px;}
+.scenario-folder-head{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;padding:8px 14px;
+  background:var(--paper-warm);
+  border:1px solid var(--rule-mid);
+  border-left:3px solid var(--seal-mid);
+}
+.scenario-folder-head::before{content:'§';font-family:'Libre Baskerville',serif;font-size:14px;color:var(--ink-dim);flex-shrink:0;}
+.scenario-folder-name{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--ink-dark);letter-spacing:2px;flex:1;}
+.scenario-folder-count{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:1px;margin-left:auto;}
+.scenario-folder-del{background:none;border:none;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);cursor:pointer;letter-spacing:1px;transition:color .15s;padding:2px 6px;}
+.scenario-folder-del:hover{color:var(--seal-body);}
+.scenario-unassigned .scenario-folder-head{border-bottom-style:dashed;border-bottom-color:var(--rule-light);}
+.scenario-unassigned .scenario-folder-name{color:var(--ink-dim);}
+
+/* シナリオ管理モーダル用 */
+.scenario-list-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--paper-warm);border:1px solid var(--rule-light);margin-bottom:5px;}
+.scenario-list-name{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ink-dark);flex:1;letter-spacing:1px;}
+.scenario-list-count{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);}
+.scenario-list-del{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:12px;transition:color .15s;}
+.scenario-list-del:hover{color:var(--seal-body);}
+
+/* シナリオフォルダ追加ボタン・空表示 */
+.scenario-folder-add{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;
+  background:transparent;border:1px solid var(--rule-mid);color:var(--ink-muted);
+  padding:4px 12px;cursor:pointer;transition:all .15s;text-transform:uppercase;
+  white-space:nowrap;flex-shrink:0;margin-left:auto;
+}
+.scenario-folder-add:hover{background:var(--ink-dark);color:var(--paper-base);border-color:var(--ink-dark);}
+.scenario-folder-empty{
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);
+  letter-spacing:3px;padding:16px 0;text-align:center;
+}
+
+/* カードにカラーライン */
+.npc-card .card-color-line{height:3px;width:100%;}
+.npc-container{display:flex;flex-direction:column;gap:0;}
+
+/* 差分カードのラベル編集 */
+.expr-label-input{
+  width:100%;background:transparent;border:none;border-bottom:1px solid var(--rule-faint);
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dark);
+  padding:3px 6px;outline:none;
+}
+.expr-label-input:focus{border-bottom-color:var(--pen-body);}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-stamp">NPC</div>
+  <div class="site-title">探索者記録簿 <em>NPC Manager</em></div>
+  <div class="hfill"></div>
+  <button class="btn btn-ghost btn-sm" onclick="openScenarioModal()" style="font-size:8px;letter-spacing:2px">📁 シナリオ管理</button>
+  <nav class="site-nav">
+    <a class="nav-link" href="index.html">TOP</a>
+    <a class="nav-link" href="charactorsheet.html">探索者</a>
+    <a class="nav-link current" href="npc.html">NPC</a>
+    <a class="nav-link" href="log.html">ログ変換</a>
+  </nav>
+  <div class="hstat" id="hstat">— FILES</div>
+</header>
+
+<div class="app">
+  <div id="db-loading">CONNECTING...</div>
+
+  <!-- セットアップ -->
+  <div id="view-setup" class="view">
+    <div class="sec-head"><div class="sh-title">DATABASE SETUP</div></div>
+    <div class="setup-box">
+      <p style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:2px;line-height:1.8;margin-bottom:18px">探索者記録簿（index.html）と同じSupabase URLとAPIキーを入力してください。</p>
+      <div class="form-row"><label class="form-lbl">Supabase URL</label><input type="text" class="form-input" id="setup-url" placeholder="https://xxxx.supabase.co"></div>
+      <div class="form-row"><label class="form-lbl">Anon Key</label><input type="text" class="form-input" id="setup-key" placeholder="eyJ..."></div>
+      <button class="btn btn-primary" onclick="saveSetup()" style="margin-top:8px">接続する</button>
+      <div class="setup-status" id="setup-status"></div>
+    </div>
+  </div>
+
+  <!-- NPC一覧 -->
+  <div id="view-list" class="view">
+    <div class="sec-head">
+      <div class="sh-title">NPC ROSTER</div>
+      <div class="sh-fill"></div>
+      <div class="sh-sub" id="npc-count-sub">— 件</div>
+    </div>
+    <div class="npc-container" id="npc-grid"></div>
+  </div>
+
+  <!-- NPC詳細 -->
+  <div id="view-detail" class="view">
+    <button class="back-btn" onclick="showView('list')">← BACK TO LIST</button>
+    <div class="npc-casefile" id="d-casefile"></div>
+    <div class="expr-section">
+      <div class="expr-section-head">
+        <div class="expr-section-title">差分画像</div>
+        <div class="expr-count-badge" id="expr-count-badge"></div>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary btn-sm" onclick="openExprModal()">＋ 差分を追加</button>
+      </div>
+      <div class="expr-grid" id="expr-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NPC作成モーダル -->
+<div class="modal-overlay" id="modal-npc">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-npc')">[ close ]</button>
+    <div class="modal-title" id="modal-npc-title">NPCを新規作成</div>
+    <div class="form-row"><label class="form-lbl">NPC名 *</label><input type="text" class="form-input" id="f-npc-name" placeholder="NPC・敵キャラの名前"></div>
+    <div class="form-row">
+      <label class="form-lbl">シナリオ</label>
+      <select class="form-input" id="f-npc-scenario" style="cursor:pointer"></select>
+    </div>
+    <div class="form-row">
+      <label class="form-lbl">バストアップ画像（省略可）</label>
+      <div class="drop-zone" id="npc-bust-zone" onclick="document.getElementById('npc-bust-file').click()">
+        <div id="npc-bust-preview" class="drop-zone-txt">クリックして選択</div>
+      </div>
+      <input type="file" id="npc-bust-file" accept="image/*" style="display:none" onchange="onNpcBustSelect(event)">
+    </div>
+    <div class="form-row">
+      <label class="form-lbl">カラー</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="color" class="in-color-picker" id="f-npc-color" value="#8a1818">
+        <input type="text" class="form-input" id="f-npc-color-hex" value="#8a1818" style="width:110px" oninput="if(/^#[0-9A-F]{6}$/i.test(this.value))document.getElementById('f-npc-color').value=this.value">
+      </div>
+    </div>
+    <div class="form-row"><label class="form-lbl">メモ（省略可）</label><input type="text" class="form-input" id="f-npc-memo" placeholder="説明・備考など"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" id="npc-save-btn" onclick="saveNpc()">作成する</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-npc')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- 差分追加モーダル -->
+<div class="modal-overlay" id="modal-expr">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('modal-expr')">[ close ]</button>
+    <div class="modal-title">差分を追加</div>
+    <div class="form-row"><label class="form-lbl">差分ラベル（省略でファイル名を使用）</label><input type="text" class="form-input" id="f-expr-label" placeholder="通常・笑顔・怒り…"></div>
+    <div class="form-row">
+      <label class="form-lbl">画像ファイル（複数選択可）</label>
+      <div class="drop-zone" id="expr-drop-zone" onclick="document.getElementById('expr-file').click()">
+        <div id="expr-preview-info" class="drop-zone-txt">クリック または ドラッグ＆ドロップ<br>複数枚同時選択可</div>
+      </div>
+      <input type="file" id="expr-file" accept="image/*" multiple style="display:none" onchange="onExprFileSelect(event)">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" id="expr-save-btn" onclick="saveExprs()">追加する</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-expr')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- シナリオ管理モーダル -->
+<div class="modal-overlay" id="modal-scenario">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('modal-scenario')">[ close ]</button>
+    <div class="modal-title">シナリオ管理</div>
+    <div class="form-row">
+      <label class="form-lbl">新しいシナリオを追加</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="form-input" id="f-scenario-name" placeholder="シナリオ名を入力" style="flex:1">
+        <button class="btn btn-primary btn-sm" onclick="addScenario()">追加</button>
+      </div>
+    </div>
+    <div id="scenario-list-container" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+/* ════ SUPABASE ════ */
+let SUPA_URL='',SUPA_KEY='',H={};
+function loadSupaConfig(){
+  SUPA_URL=localStorage.getItem('supa_url')||'';
+  SUPA_KEY=localStorage.getItem('supa_key')||'';
+  H={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
+}
+async function sbSelect(table,filter=''){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${filter}&limit=10000`,{headers:{...H,'Prefer':'return=representation'}});
+  if(!r.ok)throw new Error(await r.text());return r.json();
+}
+async function sbUpsert(table,body){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}`,{method:'POST',headers:{...H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(await r.text());
+}
+async function sbDelete(table,filter){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:H});
+  if(!r.ok)throw new Error(await r.text());
+}
+async function storageUpload(path,blob){
+  const r=await fetch(`${SUPA_URL}/storage/v1/object/images/${path}`,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':blob.type||'image/jpeg','x-upsert':'true'},body:blob});
+  if(!r.ok)throw new Error(await r.text());
+}
+async function storageDelete(paths){
+  const r=await fetch(`${SUPA_URL}/storage/v1/object/images`,{method:'DELETE',headers:H,body:JSON.stringify({prefixes:paths})});
+  if(!r.ok)throw new Error(await r.text());
+}
+function storageUrl(path){return `${SUPA_URL}/storage/v1/object/public/images/${path}`;}
+
+/* ════ STATE ════ */
+let npcs=[],scenarios=[],curId=null,bustFile=null,exprFiles=[];
+const getNpc=()=>npcs.find(n=>n.id===curId);
+
+/* ════ VIEWS ════ */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  if(name==='list')renderList();
+  if(name==='detail')renderDetail();
+}
+
+/* ════ LIST ════ */
+function renderList(){
+  const container=document.getElementById('npc-grid');
+  container.innerHTML='';
+  const hs=document.getElementById('hstat');if(hs)hs.textContent=`${npcs.length} FILES`;
+  const cs=document.getElementById('npc-count-sub');if(cs)cs.textContent=`${npcs.length} 件`;
+
+  if(scenarios.length){
+    // シナリオフォルダを縦積み
+    scenarios.forEach(s=>{
+      const members=npcs.filter(n=>n.scenarioId===s.id);
+      renderFolder(container,s.id,s.name,members,false);
+    });
+    // 未分類はNPCがいる場合のみ表示
+    const unassigned=npcs.filter(n=>!n.scenarioId||!scenarios.find(s=>s.id===n.scenarioId));
+    if(unassigned.length) renderFolder(container,'','未分類',unassigned,true);
+    // 全体末尾に汎用追加ボタン
+    renderGlobalAddBtn(container);
+  } else {
+    // シナリオなし：フラット表示
+    const npcGrid=document.createElement('div');npcGrid.className='npc-grid';
+    npcs.forEach(n=>npcGrid.appendChild(makeNpcCard(n)));
+    const add=document.createElement('div');add.className='add-card';
+    add.innerHTML=`<div class="add-ico">+</div><div class="add-lbl">新規 N P C を作成</div>`;
+    add.onclick=()=>openAddModal('');
+    npcGrid.appendChild(add);
+    container.appendChild(npcGrid);
+  }
+}
+
+function makeNpcCard(n){
+  const el=document.createElement('div');el.className='npc-card';
+  const bustUrl=n.bust_path?storageUrl(n.bust_path):'';
+  el.innerHTML=`
+    <div class="card-color-line" style="background:${n.color||'var(--seal-mid)'}"></div>
+    <div class="card-photo">
+      ${bustUrl?`<img src="${bustUrl}" alt="${n.name}">`:`<div class="card-photo-ph">NO PHOTO</div>`}
+    </div>
+    <div class="card-body">
+      <div class="card-name">${n.name}</div>
+      <div class="card-meta">${n.memo||'—'}</div>
+      ${n.scenarioId?(()=>{const s=scenarios.find(x=>x.id===n.scenarioId);return s?`<div class="card-scenario">${s.name}</div>`:''})():''}
+    </div>`;
+  el.onclick=()=>{curId=n.id;showView('detail');};
+  return el;
+}
+
+function renderFolder(container,scenarioId,name,members,isUnassigned){
+  const folder=document.createElement('div');
+  folder.className='scenario-folder'+(isUnassigned?' scenario-unassigned':'');
+  // ヘッド
+  const head=document.createElement('div');head.className='scenario-folder-head';
+  const nameEl=document.createElement('div');nameEl.className='scenario-folder-name';nameEl.textContent=name;
+  const countEl=document.createElement('div');countEl.className='scenario-folder-count';countEl.textContent=members.length+' 件';
+  head.appendChild(nameEl);head.appendChild(countEl);
+  if(!isUnassigned){
+    const addBtn=document.createElement('button');addBtn.className='scenario-folder-add';
+    addBtn.innerHTML='＋ NPCを追加';
+    addBtn.onclick=()=>openAddModal(scenarioId);
+    head.appendChild(addBtn);
+  }
+  folder.appendChild(head);
+  // カードグリッド or 空表示
+  if(members.length){
+    const npcGrid=document.createElement('div');npcGrid.className='npc-grid';
+    members.forEach(n=>npcGrid.appendChild(makeNpcCard(n)));
+    folder.appendChild(npcGrid);
+  } else {
+    const empty=document.createElement('div');empty.className='scenario-folder-empty';
+    empty.textContent='— NO NPC —';
+    folder.appendChild(empty);
+  }
+  container.appendChild(folder);
+}
+
+function renderGlobalAddBtn(container){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='margin-top:8px;padding-top:24px;border-top:1px dashed var(--rule-light)';
+  const btn=document.createElement('button');
+  btn.className='btn btn-ghost';
+  btn.style.cssText='font-size:9px;letter-spacing:2px';
+  btn.innerHTML='＋ 未分類に N P C を新規作成';
+  btn.onclick=()=>openAddModal('');
+  wrap.appendChild(btn);
+  container.appendChild(wrap);
+}
+
+/* ════ DETAIL ════ */
+async function renderDetail(){
+  const n=getNpc();if(!n)return;
+  const bustUrl=n.bust_path?storageUrl(n.bust_path):'';
+  document.getElementById('d-casefile').innerHTML=`
+    <div class="npc-inner">
+      <div class="npc-portrait-col">
+        <div class="photo-frame" id="bust-frame">
+          ${bustUrl?`<img src="${bustUrl}" alt="${n.name}">`:`<div class="photo-frame-ph">NO<br>PHOTO</div>`}
+        </div>
+        <button class="upload-under-btn" onclick="document.getElementById('detail-bust-file').click()">▲ 変更</button>
+        <input type="file" id="detail-bust-file" accept="image/*" style="display:none" onchange="onDetailBust(event)">
+        <div class="portrait-label">BUST UP</div>
+      </div>
+      <div class="npc-data">
+        <div class="npc-stamp">${(scenarios.find(s=>s.id===n.scenarioId)||{}).name||'NPC FILE'}</div>
+        <div>
+          <div class="npc-name">
+            <div class="npc-color-dot" style="background:${n.color||'var(--seal-mid)'}"></div>
+
+            ${n.name}
+          </div>
+        </div>
+        <div class="npc-memo-area">
+          <span class="npc-memo-label">MEMO</span>
+          <textarea class="npc-memo" id="npc-memo-ta" placeholder="説明・備考など…" oninput="debounceMemo(this.value)">${n.memo||''}</textarea>
+        </div>
+      </div>
+      <div class="npc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEditModal()">編集</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteNpc()">削除</button>
+      </div>
+    </div>`;
+  await loadExprs();
+}
+
+async function loadExprs(){
+  const n=getNpc();if(!n)return;
+  const grid=document.getElementById('expr-grid');
+  const badge=document.getElementById('expr-count-badge');
+  grid.innerHTML=`<div class="expr-empty">LOADING...</div>`;
+  try{
+    const rows=await sbSelect('npc_expressions',`npc_id=eq.${n.id}&order=created_at.asc`);
+    n._exprs=rows;
+    if(badge)badge.textContent=`${rows.length} 件`;
+    if(rows.length===0){grid.innerHTML=`<div class="expr-empty">差分画像がありません</div>`;return;}
+    grid.innerHTML='';
+    rows.forEach(ex=>{
+      const url=ex.image_path?storageUrl(ex.image_path):'';
+      const card=document.createElement('div');card.className='expr-card';
+      card.innerHTML=`
+        <div class="expr-img">${url?`<img src="${url}" loading="lazy" alt="">`:`<div class="expr-img-ph">NO IMG</div>`}</div>
+        <div class="expr-name">${ex.label||'（無名）'}</div>
+        <button class="expr-del" onclick="deleteExpr('${ex.id}','${ex.image_path||''}')">✕ 削除</button>`;
+      grid.appendChild(card);
+    });
+  }catch(e){grid.innerHTML=`<div class="expr-empty" style="color:var(--seal-body)">エラー: ${e.message}</div>`;}
+}
+
+/* ════ BUST UPLOAD (detail) ════ */
+async function onDetailBust(e){
+  const file=e.target.files[0];if(!file)return;
+  const n=getNpc();if(!n)return;
+  toast('アップロード中…');
+  try{
+    const ext=file.name.split('.').pop().toLowerCase()||'jpg';
+    const path=`npc/${n.id}/bust.${ext}`;
+    if(n.bust_path&&n.bust_path!==path){try{await storageDelete([n.bust_path]);}catch(e){}}
+    await storageUpload(path,file);
+    n.bust_path=path;
+    await sbUpsert('npcs',{id:n.id,data:npcToData(n)});
+    const frame=document.getElementById('bust-frame');
+    if(frame)frame.innerHTML=`<img src="${storageUrl(path)}?t=${Date.now()}" alt="">`;
+    toast('バストアップ画像を更新しました');
+  }catch(err){toast('エラー: '+err.message);}
+}
+
+/* ════ MEMO ════ */
+const _dt={};
+function debounce(k,fn,ms){clearTimeout(_dt[k]);_dt[k]=setTimeout(fn,ms);}
+function debounceMemo(v){
+  const n=getNpc();if(!n)return;
+  n.memo=v;
+  debounce('memo',()=>sbUpsert('npcs',{id:n.id,data:npcToData(n)}),800);
+}
+
+/* ════ NPC CRUD ════ */
+function npcToData(n){return{name:n.name,scenarioId:n.scenarioId||'',memo:n.memo||'',bust_path:n.bust_path||'',color:n.color||'',emoji:n.emoji||''};}
+
+function openAddModal(presetScenarioId=''){
+  bustFile=null;
+  ['f-npc-name','f-npc-memo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-npc-color').value='#8a1818';
+  document.getElementById('f-npc-color-hex').value='#8a1818';
+  document.getElementById('npc-bust-preview').innerHTML='クリックして選択';
+  document.getElementById('npc-bust-preview').className='drop-zone-txt';
+  document.getElementById('npc-bust-file').value='';
+  populateScenarioSelect('f-npc-scenario',presetScenarioId);
+  document.getElementById('modal-npc-title').textContent='NPCを新規作成';
+  const btn=document.getElementById('npc-save-btn');btn.textContent='作成する';btn.onclick=saveNpc;
+  document.getElementById('modal-npc').classList.add('open');
+}
+function openEditModal(){
+  const n=getNpc();if(!n)return;
+  bustFile=null;
+  document.getElementById('f-npc-name').value=n.name||'';
+  document.getElementById('f-npc-memo').value=n.memo||'';
+  const nc=n.color||'#8a1818';document.getElementById('f-npc-color').value=nc;document.getElementById('f-npc-color-hex').value=nc;
+  populateScenarioSelect('f-npc-scenario',n.scenarioId||'');
+  const prev=document.getElementById('npc-bust-preview');
+  if(n.bust_path){prev.innerHTML=`<img src="${storageUrl(n.bust_path)}" style="max-height:70px;object-fit:contain">`;prev.className='';}
+  else{prev.innerHTML='クリックして選択';prev.className='drop-zone-txt';}
+  document.getElementById('npc-bust-file').value='';
+  document.getElementById('modal-npc-title').textContent='NPCを編集';
+  const btn=document.getElementById('npc-save-btn');btn.textContent='保存する';btn.onclick=updNpc;
+  document.getElementById('modal-npc').classList.add('open');
+}
+function onNpcBustSelect(e){
+  const file=e.target.files[0];if(!file)return;
+  bustFile=file;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const prev=document.getElementById('npc-bust-preview');
+    prev.innerHTML=`<img src="${ev.target.result}" style="max-height:80px;object-fit:contain">`;prev.className='';
+  };reader.readAsDataURL(file);
+}
+async function saveNpc(){
+  const name=document.getElementById('f-npc-name').value.trim();
+  if(!name){toast('NPC名を入力してください');return;}
+  const scenarioId=document.getElementById('f-npc-scenario').value;
+  const memo=document.getElementById('f-npc-memo').value.trim();
+  const color=document.getElementById('f-npc-color').value;
+  const emoji='';
+  const btn=document.getElementById('npc-save-btn');btn.disabled=true;btn.textContent='保存中…';
+  const id=Date.now().toString();let bust_path='';
+  try{
+    if(bustFile){
+      const ext=bustFile.name.split('.').pop().toLowerCase()||'jpg';
+      bust_path=`npc/${id}/bust.${ext}`;
+      await storageUpload(bust_path,bustFile);
+    }
+    await sbUpsert('npcs',{id,data:{name,scenarioId,memo,bust_path,color,emoji}});
+    npcs.push({id,name,scenarioId,memo,bust_path,color,emoji});
+    closeModal('modal-npc');toast(`「${name}」を作成しました`);renderList();
+  }catch(e){toast('エラー: '+e.message);}
+  btn.disabled=false;btn.textContent='作成する';
+}
+async function updNpc(){
+  const n=getNpc();if(!n)return;
+  const name=document.getElementById('f-npc-name').value.trim();
+  if(!name){toast('NPC名を入力してください');return;}
+  const btn=document.getElementById('npc-save-btn');btn.disabled=true;btn.textContent='保存中…';
+  try{
+    n.name=name;n.scenarioId=document.getElementById('f-npc-scenario').value;n.memo=document.getElementById('f-npc-memo').value.trim();n.color=document.getElementById('f-npc-color').value;
+    if(bustFile){
+      const ext=bustFile.name.split('.').pop().toLowerCase()||'jpg';
+      const path=`npc/${n.id}/bust.${ext}`;
+      if(n.bust_path&&n.bust_path!==path){try{await storageDelete([n.bust_path]);}catch(e){}}
+      await storageUpload(path,bustFile);n.bust_path=path;
+    }
+    await sbUpsert('npcs',{id:n.id,data:npcToData(n)});
+    closeModal('modal-npc');toast('更新しました');renderDetail();
+  }catch(e){toast('エラー: '+e.message);}
+  btn.disabled=false;btn.textContent='保存する';
+}
+async function deleteNpc(){
+  const n=getNpc();if(!n)return;
+  if(!confirm(`「${n.name}」を削除しますか？差分画像もすべて削除されます。`))return;
+  try{
+    const rows=await sbSelect('npc_expressions',`npc_id=eq.${n.id}`);
+    const paths=rows.map(r=>r.image_path).filter(Boolean);
+    if(n.bust_path)paths.push(n.bust_path);
+    if(paths.length)try{await storageDelete(paths);}catch(e){}
+    await sbDelete('npcs',`id=eq.${n.id}`);
+    npcs=npcs.filter(x=>x.id!==n.id);
+    showView('list');toast('削除しました');
+  }catch(e){toast('エラー: '+e.message);}
+}
+
+/* ════ EXPR CRUD ════ */
+function openExprModal(){
+  exprFiles=[];
+  document.getElementById('f-expr-label').value='';
+  document.getElementById('expr-preview-info').innerHTML='クリック または ドラッグ＆ドロップ<br>複数枚同時選択可';
+  document.getElementById('expr-preview-info').className='drop-zone-txt';
+  document.getElementById('expr-file').value='';
+  const btn=document.getElementById('expr-save-btn');btn.disabled=false;btn.textContent='追加する';
+  document.getElementById('modal-expr').classList.add('open');
+}
+function onExprFileSelect(e){
+  exprFiles=Array.from(e.target.files);if(!exprFiles.length)return;
+  const info=document.getElementById('expr-preview-info');
+  if(exprFiles.length===1){
+    const reader=new FileReader();
+    reader.onload=ev=>{info.innerHTML=`<img src="${ev.target.result}" style="max-height:80px;object-fit:contain">`;info.className='';};
+    reader.readAsDataURL(exprFiles[0]);
+  }else{info.innerHTML=`${exprFiles.length} 枚 選択中`;info.className='drop-zone-txt';}
+}
+async function saveExprs(){
+  if(!exprFiles.length){toast('画像を選択してください');return;}
+  const n=getNpc();if(!n)return;
+  const baseLabel=document.getElementById('f-expr-label').value.trim();
+  const btn=document.getElementById('expr-save-btn');btn.disabled=true;
+  const total=exprFiles.length,ts=Date.now();
+  try{
+    for(let i=0;i<total;i++){
+      const file=exprFiles[i];
+      const label=total>1
+        ?(baseLabel?`${baseLabel}${String(i+1).padStart(2,'0')}`:file.name.replace(/\.[^.]+$/,''))
+        :(baseLabel||file.name.replace(/\.[^.]+$/,''));
+      const exprId=`${n.id}_${ts}_${i}`;
+      const ext=file.name.split('.').pop().toLowerCase()||'jpg';
+      const path=`npc/${n.id}/expr/${exprId}.${ext}`;
+      btn.textContent=`保存中… ${i+1}/${total}`;
+      await storageUpload(path,file);
+      await sbUpsert('npc_expressions',{id:exprId,npc_id:n.id,label,image_path:path});
+    }
+    closeModal('modal-expr');toast(`${total}枚を追加しました`);await loadExprs();
+  }catch(e){toast('エラー: '+e.message);}
+  btn.disabled=false;btn.textContent='追加する';
+}
+async function deleteExpr(id,imagePath){
+  if(!confirm('この差分画像を削除しますか？'))return;
+  try{
+    await sbDelete('npc_expressions',`id=eq.${id}`);
+    if(imagePath)try{await storageDelete([imagePath]);}catch(e){}
+    toast('削除しました');await loadExprs();
+  }catch(e){toast('エラー: '+e.message);}
+}
+
+/* ════ DRAG & DROP ════ */
+['npc-bust-zone','expr-drop-zone'].forEach(zoneId=>{
+  const z=document.getElementById(zoneId);if(!z)return;
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+  z.addEventListener('drop',e=>{
+    e.preventDefault();z.classList.remove('drag');
+    if(!e.dataTransfer.files.length)return;
+    if(zoneId==='npc-bust-zone')onNpcBustSelect({target:{files:e.dataTransfer.files}});
+    else onExprFileSelect({target:{files:e.dataTransfer.files}});
+  });
+});
+
+/* ════ MODAL / TOAST ════ */
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toast(msg){const el=document.getElementById('toast-el');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2700);}
+
+/* ════ SETUP ════ */
+async function saveSetup(){
+  const url=document.getElementById('setup-url').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('setup-key').value.trim();
+  const status=document.getElementById('setup-status');
+  if(!url||!key){status.textContent='URLとKeyを入力してください';return;}
+  status.textContent='接続確認中…';
+  try{
+    const r=await fetch(`${url}/rest/v1/npcs?limit=1`,{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+    if(!r.ok)throw new Error('接続失敗: '+r.status);
+    localStorage.setItem('supa_url',url);localStorage.setItem('supa_key',key);
+    status.textContent='接続成功！';setTimeout(()=>location.reload(),700);
+  }catch(e){status.textContent='エラー: '+e.message;}
+}
+
+/* ════ INIT ════ */
+/* ════ SCENARIO MANAGEMENT ════ */
+function loadScenariosFromStorage(){
+  try{ scenarios=JSON.parse(localStorage.getItem('npc_scenarios')||'[]'); }catch(e){ scenarios=[]; }
+}
+function persistScenarios(){
+  localStorage.setItem('npc_scenarios',JSON.stringify(scenarios));
+}
+function populateScenarioSelect(selectId, selectedId){
+  const sel=document.getElementById(selectId);
+  sel.innerHTML='<option value="">— 未分類 —</option>';
+  scenarios.forEach(s=>{
+    const opt=document.createElement('option');
+    opt.value=s.id;opt.textContent=s.name;
+    if(s.id===selectedId)opt.selected=true;
+    sel.appendChild(opt);
+  });
+}
+function openScenarioModal(){
+  renderScenarioList();
+  document.getElementById('modal-scenario').classList.add('open');
+}
+function renderScenarioList(){
+  const el=document.getElementById('scenario-list-container');
+  if(!scenarios.length){
+    el.innerHTML=`<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:2px;padding:10px 0;text-align:center">シナリオがありません</div>`;
+    return;
+  }
+  el.innerHTML='';
+  scenarios.forEach((s,i)=>{
+    const count=npcs.filter(n=>n.scenarioId===s.id).length;
+    const row=document.createElement('div');row.className='scenario-list-item';
+    row.innerHTML=`
+      <span class="scenario-list-name">${s.name}</span>
+      <span class="scenario-list-count">${count} NPC</span>
+      <button class="scenario-list-del" onclick="deleteScenario('${s.id}')" title="削除">✕</button>`;
+    el.appendChild(row);
+  });
+}
+function addScenario(){
+  const name=document.getElementById('f-scenario-name').value.trim();
+  if(!name){toast('シナリオ名を入力してください');return;}
+  if(scenarios.find(s=>s.name===name)){toast('同じ名前のシナリオが既にあります');return;}
+  scenarios.push({id:Date.now().toString(),name});
+  persistScenarios();
+  document.getElementById('f-scenario-name').value='';
+  renderScenarioList();
+  renderList();
+  toast(`「${name}」を追加しました`);
+}
+function deleteScenario(id){
+  const s=scenarios.find(x=>x.id===id);if(!s)return;
+  if(npcs.some(n=>n.scenarioId===id)){
+    if(!confirm(`「${s.name}」を削除するとこのシナリオのNPCは未分類になります。続けますか？`))return;
+    npcs.forEach(n=>{ if(n.scenarioId===id) n.scenarioId=''; });
+  }
+  scenarios=scenarios.filter(x=>x.id!==id);
+  persistScenarios();
+  renderScenarioList();
+  renderList();
+  toast('シナリオを削除しました');
+}
+
+async function init(){
+  loadSupaConfig();
+  loadScenariosFromStorage();
+  if(!SUPA_URL||!SUPA_KEY){document.getElementById('db-loading').style.display='none';showView('setup');return;}
+  try{
+    const rows=await sbSelect('npcs','order=created_at.asc');
+    npcs=rows.map(r=>({...r.data,id:r.id}));
+    document.getElementById('db-loading').style.display='none';
+    showView('list');
+  }catch(err){
+    document.getElementById('db-loading').innerHTML=`<div style="color:var(--seal-body);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;text-align:center;padding:20px">CONNECTION ERROR<br><span style="opacity:.5;font-size:9px">${err.message}</span><br><br><button class="btn btn-ghost btn-sm" onclick="showView('setup')">設定を確認する</button></div>`;
+  }
+}
+init();
+</script>
+</body>
+</html>

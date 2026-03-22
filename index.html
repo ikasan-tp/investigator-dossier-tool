@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>探索者記録簿</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Crect width='1024' height='1024' fill='%238a1818'/%3E%3Cpath fill='%23f4efe6' d='M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32zM668 345.9L621.5 312 572 347.4V124h96z'/%3E%3C/svg%3E">
+<style>
+:root {
+  /* ── 紙 ── */
+  --paper-base:   #f4efe6;
+  --paper-warm:   #ede5d8;
+  --paper-aged:   #e4d8c4;
+  --paper-dark:   #d8c9b0;
+  --paper-shadow: #c8b89a;
+  --paper-deep:   #b8a480;
+
+  /* ── テキスト階層 ── */
+  --ink-black:    #1a1612;  /* 見出し・名前 */
+  --ink-dark:     #2e2820;  /* 本文強調 */
+  --ink-body:     #3c3428;  /* 本文 */
+  --ink-muted:    #6a5e4e;  /* 補助テキスト */
+  --ink-dim:      #9a8e7e;  /* ラベル・メタ */
+  --ink-faint:    #c4b8a8;  /* プレースホルダー */
+
+  /* ── ブランド色（装飾のみ） ── */
+  --brand:        #a82020;  /* ヘッダー上線・スタンプ */
+  --brand-dark:   #6a1010;
+  --brand-mid:    #8a1818;
+  --brand-bright: #c83030;
+
+  /* ── 操作色（ボタン・リンク・フォーカス） ── */
+  --action:       #2a5080;
+  --action-dark:  #1a2a3a;
+  --action-mid:   #1e3a5a;
+  --action-light: #3a6898;
+
+  /* ── 危険操作（削除のみ） ── */
+  --danger:       #8a1818;
+  --danger-bg:    rgba(106,16,16,.06);
+
+  /* ── 状態色 ── */
+  --state-hidden: #6a5e4e;  /* 非表示バッジ */
+
+  /* ── 枠線 ── */
+  --rule-dark:    #8a7a68;
+  --rule-mid:     #b0a088;
+  --rule-light:   #cfc0a8;
+  --rule-faint:   #e0d4c0;
+
+  /* 後方互換エイリアス */
+  --seal-dark:    var(--brand-dark);
+  --seal-mid:     var(--brand-mid);
+  --seal-body:    var(--brand);
+  --seal-bright:  var(--brand-bright);
+  --pen-dark:     var(--action-dark);
+  --pen-mid:      var(--action-mid);
+  --pen-body:     var(--action);
+  --pen-bright:   var(--action-light);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper-aged);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.3'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.06'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 80% 30% at 50% 0%,#c8b898 0%,transparent 70%),
+    radial-gradient(ellipse 40% 20% at 0% 50%,#d0c4a8 0%,transparent 50%),
+    radial-gradient(ellipse 40% 20% at 100% 80%,#c8bc9a 0%,transparent 50%);
+  min-height:100vh;font-family:'Noto Serif JP',serif;color:var(--ink-body);overflow-x:hidden;
+}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:repeating-linear-gradient(180deg,transparent,transparent 27px,rgba(160,144,120,.12) 28px);}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--paper-warm)}::-webkit-scrollbar-thumb{background:var(--rule-dark)}
+
+/* HEADER */
+.site-header{position:sticky;top:0;z-index:100;background:var(--paper-warm);border-bottom:2px solid var(--rule-dark);border-top:3px solid var(--seal-body);padding:0 32px;display:flex;align-items:center;gap:16px;height:64px;box-shadow:0 2px 12px rgba(100,80,50,.15);}
+.site-header::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--rule-mid);}
+.header-stamp{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--seal-body);border:1.5px solid var(--seal-body);padding:3px 8px;transform:rotate(-.8deg);flex-shrink:0;font-weight:bold;}
+.site-title{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--ink-black);letter-spacing:2px;}
+.site-title em{font-size:12px;font-weight:400;font-style:italic;color:var(--ink-muted);margin-left:10px;letter-spacing:1px;}
+.hfill{flex:1}
+.site-nav{display:flex;align-items:center;gap:2px;margin-left:8px;padding-left:16px;border-left:1px solid var(--rule-light);}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink-dim);text-decoration:none;padding:4px 10px;border:1px solid transparent;transition:all .2s;text-transform:uppercase;white-space:nowrap;}
+.nav-link:hover{color:var(--ink-body);border-color:var(--rule-mid);background:var(--paper-aged)}
+.nav-link.current{color:var(--action);border-color:var(--action-mid);background:var(--paper-base)}
+
+/* APP */
+.app{max-width:1200px;margin:0 auto;padding:48px 26px;position:relative;z-index:1}
+
+/* DB STATUS */
+.db-status{display:flex;align-items:center;gap:8px;margin-bottom:32px;padding:10px 16px;background:var(--paper-warm);border:1px solid var(--rule-light);font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:2px;}
+.db-dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;transition:background .3s;}
+.db-dot.connected{background:#4a8a4a;}
+.db-url-txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.db-setup-link{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--action);text-decoration:none;border:1px solid var(--action-light);padding:2px 8px;transition:all .2s;white-space:nowrap;}
+.db-setup-link:hover{background:var(--action-dark);color:#d8e8f4;}
+
+/* HERO */
+.hero{text-align:center;padding:56px 0 48px;border-bottom:2px solid var(--rule-mid);margin-bottom:48px;position:relative;}
+.hero::before{content:'§';font-family:'Libre Baskerville',serif;font-size:80px;color:var(--seal-mid);opacity:.08;position:absolute;top:10px;left:50%;transform:translateX(-50%);pointer-events:none;line-height:1;}
+.hero-brand{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:6px;color:var(--ink-dim);display:block;margin-bottom:16px;text-transform:uppercase;}
+.hero-title{font-family:'Libre Baskerville',serif;font-size:38px;font-weight:700;color:var(--ink-black);letter-spacing:3px;margin-bottom:10px;}
+.hero-sub{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--ink-dim);}
+
+/* TOOL CARDS */
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:56px;}
+@media(max-width:900px){.tools-grid{grid-template-columns:1fr;gap:16px}}
+.tool-card{background:var(--paper-base);border:1px solid var(--rule-mid);border-top:3px solid var(--seal-mid);padding:28px 24px 22px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;box-shadow:2px 3px 10px rgba(100,80,50,.14);transition:transform .25s,box-shadow .25s;}
+.tool-card::after{content:'';position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 22px 22px 0;border-color:transparent var(--paper-aged) transparent transparent;transition:border-width .2s;}
+.tool-card:hover{transform:translateY(-4px);box-shadow:3px 10px 28px rgba(100,80,50,.24);}
+.tool-card:hover::after{border-width:0 30px 30px 0;}
+.tool-card.log{border-top-color:var(--action-mid);}
+.tool-stamp{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;font-weight:bold;padding:2px 8px;display:inline-block;border:1.5px solid var(--seal-body);color:var(--seal-body);transform:rotate(-.5deg);align-self:flex-start;}
+.tool-card.log .tool-stamp{border-color:var(--pen-body);color:var(--pen-body);}
+.tool-name{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--ink-dark);letter-spacing:1px;}
+.tool-desc{font-family:'Noto Serif JP',serif;font-size:13px;color:var(--ink-muted);line-height:1.9;flex:1;}
+.tool-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:2px;border-top:1px dashed var(--rule-light);padding-top:10px;display:flex;justify-content:space-between;align-items:center;}
+.tool-count{color:var(--seal-body);font-weight:bold;}
+.tool-card.log .tool-count{color:var(--pen-body);}
+.tool-arrow{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink-dim);letter-spacing:2px;transition:color .2s,letter-spacing .2s;}
+.tool-card:hover .tool-arrow{color:var(--seal-body);letter-spacing:4px;}
+.tool-card.log:hover .tool-arrow{color:var(--pen-body);}
+
+/* RECENT */
+.recent-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+@media(max-width:900px){.recent-grid{grid-template-columns:1fr}}
+.recent-section{background:var(--paper-base);border:1px solid var(--rule-mid);padding:20px 22px;}
+.recent-head{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid var(--rule-dark);padding-bottom:8px;margin-bottom:16px;}
+.recent-head::before{content:'§';font-family:'Libre Baskerville',serif;font-size:13px;color:var(--seal-mid);}
+.recent-title{font-family:'Libre Baskerville',serif;font-size:12px;font-weight:700;color:var(--ink-dark);letter-spacing:3px;}
+.recent-fill{flex:1}
+.recent-link{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--ink-dim);text-decoration:none;transition:color .2s;}
+.recent-link:hover{color:var(--action);}
+.recent-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--rule-light);text-decoration:none;color:inherit;transition:all .15s;cursor:pointer;}
+.recent-row:last-child{border-bottom:none;}
+.recent-row:hover{background:var(--paper-warm);margin:0 -10px;padding-left:10px;padding-right:10px;}
+.recent-thumb{width:32px;height:40px;flex-shrink:0;background:var(--paper-dark);border:1px solid var(--rule-light);overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.recent-thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+.recent-thumb svg{width:16px;height:16px;fill:var(--ink-faint);}
+.recent-name{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--ink-dark);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.recent-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-dim);letter-spacing:1px;white-space:nowrap;}
+.recent-color{width:3px;height:1.2em;flex-shrink:0;border-radius:1px;}
+.recent-empty{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:3px;padding:20px 0;text-align:center;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-stamp">HOME</div>
+  <div class="site-title">探索者記録簿 <em>Investigator's Archive</em></div>
+  <div class="hfill"></div>
+  <nav class="site-nav">
+    <a class="nav-link current" href="index.html">TOP</a>
+    <a class="nav-link" href="charactorsheet.html">探索者</a>
+    <a class="nav-link" href="npc.html">NPC</a>
+    <a class="nav-link" href="log.html">ログ変換</a>
+  </nav>
+</header>
+
+<div class="app">
+
+  <div class="db-status">
+    <div class="db-dot" id="db-dot"></div>
+    <span class="db-url-txt" id="db-url-txt">データベース未接続</span>
+    <a class="db-setup-link" href="charactorsheet.html">⚙ DB設定</a>
+  </div>
+
+  <div class="hero">
+    <span class="hero-brand">Investigator's Archive</span>
+    <div class="hero-title">探索者記録簿</div>
+    <div class="hero-sub">CHARACTER SHEET &nbsp;·&nbsp; NPC MANAGER &nbsp;·&nbsp; LOG CONVERTER</div>
+  </div>
+
+  <div class="tools-grid">
+    <a class="tool-card" href="charactorsheet.html">
+      <div class="tool-stamp">CASE FILE</div>
+      <div class="tool-name">探索者記録簿</div>
+      <div class="tool-desc">探索者のステータス・表情差分・立ち絵・背景情報を一元管理。ログ変換ツールと連携して差分画像をリアルタイムに反映します。</div>
+      <div class="tool-meta">
+        <span>INVESTIGATOR · CHARACTER SHEET</span>
+        <span id="cs-count" class="tool-count">…</span>
+      </div>
+      <div class="tool-arrow">OPEN →</div>
+    </a>
+
+    <a class="tool-card" href="npc.html">
+      <div class="tool-stamp">NPC FILE</div>
+      <div class="tool-name">NPC管理</div>
+      <div class="tool-desc">セッションに登場するNPC・敵キャラクターの画像と表情差分を管理。ログ変換ツールでそのまま利用できます。</div>
+      <div class="tool-meta">
+        <span>NON-PLAYER CHARACTER</span>
+        <span id="npc-count" class="tool-count">…</span>
+      </div>
+      <div class="tool-arrow">OPEN →</div>
+    </a>
+
+    <a class="tool-card log" href="log.html">
+      <div class="tool-stamp" style="border-color:var(--pen-body);color:var(--pen-body)">LOG TOOL</div>
+      <div class="tool-name">ログ変換</div>
+      <div class="tool-desc">ココフォリアのHTMLログを読み込み、表情差分画像付きのセッションアーカイブに変換して書き出します。</div>
+      <div class="tool-meta">
+        <span>LOG CONVERTER · ARCHIVE</span>
+        <span class="tool-count" style="color:var(--pen-body)">HTML EXPORT</span>
+      </div>
+      <div class="tool-arrow">OPEN →</div>
+    </a>
+  </div>
+
+  <div class="recent-grid">
+    <div class="recent-section">
+      <div class="recent-head">
+        <div class="recent-title">RECENT INVESTIGATORS</div>
+        <div class="recent-fill"></div>
+        <a class="recent-link" href="charactorsheet.html">すべて見る →</a>
+      </div>
+      <div id="recent-chars"></div>
+    </div>
+    <div class="recent-section">
+      <div class="recent-head">
+        <div class="recent-title">RECENT NPCs</div>
+        <div class="recent-fill"></div>
+        <a class="recent-link" href="npc.html">すべて見る →</a>
+      </div>
+      <div id="recent-npcs"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SVG_PH = `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+let SUPA_URL = '', SUPA_KEY = '';
+
+function storageUrl(path) { return `${SUPA_URL}/storage/v1/object/public/images/${path}`; }
+
+function renderEmpty(id) {
+  document.getElementById(id).innerHTML = `<div class="recent-empty">NO DATA</div>`;
+}
+
+function renderRecentChars(chars) {
+  const el = document.getElementById('recent-chars');
+  if (!chars.length) { renderEmpty('recent-chars'); return; }
+  el.innerHTML = '';
+  chars.forEach(c => {
+    const a = document.createElement('a');
+    a.className = 'recent-row'; a.href = `charactorsheet.html?char=${c.id}`;
+    a.innerHTML = `
+      <div class="recent-thumb">${c.bust_path ? `<img src="${storageUrl(c.bust_path)}" alt="">` : SVG_PH}</div>
+      <div class="recent-color" style="background:${c.color || 'var(--seal-mid)'}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="recent-name">${c.emoji ? `<span style="margin-right:4px">${c.emoji}</span>` : ''}${c.name || '—'}</div>
+        <div class="recent-sub">${[c.job, c.age].filter(Boolean).join(' / ') || '—'}</div>
+      </div>
+      <div class="recent-sub">${c.scenario || ''}</div>`;
+    el.appendChild(a);
+  });
+}
+
+function renderRecentNpcs(npcs) {
+  const el = document.getElementById('recent-npcs');
+  if (!npcs.length) { renderEmpty('recent-npcs'); return; }
+  el.innerHTML = '';
+  npcs.forEach(n => {
+    const a = document.createElement('a');
+    a.className = 'recent-row'; a.href = 'npc.html';
+    a.innerHTML = `
+      <div class="recent-thumb">${n.bust_path ? `<img src="${storageUrl(n.bust_path)}" alt="">` : SVG_PH}</div>
+      <div class="recent-color" style="background:${n.color || '#6a1010'}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="recent-name">${n.name || '—'}</div>
+        <div class="recent-sub">${n.memo || '—'}</div>
+      </div>`;
+    el.appendChild(a);
+  });
+}
+
+async function init() {
+  SUPA_URL = localStorage.getItem('supa_url') || '';
+  SUPA_KEY = localStorage.getItem('supa_key') || '';
+  const dot = document.getElementById('db-dot');
+  const txt = document.getElementById('db-url-txt');
+
+  if (!SUPA_URL || !SUPA_KEY) {
+    txt.textContent = 'データベース未接続 — 探索者記録簿ページから設定してください';
+    renderEmpty('recent-chars');
+    renderEmpty('recent-npcs');
+    document.getElementById('cs-count').textContent = '—';
+    document.getElementById('npc-count').textContent = '—';
+    return;
+  }
+
+  dot.className = 'db-dot connected';
+  txt.textContent = SUPA_URL;
+  const H = { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
+
+  // 探索者
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/characters?select=id,data&order=created_at.desc&limit=100`, { headers: H });
+    if (res.ok) {
+      const rows = await res.json();
+      const chars = rows.map(r => ({ ...r.data, id: r.id })).filter(c => !c.hidden);
+      document.getElementById('cs-count').textContent = chars.length + ' FILES';
+      renderRecentChars(chars.slice(0, 5));
+    } else { renderEmpty('recent-chars'); document.getElementById('cs-count').textContent = '—'; }
+  } catch(e) { renderEmpty('recent-chars'); document.getElementById('cs-count').textContent = '—'; }
+
+  // NPC
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/npcs?select=id,data&order=created_at.desc&limit=5`, { headers: H });
+    if (res.ok) {
+      const rows = await res.json();
+      const npcs = rows.map(r => ({ id: r.id, ...(r.data || {}) }));
+      document.getElementById('npc-count').textContent = npcs.length + ' FILES';
+      renderRecentNpcs(npcs);
+    } else { renderEmpty('recent-npcs'); document.getElementById('npc-count').textContent = '—'; }
+  } catch(e) { renderEmpty('recent-npcs'); document.getElementById('npc-count').textContent = '—'; }
+}
+
+init();
+</script>
+</body>
+</html>

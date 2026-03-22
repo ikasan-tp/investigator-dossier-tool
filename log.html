@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>探索者記録簿 - LOG CONVERTER</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Crect width='1024' height='1024' fill='%238a1818'/%3E%3Cpath fill='%23f4efe6' d='M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32zM668 345.9L621.5 312 572 347.4V124h96z'/%3E%3C/svg%3E">
+<style>
+/* ── 探索者記録簿 オリジナル変数 ── */
+:root {
+  /* ── 紙 ── */
+  --paper-base:   #f4efe6;
+  --paper-warm:   #ede5d8;
+  --paper-aged:   #e4d8c4;
+  --paper-dark:   #d8c9b0;
+  --paper-shadow: #c8b89a;
+  --paper-deep:   #b8a480;
+
+  /* ── テキスト階層 ── */
+  --ink-black:    #1a1612;  /* 見出し・名前 */
+  --ink-dark:     #2e2820;  /* 本文強調 */
+  --ink-body:     #3c3428;  /* 本文 */
+  --ink-muted:    #6a5e4e;  /* 補助テキスト */
+  --ink-dim:      #9a8e7e;  /* ラベル・メタ */
+  --ink-faint:    #c4b8a8;  /* プレースホルダー */
+
+  /* ── ブランド色（装飾のみ） ── */
+  --brand:        #a82020;  /* ヘッダー上線・スタンプ */
+  --brand-dark:   #6a1010;
+  --brand-mid:    #8a1818;
+  --brand-bright: #c83030;
+
+  /* ── 操作色（ボタン・リンク・フォーカス） ── */
+  --action:       #2a5080;
+  --action-dark:  #1a2a3a;
+  --action-mid:   #1e3a5a;
+  --action-light: #3a6898;
+
+  /* ── 危険操作（削除のみ） ── */
+  --danger:       #8a1818;
+  --danger-bg:    rgba(106,16,16,.06);
+
+  /* ── 状態色 ── */
+  --state-hidden: #6a5e4e;  /* 非表示バッジ */
+
+  /* ── 枠線 ── */
+  --rule-dark:    #8a7a68;
+  --rule-mid:     #b0a088;
+  --rule-light:   #cfc0a8;
+  --rule-faint:   #e0d4c0;
+
+  /* 後方互換エイリアス */
+  --seal-dark:    var(--brand-dark);
+  --seal-mid:     var(--brand-mid);
+  --seal-body:    var(--brand);
+  --seal-bright:  var(--brand-bright);
+  --pen-dark:     var(--action-dark);
+  --pen-mid:      var(--action-mid);
+  --pen-body:     var(--action);
+  --pen-bright:   var(--action-light);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+body{
+  background: var(--paper-aged);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.3'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.06'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 80% 30% at 50% 0%, #c8b898 0%, transparent 70%),
+    radial-gradient(ellipse 40% 20% at 0% 50%, #d0c4a8 0%, transparent 50%),
+    radial-gradient(ellipse 40% 20% at 100% 80%, #c8bc9a 0%, transparent 50%);
+  min-height:100vh;
+  font-family:'Noto Serif JP',serif;
+  color:var(--ink-body);
+  overflow-x:hidden;
+}
+
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(
+    180deg,transparent,transparent 27px,
+    rgba(160,144,120,.12) 28px
+  );
+}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--paper-warm)}
+::-webkit-scrollbar-thumb{background:var(--rule-dark)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-muted)}
+
+/* ══ HEADER ══ */
+.site-header{
+  position:sticky;top:0;z-index:100;
+  background:var(--paper-warm);
+  border-bottom:2px solid var(--rule-dark);
+  padding:0 32px;
+  display:flex;align-items:center;gap:16px;height:64px;
+  box-shadow:0 2px 12px rgba(100,80,50,.15);
+  border-top:3px solid var(--seal-body);
+}
+.site-header::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--rule-mid);}
+.header-stamp{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--seal-body);border:1.5px solid var(--seal-body);padding:3px 8px;transform:rotate(-.8deg);flex-shrink:0;font-weight:bold;box-shadow:1px 1px 0 rgba(168,32,32,.2);}
+.site-title{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--ink-black);letter-spacing:2px;}
+.site-title em{font-size:12px;font-weight:400;font-style:italic;color:var(--ink-muted);margin-left:10px;letter-spacing:1px;}
+.hfill{flex:1}
+
+/* ══ APP & VIEWS ══ */
+.app{max-width:1440px;margin:0 auto;padding:32px 26px;position:relative;z-index:1}
+.view{display:none;animation:emerge .3s ease}
+.view.active{display:block}
+@keyframes emerge{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* 見出し */
+.sec-head{margin-bottom:24px;display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--rule-dark);padding-bottom:8px;}
+.sec-head::before{content:'§';font-family:'Libre Baskerville',serif;font-size:14px;color:var(--ink-dim);}
+.sh-title{font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700;color:var(--ink-dark);letter-spacing:3px}
+
+/* UIパーツ */
+.form-row{margin-bottom:13px}
+.form-lbl{display:block;font-family:'Share Tech Mono',monospace;font-size:8px;font-weight:bold;letter-spacing:3px;color:var(--ink-dim);margin-bottom:5px;text-transform:uppercase}
+.form-input, .form-sel{
+  width:100%;padding:8px 11px;background:var(--paper-warm);
+  border:none;border-bottom:2px solid var(--rule-mid);border-left:3px solid var(--rule-mid);
+  color:var(--ink-body);font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:1px;
+  outline:none;transition:border-color .2s;border-radius:0;-webkit-appearance:none;
+}
+.form-input:focus, .form-sel:focus{border-bottom-color:var(--action);border-left-color:var(--action)}
+.upload-zone{border:1px dashed var(--rule-mid);border-left:3px solid var(--seal-mid);padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--paper-warm);}
+.upload-zone:hover{border-color:var(--pen-mid);background:rgba(26,42,58,.04)}
+
+/* ボタン */
+.btn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 18px;cursor:pointer;border-radius:0;transition:all .2s;white-space:nowrap;display:inline-block;text-transform:uppercase;text-align:center;border:none;}
+.btn-primary{background:var(--action-dark);border:1px solid var(--action-mid);color:#d8e8f4;}
+.btn-primary:hover{background:var(--action-mid);border-color:var(--action-light);color:#e8f2fc}
+.btn-primary:disabled{background:var(--ink-muted);border-color:var(--ink-dim);cursor:not-allowed;color:var(--paper-warm)}
+.btn-ghost{background:transparent;border:1px solid var(--rule-mid);color:var(--ink-muted)}
+.btn-ghost:hover{border-color:var(--rule-dark);color:var(--ink-body);background:var(--paper-warm)}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn-danger:hover{background:var(--danger-bg);border-color:var(--danger);color:var(--danger)}
+.btn-sm{padding:5px 12px;font-size:9px}
+
+/* モーダル */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(60,40,20,.6);backdrop-filter:blur(3px);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--paper-base);border:1px solid var(--rule-mid);border-top:3px solid var(--seal-mid);padding:30px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:4px 8px 40px rgba(60,40,20,.35);animation:emerge .3s ease;}
+.modal::before{content:'CASE FILE';position:absolute;top:12px;right:14px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--seal-body);border:1.5px solid var(--seal-body);padding:2px 7px;opacity:.4;transform:rotate(1.5deg);font-weight:bold;}
+.modal-title{font-family:'Libre Baskerville',serif;font-size:17px;font-weight:700;color:var(--ink-dark);margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--rule-light);letter-spacing:1px}
+.modal-close{position:absolute;top:12px;left:14px;background:none;border:none;color:var(--ink-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:color .2s;text-transform:uppercase}
+
+/* 通知 */
+.toast{
+  position:fixed; top:20px; left:50%; transform:translate(-50%, -20px);
+  background:var(--seal-dark); color:var(--paper-base);
+  border:2px solid var(--seal-bright); border-radius:4px;
+  padding:14px 32px; font-family:'Share Tech Mono',monospace; font-size:14px; font-weight:bold;
+  letter-spacing:2px; text-transform:uppercase; text-align:center;
+  opacity:0; transition:all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index:9999; box-shadow:0 6px 16px rgba(0,0,0,.4); pointer-events:none;
+}
+.toast.show{opacity:1; transform:translate(-50%, 0);}
+
+
+/* ══ SITE NAV ══ */
+.site-nav{
+  display:flex;align-items:center;gap:2px;
+  margin-left:16px;padding-left:16px;
+  border-left:1px solid var(--rule-light);
+}
+.nav-link{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  color:var(--ink-dim);text-decoration:none;padding:4px 10px;
+  border:1px solid transparent;transition:all .2s;text-transform:uppercase;
+  white-space:nowrap;
+}
+.nav-link:hover{color:var(--ink-body);border-color:var(--rule-mid);background:var(--paper-aged)}
+.nav-link.current{color:var(--action);border-color:var(--action-mid);background:var(--paper-base)}
+
+/* ══ EDITOR 専用レイアウト ══ */
+.edit-layout { display:flex; gap:24px; align-items:flex-start; }
+.sidebar {
+  width: 360px; flex-shrink: 0; background: var(--paper-warm);
+  border: 1px solid var(--rule-mid); padding: 20px;
+  box-shadow: 2px 3px 12px rgba(100,80,50,.1);
+}
+.main-area { flex: 1; min-width: 0; }
+
+.panel-section { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px dashed var(--rule-light); }
+.panel-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.panel-head { font-family:'Share Tech Mono',monospace; font-size:10px; font-weight:bold; letter-spacing:2px; color:var(--seal-body); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.panel-head::before { content:''; display:block; width:6px; height:6px; background:var(--ink-dim); transform:rotate(45deg); }
+
+.db-list { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+.db-item { display:flex; justify-content:space-between; padding:8px 12px; background:var(--paper-base); border:1px solid var(--rule-light); font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--ink-muted); }
+.db-item.own { border-left:3px solid var(--seal-mid); }
+.db-item.guest { border-left:3px solid var(--pen-mid); }
+
+/* 参加者保存UI */
+.saved-member-row {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; background:var(--paper-base);
+  border:1px solid var(--rule-light); margin-bottom:5px;
+  transition:background .15s;
+}
+.saved-member-row:hover { background:var(--paper-warm); }
+.saved-member-row input[type=checkbox] { width:16px; height:16px; accent-color:var(--seal-body); flex-shrink:0; cursor:pointer; }
+.saved-member-name { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--ink-dark); flex:1; letter-spacing:1px; }
+.saved-member-label { font-family:'Share Tech Mono',monospace; font-size:8px; color:var(--ink-dim); letter-spacing:2px; }
+.saved-member-del { background:none; border:none; color:var(--ink-faint); cursor:pointer; font-size:12px; transition:color .15s; flex-shrink:0; }
+.saved-member-del:hover { color:var(--seal-body); }
+.member-add-form { background:var(--paper-aged); border:1px dashed var(--rule-mid); padding:14px; margin-top:10px; }
+.member-add-toggle { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--pen-body); cursor:pointer; background:none; border:none; display:flex; align-items:center; gap:6px; margin-bottom:0; transition:color .2s; text-transform:uppercase; }
+.member-add-toggle:hover { color:var(--pen-mid); }
+
+.conf-row { background:var(--paper-base); border:1px solid var(--rule-light); padding:10px; margin-bottom:8px; }
+.conf-flex { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+.in-color-picker { width:24px; height:24px; padding:0; border:1px solid var(--rule-mid); background:none; cursor:pointer; flex-shrink:0; }
+.in-color-picker::-webkit-color-swatch-wrapper { padding:0; }
+.in-color-picker::-webkit-color-swatch { border:none; }
+
+.anchor-item { display:flex; justify-content:space-between; padding:6px 8px; background:var(--paper-base); border:1px solid var(--rule-light); margin-bottom:4px; font-size:12px; cursor:pointer; transition:0.2s; }
+.anchor-item:hover { border-color:var(--action-mid); }
+
+.group-panel {
+  position:sticky; top:80px; z-index:50; background:var(--paper-warm);
+  border:1px solid var(--action-mid); padding:12px 16px; margin-bottom:16px;
+  box-shadow:0 4px 12px rgba(100,80,50,.2); display:none;
+}
+.group-panel-txt { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--action); margin-bottom:8px; font-weight:bold; }
+
+.log-container { background:var(--paper-base); border:1px solid var(--rule-mid); padding:24px; box-shadow:2px 3px 12px rgba(100,80,50,.1); }
+.log-line { display:flex; gap:16px; margin-bottom:16px; padding-bottom:16px; border-bottom:1px dashed var(--rule-light); transition:background 0.2s; }
+.log-line.selected { background:rgba(168,32,32,.05); border-color:var(--seal-body); }
+.log-line.search-hit { background:rgba(200,180,100,.15); }
+
+/* ── 表情アイコン ── */
+.log-icon {
+  width:72px; height:90px; flex-shrink:0; background:var(--paper-aged);
+  border:1px solid var(--rule-mid); cursor:pointer; overflow:hidden; position:relative;
+  display:flex; align-items:center; justify-content:center; box-shadow:inset 0 0 6px rgba(100,80,50,.15);
+}
+.log-icon img { width:100%; height:100%; object-fit:cover; object-position:top center; transition:transform 0.1s ease-out; transform-origin:center; }
+.log-icon svg { width:100%; height:100%; display:block; }
+.log-icon::after { content:'CHANGE'; position:absolute; bottom:0; background:rgba(26,22,18,.7); color:var(--paper-warm); font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:1px; width:100%; text-align:center; padding:2px 0; opacity:0; transition:opacity .2s; }
+.log-icon:hover::after { opacity:1; }
+
+.log-content { flex:1; min-width:0; }
+.log-meta { margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+.log-name { font-family:'Libre Baskerville',serif; font-size:14px; font-weight:700; color:var(--ink-dark); margin-right:8px; display:flex; align-items:center; gap:6px; }
+.name-line { display:inline-block; width:3px; height:1em; }
+.log-tab { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--ink-muted); background:var(--paper-warm); padding:2px 6px; border:1px solid var(--rule-faint); }
+
+.log-actions { display:flex; gap:6px; align-items:center; }
+.log-text {
+  width:100%; min-height:40px; background:transparent; border:none; resize:vertical;
+  font-family:'Noto Serif JP',serif; font-size:14px; font-weight:400; color:var(--ink-body);
+  line-height:1.8; outline:none; caret-color:var(--pen-body); border-left:3px solid var(--rule-mid); padding-left:10px;
+}
+.log-foot { display:flex; justify-content:space-between; margin-top:8px; align-items:center; }
+
+.expr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:16px}
+.expr-card{background:var(--paper-base);border:1px solid var(--rule-light);cursor:pointer;transition:transform .2s;box-shadow:1px 1px 4px rgba(100,80,50,.1)}
+.expr-card:hover{transform:translateY(-2px);border-color:var(--rule-dark)}
+.expr-img{width:100%;aspect-ratio:3/4;overflow:hidden;background:var(--paper-aged);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--rule-light)}
+.expr-img img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.expr-name{padding:6px;font-family:'Libre Baskerville',serif;font-size:10px;font-weight:700;color:var(--ink-dark);text-align:center;word-break:break-all}
+
+/* ══ IMG ドラッグ調整 ══ */
+.img-adjust-wrap {
+  border: 1px solid var(--rule-light);
+  background: var(--paper-aged);
+  padding: 8px;
+  margin-bottom: 8px;
+}
+.img-adjust-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 2px;
+  color: var(--seal-mid); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.img-preview-frame {
+  width: 72px; height: 90px;
+  background: var(--paper-dark);
+  border: 1px solid var(--rule-mid);
+  overflow: hidden; position: relative;
+  cursor: grab; flex-shrink: 0;
+  user-select: none;
+  box-shadow: inset 0 0 6px rgba(100,80,50,.15);
+}
+.img-preview-frame:active { cursor: grabbing; }
+.img-preview-frame img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top center;
+  pointer-events: none;
+  transform-origin: center;
+}
+.img-adjust-controls {
+  display: flex; flex-direction: column; gap: 4px; flex: 1;
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+}
+.img-adjust-row {
+  display: flex; align-items: center; gap: 4px;
+}
+.img-adjust-row label { width: 28px; color: var(--ink-dim); letter-spacing: 1px; flex-shrink: 0; }
+.img-adjust-row input[type=range] {
+  flex: 1; accent-color: var(--seal-body); cursor: pointer;
+}
+.img-adjust-row input[type=number] {
+  width: 44px; padding: 2px 4px;
+  background: var(--paper-warm); border: none;
+  border-bottom: 1px solid var(--rule-mid);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; color: var(--ink-body); text-align: right;
+}
+.img-adjust-body { display: flex; gap: 8px; align-items: flex-start; }
+.img-reset-btn {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px;
+  letter-spacing: 1px; color: var(--ink-faint);
+  background: none; border: none; cursor: pointer;
+  padding: 2px 0; text-decoration: underline;
+  transition: color .15s;
+}
+.img-reset-btn:hover { color: var(--seal-body); }
+
+
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-stamp">LOG TOOL</div>
+  <div class="site-title">探索者記録簿 <em>Log Converter</em></div>
+  <div class="hfill"></div>
+  <nav class="site-nav">
+    <a class="nav-link" href="index.html">TOP</a>
+    <a class="nav-link" href="charactersheet.html">探索者</a>
+    <a class="nav-link" href="npc.html">NPC</a>
+    <a class="nav-link" href="log.html" class="nav-link current">ログ変換</a>
+  </nav>
+</header>
+
+<div class="app">
+
+  <div id="view-setup" class="view active">
+    <div class="sec-head">
+      <div class="sh-title">INITIAL SETUP</div>
+    </div>
+    <div style="max-width:600px;margin:0 auto">
+      <div style="background:var(--paper-warm);border:1px solid var(--rule-mid);padding:20px;margin-bottom:24px">
+        <div class="panel-head">1. DATABASE CONNECTIONS</div>
+
+        <!-- 自分のDB表示 -->
+        <div class="db-list" id="own-db-display" style="margin-bottom:12px"></div>
+
+        <!-- 参加者チェックリスト -->
+        <label class="form-lbl" style="margin-bottom:8px;display:block">参加者を選択</label>
+        <div id="saved-members-list"></div>
+
+        <!-- 新規追加フォーム（折りたたみ） -->
+        <div class="member-add-form">
+          <button class="member-add-toggle" onclick="toggleAddForm()" id="add-form-toggle">＋ 新しい参加者を追加</button>
+          <div id="add-form-body" style="display:none;margin-top:12px">
+            <div class="form-row">
+              <label class="form-lbl">参加者名</label>
+              <input type="text" class="form-input" id="guest-name-input" placeholder="プレイヤー名など">
+            </div>
+            <div class="form-row">
+              <label class="form-lbl">閲覧用URL</label>
+              <input type="text" class="form-input" id="guest-url-input" placeholder="https://.../?view=1&url=...&key=...">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn btn-primary" onclick="saveAndAddMember()">保存して追加</button>
+              <button class="btn btn-ghost" onclick="toggleAddForm()">キャンセル</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 現在のセッション接続一覧 -->
+        <div id="db-list" style="margin-top:12px"></div>
+      </div>
+
+      <div style="background:var(--paper-warm);border:1px solid var(--rule-mid);padding:20px">
+        <div class="panel-head">2. LOG FILE UPLOAD</div>
+        <p style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);margin-bottom:12px;line-height:1.6">ココフォリアのHTMLログファイルを選択してください。</p>
+        <div class="upload-zone" id="log-drop-zone" onclick="document.getElementById('log-file').click()">
+          <div id="log-file-name"><p>クリック または ドラッグ＆ドロップ<br>HTML FILE</p></div>
+        </div>
+        <input type="file" id="log-file" accept=".html" style="display:none" onchange="onLogFileSelect(event)">
+      </div>
+    </div>
+  </div>
+
+  <div id="view-edit" class="view">
+    <div class="sec-head">
+      <div class="sh-title">EDIT LOG</div>
+    </div>
+    <div class="edit-layout">
+      <div class="sidebar">
+        <div class="panel-section">
+          <div class="panel-head">OUTPUT SETTINGS</div>
+          <label class="form-lbl">タイトル</label>
+          <input type="text" class="form-input" id="logTitleInput" placeholder="セッションタイトル" style="margin-bottom:8px">
+          <label class="form-lbl">ファイル名</label>
+          <div style="display:flex;align-items:center;gap:0;margin-bottom:8px">
+            <input type="text" class="form-input" id="fileNameInput" placeholder="export_log" style="flex:1;border-right:none">
+            <span style="background:var(--paper-dark);border:none;border-bottom:2px solid var(--rule-mid);border-right:none;padding:8px 10px;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--ink-dim);white-space:nowrap;letter-spacing:1px">.html</span>
+          </div>
+          <label class="form-lbl">システム</label>
+          <select id="systemSelect" class="form-sel" onchange="document.getElementById('customSystemInput').style.display = this.value==='CUSTOM' ? 'block' : 'none'">
+            <option value="CALL OF CTHULHU 6th">Call of Cthulhu 6th</option>
+            <option value="CALL OF CTHULHU 7th">Call of Cthulhu 7th</option>
+            <option value="EMOKLORE">Emoklore</option>
+            <option value="CUSTOM" selected>その他（自由入力）</option>
+          </select>
+          <input type="text" class="form-input" id="customSystemInput" placeholder="システム名を入力" value="LOG ARCHIVE" style="margin-top:4px">
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-head">SEARCH & CLEAN</div>
+          <button class="btn btn-ghost" style="width:100%; margin-bottom:12px;" onclick="cleanUpLogData()">🧹 ログを掃除する (空行・削除済)</button>
+          <div style="display:flex; gap:4px; margin-bottom:4px;">
+            <input type="text" class="form-input" id="searchInput" placeholder="検索ワード..." oninput="handleSearch()">
+          </div>
+          <div style="display:flex; gap:4px; margin-bottom:12px;">
+            <button class="btn btn-ghost btn-sm" style="flex:1" onclick="navSearch(-1)">前へ</button>
+            <button class="btn btn-ghost btn-sm" style="flex:1" onclick="navSearch(1)">次へ</button>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <input type="text" class="form-input" id="replaceInput" placeholder="置換後のワード...">
+            <button class="btn btn-ghost" onclick="handleReplace()">置換</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-head">CHARACTERS</div>
+          <div id="charGrid"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-head">TAB STYLES</div>
+          <div id="tabStyleSettings"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-head">INDEX (目次)</div>
+          <div id="anchorList"></div>
+        </div>
+
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost" style="flex:1;font-size:11px;padding:11px;" onclick="openPreview()">プレビュー</button>
+          <button class="btn btn-primary" style="flex:2;font-size:12px;padding:12px;" onclick="exportLog()">HTMLを書き出し</button>
+        </div>
+      </div>
+
+      <div class="main-area">
+        <div id="groupPanel" class="group-panel">
+          <div class="group-panel-txt" id="selectionInfo">選択した行をまとめて操作</div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="moveGroup(-1)">↑ 上へ</button>
+            <button class="btn btn-primary btn-sm" onclick="moveGroup(1)">↓ 下へ</button>
+            <button class="btn btn-ghost btn-sm" onclick="groupAndMove()">詰めて移動</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSelectedRows()">✕ 削除</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearSelection()">取消</button>
+          </div>
+        </div>
+        
+        <div class="log-container" id="logEditor">
+          <div style="text-align:center;padding:40px;font-family:'Share Tech Mono',monospace;color:var(--ink-dim)">LOADING...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-expr">
+  <div class="modal" style="max-width:640px">
+    <button class="modal-close" onclick="closeModal('modal-expr')">[ close ]</button>
+    <div class="modal-title" id="expr-modal-title">表情差分を選択</div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button class="btn btn-ghost btn-sm" onclick="applyDefaultImage()">デフォルト画像に戻す</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyNoImage()">画像を非表示 (NPC)</button>
+    </div>
+    <div class="expr-grid" id="expr-grid-container"></div>
+  </div>
+</div>
+
+
+<!-- 書き出しプレビューモーダル -->
+<div class="modal-overlay" id="modal-preview" style="padding:0;z-index:300">
+  <div style="width:100%;height:100%;display:flex;flex-direction:column;background:var(--paper-base)">
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--paper-warm);border-bottom:2px solid var(--rule-dark);flex-shrink:0">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--seal-body);border:1.5px solid var(--seal-body);padding:2px 8px;font-weight:bold">PREVIEW</div>
+      <span style="font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700;color:var(--ink-dark);flex:1">書き出しプレビュー</span>
+      <button class="btn btn-primary btn-sm" onclick="exportFromPreview()" style="font-size:10px">ダウンロード</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-preview')" style="font-size:10px">[ close ]</button>
+    </div>
+    <iframe id="preview-iframe" style="flex:1;border:none;width:100%;background:#fff"></iframe>
+  </div>
+</div>
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+/* ════ STATE ════ */
+let logData = []; 
+let charSettings = {}; 
+let tabStyleMap = {}; 
+let selectedIndices = [];
+let searchMatches = [];
+let currentSearchIdx = -1;
+
+let ownDb = null;
+let guestDbs = [];
+let allCharacters = [];
+let targetLineId = null;
+
+
+
+const SVG_USER = `<svg viewBox="0 0 72 90" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
+  <rect width="72" height="90" fill="#d8c9b0"/>
+  <ellipse cx="36" cy="28" rx="14" ry="16" fill="#c4b8a8"/>
+  <path d="M4 90 Q4 58 36 58 Q68 58 68 90Z" fill="#c4b8a8"/>
+</svg>`;
+const STYLES = [
+  { id: 'style-default', name: 'メイン' },
+  { id: 'style-info', name: '情報' },
+  { id: 'style-secret', name: '秘匿' },
+  { id: 'style-chat', name: '雑談' }
+];
+
+/* ════ INIT & DB ════ */
+
+// localStorage に保存された参加者マスタ: [{name, url, key}]
+let savedMembers = [];
+// 現セッションで選択中のゲストDB
+// guestDbs は既存のまま流用
+
+function loadSavedMembers() {
+  try { savedMembers = JSON.parse(localStorage.getItem('log_saved_members') || '[]'); } catch(e) { savedMembers = []; }
+}
+function persistSavedMembers() {
+  localStorage.setItem('log_saved_members', JSON.stringify(savedMembers));
+}
+
+function init() {
+  loadSavedMembers();
+  const url = localStorage.getItem('supa_url');
+  const key = localStorage.getItem('supa_key');
+  if (url && key) { ownDb = { url, key, label: 'MY DATABASE' }; }
+  renderOwnDb();
+  renderSavedMembersList();
+  renderDbList();
+}
+
+function renderOwnDb() {
+  const el = document.getElementById('own-db-display');
+  if (!el) return;
+  el.innerHTML = ownDb
+    ? `<div class="db-item own"><span style="font-family:'Share Tech Mono',monospace;font-size:10px">MY DATABASE</span></div>`
+    : '';
+}
+
+function renderSavedMembersList() {
+  const el = document.getElementById('saved-members-list');
+  if (!el) return;
+  if (savedMembers.length === 0) {
+    el.innerHTML = `<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:2px;padding:10px 0">登録された参加者がいません</div>`;
+    return;
+  }
+  // DOMを直接構築してイベントを addEventListener で登録（inline onchange の2重発火を回避）
+  el.innerHTML = '';
+  savedMembers.forEach((m, i) => {
+    const isActive = guestDbs.some(db => db.url === m.url);
+    const row = document.createElement('div');
+    row.className = 'saved-member-row';
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--paper-base);border:1px solid var(--rule-light);margin-bottom:5px;cursor:pointer;transition:background .15s';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.id = 'sm-' + i;
+    cb.checked = isActive;
+    cb.style.cssText = 'width:16px;height:16px;accent-color:var(--action);flex-shrink:0;cursor:pointer';
+    cb.addEventListener('change', function() { toggleMember(i, this.checked); });
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'saved-member-name';
+    nameSpan.style.flex = '1';
+    nameSpan.textContent = m.name;
+
+    const statusSpan = document.createElement('span');
+    statusSpan.className = 'saved-member-label';
+    statusSpan.id = 'sm-status-' + i;
+    statusSpan.textContent = isActive ? '● 接続中' : '○ 未接続';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'saved-member-del';
+    delBtn.title = '削除';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', function(e) { e.stopPropagation(); deleteSavedMember(i); });
+
+    // 行クリックでチェックをトグル（チェックボックス自体のクリックは別で処理）
+    row.addEventListener('click', function(e) {
+      if (e.target === cb || e.target === delBtn) return;
+      cb.checked = !cb.checked;
+      toggleMember(i, cb.checked);
+    });
+
+    row.appendChild(cb);
+    row.appendChild(nameSpan);
+    row.appendChild(statusSpan);
+    row.appendChild(delBtn);
+    el.appendChild(row);
+  });
+}
+
+function toggleMember(i, checked) {
+  const m = savedMembers[i];
+  if (checked) {
+    if (!guestDbs.some(db => db.url === m.url) && !(ownDb && ownDb.url === m.url)) {
+      guestDbs.push({ url: m.url, key: m.key, label: m.name });
+    }
+  } else {
+    guestDbs = guestDbs.filter(db => db.url !== m.url);
+  }
+  // 再描画せずステータス表示だけ更新（チェック状態を保持するため）
+  const statusEl = document.getElementById('sm-status-' + i);
+  if (statusEl) statusEl.textContent = checked ? '● 接続中' : '○ 未接続';
+  renderDbList();
+}
+
+function deleteSavedMember(i) {
+  const m = savedMembers[i];
+  // セッションからも外す
+  guestDbs = guestDbs.filter(db => db.url !== m.url);
+  savedMembers.splice(i, 1);
+  persistSavedMembers();
+  renderSavedMembersList();
+  renderDbList();
+}
+
+function toggleAddForm() {
+  const body = document.getElementById('add-form-body');
+  const toggle = document.getElementById('add-form-toggle');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  toggle.textContent = open ? '✕ キャンセル' : '＋ 新しい参加者を追加';
+}
+
+function saveAndAddMember() {
+  const name = document.getElementById('guest-name-input').value.trim();
+  const rawUrl = document.getElementById('guest-url-input').value.trim();
+  if (!name) { toast('参加者名を入力してください'); return; }
+  if (!rawUrl) { toast('閲覧用URLを入力してください'); return; }
+  try {
+    const u = new URL(rawUrl);
+    const url = u.searchParams.get('url');
+    const key = u.searchParams.get('key');
+    if (!url || !key) { toast('無効なURLです（url・keyパラメータが見つかりません）'); return; }
+    if (savedMembers.some(m => m.url === url)) { toast('この参加者はすでに保存されています'); return; }
+    // 保存
+    savedMembers.push({ name, url, key });
+    persistSavedMembers();
+    // セッションにも即追加
+    if (!guestDbs.some(db => db.url === url) && !(ownDb && ownDb.url === url)) {
+      guestDbs.push({ url, key, label: name });
+    }
+    // フォームリセット
+    document.getElementById('guest-name-input').value = '';
+    document.getElementById('guest-url-input').value = '';
+    toggleAddForm();
+    renderSavedMembersList();
+    renderDbList();
+    toast(`「${name}」を保存して追加しました`);
+  } catch(e) { toast('URL形式が不正です'); }
+}
+
+function renderDbList() {
+  const list = document.getElementById('db-list');
+  if (!list) return;
+  if (guestDbs.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = `<div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--seal-mid);margin-bottom:6px;margin-top:4px">接続中のデータベース</div>` +
+    guestDbs.map((db, i) => `<div class="db-item guest"><span style="font-family:'Share Tech Mono',monospace;font-size:10px">${db.label || 'GUEST DATABASE '+(i+1)}</span></div>`).join('');
+}
+
+function removeGuestDb(index) { guestDbs.splice(index, 1); renderSavedMembersList(); renderDbList(); }
+
+/* ════ UPLOAD & PARSE ════ */
+async function fetchAllCharacters() {
+  allCharacters = [];
+  const dbsToFetch = [];
+  if (ownDb) dbsToFetch.push(ownDb);
+  dbsToFetch.push(...guestDbs);
+
+  for (const db of dbsToFetch) {
+    try {
+      const H = { 'Content-Type': 'application/json', 'apikey': db.key, 'Authorization': 'Bearer ' + db.key };
+      const res = await fetch(`${db.url}/rest/v1/characters?select=id,data`, { headers: H });
+      if (res.ok) {
+        const rows = await res.json();
+        rows.forEach(r => {
+          allCharacters.push({ dbUrl: db.url, dbKey: db.key, id: r.id, name: r.data.name, bustPath: r.data.bust_path, isNpc: false });
+        });
+      }
+    } catch (e) {}
+  }
+
+}
+
+function getCharKey(name, color) { return btoa(encodeURIComponent(name + color)).replace(/=/g, ""); }
+function rgbToHex(rgb) {
+  if (!rgb || rgb.startsWith('#')) return rgb || '#3c3428';
+  const parts = rgb.match(/\d+/g);
+  if (!parts) return '#3c3428';
+  return "#" + parts.slice(0,3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toLowerCase();
+}
+
+async function onLogFileSelect(e) {
+  const file = e.target.files[0] || e.dataTransfer?.files[0];
+  if (!file) return;
+  
+  document.getElementById('log-drop-zone').innerHTML = `<p style="font-size:10px;color:var(--seal-body);">データベース照会中...</p>`;
+  await fetchAllCharacters();
+
+  const text = await file.text();
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  const baseTitle = file.name.replace('.html', '').replace(/\[all\]/gi, '').trim();
+  document.getElementById('logTitleInput').value = baseTitle;
+  document.getElementById('fileNameInput').value = baseTitle;
+
+  doc.querySelectorAll('p').forEach((p) => {
+    const htmlWithNewlines = p.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlWithNewlines;
+    const match = tempDiv.innerText.match(/\[(.*?)\]\s*(.*?)\s*:\s*([\s\S]*)/); 
+    
+    if (!match) return;
+    let [_, tabRaw, name, content] = match;            
+    content = content.trim();
+    if (!content) return;
+
+    const tab = tabRaw.replace(/\(.*\)|（.*）/g, "").trim();
+    const color = rgbToHex(p.style.color);
+    const charKey = getCharKey(name, color);
+    
+    if (!charSettings[charKey]) {
+      const matchedChar = allCharacters.find(c => c.name === name);
+      charSettings[charKey] = { 
+        displayName: name, 
+        color: color,
+        dbCharId: matchedChar ? matchedChar.id : "",
+        scale: 100, x: 0, y: 0
+      };
+    }
+
+    const dbCharId = charSettings[charKey].dbCharId;
+    const dbChar = allCharacters.find(c => c.id === dbCharId);
+    let imgUrl = '';
+    if (dbChar && dbChar.bustPath) imgUrl = `${dbChar.dbUrl}/storage/v1/object/public/images/${dbChar.bustPath}`;
+
+    logData.push({ charKey, content, tab, anchor: '', imgUrl });
+    
+    if (!tabStyleMap[tab]) {
+      let defaultColor = '#3c3428'; 
+      let style = 'style-chat';     
+      if (tab.match(/info|情報|system/i)) { style = 'style-info'; defaultColor = '#2a5080'; } 
+      else if (tab.match(/秘匿|秘密|HO/i)) { style = 'style-secret'; defaultColor = '#6a1010'; } 
+      else if (tab.match(/main|メイン/i)) { style = 'style-default'; defaultColor = '#1a1612'; }
+      tabStyleMap[tab] = { style, color: defaultColor };
+    }
+  });
+
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-edit').classList.add('active');
+  
+  renderCharConfigs(); renderTabSettings(); renderEditor(true); renderAnchorPanel();
+}
+
+/* ════ SETTINGS RENDER ════ */
+function renderCharConfigs() {
+  const container = document.getElementById('charGrid');
+  container.innerHTML = '';
+  let optionsHtml = `<option value="">未設定</option>`;
+  const pcs = allCharacters.filter(c => !c.isNpc);
+  if (pcs.length) {
+    optionsHtml += `<optgroup label="── 探索者 ──">`;
+    pcs.forEach(ch => { optionsHtml += `<option value="${ch.id}">${ch.name}</option>`; });
+    optionsHtml += `</optgroup>`;
+  }
+
+
+  Object.keys(charSettings).forEach(key => {
+    const char = charSettings[key];
+    const div = document.createElement('div');
+    div.className = 'conf-row';
+    div.innerHTML = `
+      <div class="conf-flex">
+        <input type="color" class="in-color-picker" value="${char.color}" oninput="updateCharColor('${key}', this.value)">
+        <input type="text" class="form-input" value="${char.displayName}" oninput="updateCharName('${key}', this.value)">
+        <input type="text" class="form-input" style="width:70px" value="${char.color}" oninput="if(/^#[0-9A-F]{6}$/i.test(this.value)) updateCharColor('${key}', this.value)">
+      </div>
+      <div class="img-adjust-wrap">
+        <div class="img-adjust-label">IMG POSITION <button class="img-reset-btn" onclick="resetCharTransform('${key}')">リセット</button></div>
+        <div class="img-adjust-body">
+          <div class="img-preview-frame" id="prev-${key}"
+            onmousedown="startImgDrag(event,'${key}')"
+            ontouchstart="startImgDragTouch(event,'${key}')">
+            <img id="prev-img-${key}" src="" alt="" style="transform:translate(${char.x||0}px,${char.y||0}px) scale(${(char.scale||100)/100})">
+          </div>
+          <div class="img-adjust-controls">
+            <div class="img-adjust-row">
+              <label>拡大</label>
+              <input type="range" id="sc-${key}" min="50" max="300" value="${char.scale||100}" oninput="updateCharTransformUI('${key}','scale',this.value)">
+            </div>
+            <div class="img-adjust-row">
+              <label>X</label>
+              <input type="range" id="xr-${key}" min="-100" max="100" value="${char.x||0}" oninput="updateCharTransformUI('${key}','x',this.value)">
+            </div>
+            <div class="img-adjust-row">
+              <label>Y</label>
+              <input type="range" id="yr-${key}" min="-100" max="100" value="${char.y||0}" oninput="updateCharTransformUI('${key}','y',this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+      <select class="form-sel" onchange="updateCharLink('${key}', this.value)">${optionsHtml}</select>
+    `;
+    container.appendChild(div);
+    if (char.dbCharId) {
+      div.querySelector('select').value = char.dbCharId;
+      // プレビュー画像を非同期で設定
+      setTimeout(() => syncPreviewImg(key), 0);
+    }
+  });
+}
+
+function updateCharColor(key, color) {
+  charSettings[key].color = color;
+  // Update editor name-line indicators for this char
+  document.querySelectorAll(`.row-name[data-charkey="${key}"] .name-line`).forEach(line => {
+    line.style.background = color;
+  });
+  // Sync the color picker and hex input within this char's conf-row
+  document.querySelectorAll(`#charGrid .conf-row`).forEach(row => {
+    const picker = row.querySelector('.in-color-picker');
+    const nameInput = row.querySelectorAll('.form-input')[0];
+    const hexInput = row.querySelectorAll('.form-input')[1];
+    // Identify this row's key by checking if its oninput matches our key
+    if (picker && picker.getAttribute('oninput') && picker.getAttribute('oninput').includes(`'${key}'`)) {
+      picker.value = color;
+      if (hexInput) hexInput.value = color;
+    }
+  });
+}
+
+function updateCharName(key, name) {
+  charSettings[key].displayName = name;
+  document.querySelectorAll(`.row-name[data-charkey="${key}"]`).forEach(el => {
+    const lineHtml = el.querySelector('.name-line') ? el.querySelector('.name-line').outerHTML : '';
+    el.innerHTML = `${lineHtml} ${name}`;
+  });
+}
+
+function updateCharTransform(key, prop, val) {
+  charSettings[key][prop] = Number(val);
+  const char = charSettings[key];
+  const transformStr = `translate(${char.x||0}px, ${char.y||0}px) scale(${(char.scale||100)/100})`;
+  document.querySelectorAll(`.log-line`).forEach(row => {
+    const idx = Number(row.dataset.index);
+    if(!isNaN(idx) && logData[idx] && logData[idx].charKey === key) {
+      const img = row.querySelector('.log-icon img');
+      if(img) img.style.transform = transformStr;
+    }
+  });
+}
+
+/* ════ IMG TRANSFORM UI ════ */
+function updateCharTransformUI(key, prop, val) {
+  const n = Number(val);
+  charSettings[key][prop] = n;
+  // スライダーを同期
+  const sliderMap = { scale: 'sc', x: 'xr', y: 'yr' };
+  const sl = document.getElementById(sliderMap[prop] + '-' + key);
+  if (sl && sl.value != n) sl.value = n;
+  // プレビュー更新
+  const prevImg = document.getElementById('prev-img-' + key);
+  const char = charSettings[key];
+  const ts = `translate(${char.x||0}px,${char.y||0}px) scale(${(char.scale||100)/100})`;
+  if (prevImg) prevImg.style.transform = ts;
+  // エディタ内の全行を更新
+  updateCharTransform(key, prop, n);
+}
+
+function resetCharTransform(key) {
+  charSettings[key].x = 0; charSettings[key].y = 0; charSettings[key].scale = 100;
+  ['x','y','scale'].forEach(prop => updateCharTransformUI(key, prop, prop === 'scale' ? 100 : 0));
+}
+
+/* IMG ドラッグ（マウス） */
+let _dragKey = null, _dragSx = 0, _dragSy = 0, _dragOx = 0, _dragOy = 0;
+function startImgDrag(e, key) {
+  _dragKey = key; _dragSx = e.clientX; _dragSy = e.clientY;
+  _dragOx = charSettings[key].x || 0; _dragOy = charSettings[key].y || 0;
+  e.preventDefault();
+  const mm = ev => {
+    const dx = ev.clientX - _dragSx, dy = ev.clientY - _dragSy;
+    updateCharTransformUI(key, 'x', _dragOx + dx);
+    updateCharTransformUI(key, 'y', _dragOy + dy);
+  };
+  const mu = () => { window.removeEventListener('mousemove', mm); window.removeEventListener('mouseup', mu); };
+  window.addEventListener('mousemove', mm);
+  window.addEventListener('mouseup', mu);
+}
+/* IMG ドラッグ（タッチ） */
+function startImgDragTouch(e, key) {
+  if (!e.touches.length) return;
+  const t0 = e.touches[0];
+  _dragKey = key; _dragSx = t0.clientX; _dragSy = t0.clientY;
+  _dragOx = charSettings[key].x || 0; _dragOy = charSettings[key].y || 0;
+  const tm = ev => {
+    if (!ev.touches.length) return;
+    const t = ev.touches[0];
+    const dx = t.clientX - _dragSx, dy = t.clientY - _dragSy;
+    updateCharTransformUI(key, 'x', _dragOx + dx);
+    updateCharTransformUI(key, 'y', _dragOy + dy);
+    ev.preventDefault();
+  };
+  const te = () => { window.removeEventListener('touchmove', tm); window.removeEventListener('touchend', te); };
+  window.addEventListener('touchmove', tm, { passive: false });
+  window.addEventListener('touchend', te);
+}
+
+/* プレビュー画像をcharSettingsのdbCharIdから更新（エディタ内と同じ画像を参照） */
+function syncPreviewImg(key) {
+  const char = charSettings[key];
+  let url = '';
+  // まずエディタ内の現在のimgUrlを参照（差分選択済みの場合もこちら）
+  const firstLine = logData.find(item => item.charKey === key);
+  if (firstLine && firstLine.imgUrl) {
+    url = firstLine.imgUrl;
+  } else {
+    // フォールバック: dbCharのバストアップ
+    const dbChar = allCharacters.find(c => c.id === char.dbCharId);
+    if (dbChar) {
+      if (dbChar.isNpc && dbChar.bustUrl) url = dbChar.bustUrl;
+      else if (dbChar.bustPath) url = `${dbChar.dbUrl}/storage/v1/object/public/images/${dbChar.bustPath}`;
+    }
+  }
+  const prevImg = document.getElementById('prev-img-' + key);
+  if (prevImg) prevImg.src = url;
+}
+
+function updateCharLink(charKey, dbCharId) {
+  charSettings[charKey].dbCharId = dbCharId;
+  const dbChar = allCharacters.find(c => c.id === dbCharId);
+  let defaultImgUrl = '';
+  if (dbChar) {
+    if (dbChar.isNpc && dbChar.bustUrl) defaultImgUrl = dbChar.bustUrl;
+    else if (dbChar.bustPath) defaultImgUrl = `${dbChar.dbUrl}/storage/v1/object/public/images/${dbChar.bustPath}`;
+  }
+  logData.forEach(item => { if (item.charKey === charKey) item.imgUrl = defaultImgUrl; });
+  syncPreviewImg(charKey);
+  renderEditor(true);
+}
+
+function renderTabSettings() {
+  const container = document.getElementById('tabStyleSettings');
+  container.innerHTML = '';
+  Object.keys(tabStyleMap).forEach(tab => {
+    const div = document.createElement('div');
+    div.className = 'conf-row';
+    div.innerHTML = `
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:bold;color:var(--ink-dark);margin-bottom:6px;">${tab}</div>
+      <div class="conf-flex">
+        <input type="color" class="in-color-picker" value="${tabStyleMap[tab].color}" oninput="updateTabColorUI('${tab}', this.value)">
+        <input type="text" class="form-input" style="width:70px" value="${tabStyleMap[tab].color}" oninput="if(/^#[0-9A-F]{6}$/i.test(this.value)) updateTabColorUI('${tab}', this.value)">
+        <select class="form-sel" onchange="tabStyleMap['${tab}'].style=this.value; renderEditor(true)">
+          ${STYLES.map(s => `<option value="${s.id}" ${tabStyleMap[tab].style === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+        </select>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function updateTabColorUI(tab, color) {
+  tabStyleMap[tab].color = color;
+  const inputs = document.querySelectorAll(`#tabStyleSettings .conf-row`);
+  inputs.forEach(row => {
+    const title = row.querySelector('div').innerText;
+    if (title === tab) {
+      row.querySelector('.in-color-picker').value = color;
+      row.querySelector('.form-input').value = color;
+    }
+  });
+}
+
+/* ════ EDITOR RENDER ════ */
+function renderEditor(fullInit = false) {
+  const scrollPos = window.scrollY;
+  const container = document.getElementById('logEditor');
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  searchMatches = [];
+
+  if (fullInit) {
+    container.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    logData.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'log-line';
+      row.id = 'row-' + index;
+      row.dataset.index = index;
+      renderRowContent(row, index, searchTerm);
+      fragment.appendChild(row);
+    });
+    container.appendChild(fragment);
+  } else {
+    logData.forEach((item, index) => {
+      const row = document.getElementById('row-' + index);
+      if (row) renderRowContent(row, index, searchTerm);
+    });
+  }
+  
+  updateSelectionPanel();
+  if (fullInit) window.scrollTo(0, scrollPos);
+}
+
+function renderRowContent(row, index, searchTerm) {
+  const item = logData[index];
+  const char = charSettings[item.charKey] || { displayName: "Unknown", color: "#3c3428", scale:100, x:0, y:0 };
+  const isSelected = selectedIndices.includes(index);
+  const isHit = searchTerm && item.content.toLowerCase().includes(searchTerm);
+  if (isHit && !searchMatches.includes(index)) searchMatches.push(index);
+
+  row.className = `log-line ${isSelected ? 'selected' : ''} ${isHit ? 'search-hit' : ''}`;
+  const transformStr = `translate(${char.x||0}px, ${char.y||0}px) scale(${(char.scale||100)/100})`;
+  const imgHtml = item.imgUrl ? `<img src="${item.imgUrl}" alt="" style="transform:${transformStr}">` : SVG_USER;
+  
+  let safeContent = item.content
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if(isHit) {
+      const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escapedTerm})`, 'gi');
+      safeContent = safeContent.replace(regex, '<mark style="background:#f0e68c;padding:2px;border-radius:2px;">$1</mark>');
+  }
+
+  const isSystem = (char.displayName && char.displayName.toLowerCase() === 'system');
+
+  const nameBlock = isSystem ? '' : `
+    <span class="log-name" data-charkey="${item.charKey}" style="color:var(--ink-dark)">
+      <span class="name-line" style="background:${char.color}; width:3px; height:1em; margin-right:6px"></span>${char.displayName}
+    </span>
+    <span class="log-tab">${item.tab}</span>
+  `;
+
+  row.innerHTML = `
+    <div class="log-icon" onclick="openExprModal(${index})" style="${isSystem ? 'display:none;' : ''}">${imgHtml}</div>
+    <div class="log-content" style="${isSystem ? 'text-align:left; color:var(--ink-muted); font-family:\'Share Tech Mono\',monospace;' : ''}">
+      <div class="log-meta" style="${isSystem ? 'justify-content:flex-end;' : ''}">
+        <div>${nameBlock}</div>
+        <div class="log-actions">
+          <label style="font-size:9px;cursor:pointer;color:var(--ink-dim)"><input type="checkbox" class="anchor-check" ${item.anchor != null ? 'checked' : ''}> 目次</label>
+          <input type="text" class="form-input btn-sm anchor-input" value="${(item.anchor||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="目次名を入力" style="width:110px; display:${item.anchor!=null && item.anchor!==''?'block':'none'}">
+          <button class="btn btn-ghost btn-sm ruby-btn" data-type="｜">｜</button>
+          <button class="btn btn-ghost btn-sm ruby-btn" data-type="《》">《》</button>
+        </div>
+      </div>
+      <textarea class="log-text" style="${isSystem ? 'border-left:none; padding-left:0; color:var(--ink-muted); font-family:\'Share Tech Mono\',monospace;' : ''}">${item.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+      <div class="log-foot">
+        <label style="font-size:10px;cursor:pointer;color:var(--ink-muted)"><input type="checkbox" class="row-checkbox" ${isSelected ? 'checked' : ''}> 行を選択</label>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm move-up">↑</button>
+          <button class="btn btn-ghost btn-sm move-down">↓</button>
+          <button class="btn btn-danger btn-sm del-btn">✕</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  row.querySelector('.anchor-check').addEventListener('change', function() { toggleAnchor(index, this.checked); });
+  row.querySelector('.anchor-input').addEventListener('input', function() { 
+    logData[index].anchor = this.value; 
+    debounceAnchorPanel(); 
+  });
+  row.querySelectorAll('.ruby-btn').forEach(btn => btn.addEventListener('click', function() { applyRubyToRow(index, this.dataset.type); }));
+  row.querySelector('.row-checkbox').addEventListener('change', function() { toggleSelect(index); });
+  row.querySelector('.move-up').addEventListener('click', () => moveRow(index, -1));
+  row.querySelector('.move-down').addEventListener('click', () => moveRow(index, 1));
+  row.querySelector('.del-btn').addEventListener('click', () => deleteRow(index));
+  
+  const ta = row.querySelector('.log-text');
+  ta.addEventListener('input', function() {
+    logData[index].content = this.value;
+    this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';
+  });
+  setTimeout(() => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }, 0);
+}
+
+/* ════ ACTIONS ════ */
+function cleanUpLogData() {
+  const beforeCount = logData.length;
+  logData = logData.filter(item => {
+    const c = String(item.content);
+    return !(c.includes('削除済') || !c.trim());
+  });
+  selectedIndices = [];
+  const diff = beforeCount - logData.length;
+  if (diff === 0) toast('掃除する行は見つかりませんでした');
+  else { renderEditor(true); toast(`不要な ${diff} 行を削除しました！`); }
+}
+
+function handleSearch() { currentSearchIdx = -1; searchMatches = []; renderEditor(false); }
+function navSearch(dir) {
+  if (searchMatches.length === 0) return;
+  currentSearchIdx = (currentSearchIdx + dir + searchMatches.length) % searchMatches.length;
+  document.getElementById(`row-${searchMatches[currentSearchIdx]}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function handleReplace() {
+  const search = document.getElementById('searchInput').value;
+  const replace = document.getElementById('replaceInput').value;
+  if (!search) return;
+  if (!confirm(`「${search}」を「${replace}」に一括置換しますか？`)) return;
+  let count = 0;
+  logData.forEach(item => {
+    if (item.content.includes(search)) { item.content = item.content.split(search).join(replace); count++; }
+  });
+  renderEditor(true); toast(`${count}行を置換しました`);
+}
+
+function applyRubyToRow(index, type) {
+  const ta = document.querySelector(`#row-${index} .log-text`);
+  if (!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd, text = ta.value, sel = text.substring(start, end);
+  let newText, newPos;
+  if (type === '｜') { newText = text.substring(0, start) + '｜' + sel + text.substring(end); newPos = start + (sel ? sel.length + 1 : 1); }
+  else { newText = text.substring(0, start) + '《' + sel + '》' + text.substring(end); newPos = sel ? end + 2 : start + 1; }
+  ta.value = newText; logData[index].content = newText;
+  ta.focus(); ta.setSelectionRange(newPos, newPos);
+}
+
+let anchorTimer = null;
+function debounceAnchorPanel() {
+  clearTimeout(anchorTimer);
+  anchorTimer = setTimeout(() => { renderAnchorPanel(); }, 300);
+}
+
+function toggleAnchor(index, checked) {
+  logData[index].anchor = checked ? '' : null;
+  const row = document.getElementById('row-' + index);
+  if (row) {
+    const input = row.querySelector('.anchor-input');
+    if (input) {
+      input.style.display = checked ? 'block' : 'none';
+      if (checked) { input.value = ''; input.focus(); }
+    }
+  }
+  debounceAnchorPanel();
+}
+
+function renderAnchorPanel() {
+  const list = document.getElementById('anchorList');
+  list.innerHTML = '';
+  const anchors = logData.map((item, idx) => ({ idx, anchor: item.anchor })).filter(a => a.anchor != null && a.anchor !== '');
+  anchors.forEach((a, n) => {
+    const el = document.createElement('div'); el.className = 'anchor-item';
+    el.innerHTML = `<span style="color:var(--seal-body);font-weight:bold;font-family:'Share Tech Mono';">${n+1}</span><span style="flex:1;margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.anchor}</span>`;
+    el.onclick = () => document.getElementById('row-' + a.idx).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    list.appendChild(el);
+  });
+}
+
+function toggleSelect(index) {
+  const pos = selectedIndices.indexOf(index);
+  const row = document.getElementById('row-' + index);
+  if (pos > -1) {
+    selectedIndices.splice(pos, 1);
+    if(row) row.classList.remove('selected');
+  } else {
+    selectedIndices.push(index);
+    if(row) row.classList.add('selected');
+  }
+  updateSelectionPanel();
+}
+function updateSelectionPanel() {
+  const p = document.getElementById('groupPanel');
+  if (selectedIndices.length > 0) {
+    p.style.display = 'block'; document.getElementById('selectionInfo').textContent = `${selectedIndices.length}行を選択中`;
+  } else { p.style.display = 'none'; }
+}
+
+function moveRow(index, dir) {
+  const newIndex = index + dir;
+  if (newIndex < 0 || newIndex >= logData.length) return;
+  const temp = logData[index]; logData[index] = logData[newIndex]; logData[newIndex] = temp;
+  selectedIndices = selectedIndices.map(i => i === index ? newIndex : (i === newIndex ? index : i));
+  renderEditor(true);
+}
+function deleteRow(index) {
+  if(!confirm("削除しますか？")) return;
+  logData.splice(index, 1); renderEditor(true);
+}
+function moveGroup(dir) {
+  if(!selectedIndices.length) return;
+  selectedIndices.sort((a,b)=>a-b);
+  if(dir === -1 && selectedIndices[0] === 0) return;
+  if(dir === 1 && selectedIndices[selectedIndices.length-1] === logData.length-1) return;
+  const loop = dir === -1 ? selectedIndices : [...selectedIndices].reverse();
+  loop.forEach(idx => {
+    const ni = idx + dir; const temp = logData[idx]; logData[idx] = logData[ni]; logData[ni] = temp;
+  });
+  selectedIndices = selectedIndices.map(i => i + dir);
+  renderEditor(true);
+}
+function groupAndMove() {
+  if(!selectedIndices.length) return;
+  selectedIndices.sort((a,b)=>a-b);
+  const target = selectedIndices[0]; const moving = selectedIndices.map(i=>logData[i]);
+  const newData = []; const set = new Set(selectedIndices);
+  for(let i=0; i<logData.length; i++){
+    if(i===target) newData.push(...moving);
+    if(!set.has(i)) newData.push(logData[i]);
+  }
+  logData = newData; selectedIndices = Array.from({length:moving.length}, (_,i)=>target+i);
+  renderEditor(true);
+}
+function deleteSelectedRows() {
+  if(!confirm(`${selectedIndices.length}件の行を削除しますか？`)) return;
+  const set = new Set(selectedIndices);
+  logData = logData.filter((_,i) => !set.has(i));
+  selectedIndices = []; renderEditor(true); toast('削除しました');
+}
+function clearSelection() { 
+  selectedIndices = []; 
+  document.querySelectorAll('.log-line.selected').forEach(r => {
+    r.classList.remove('selected');
+    const cb = r.querySelector('.row-checkbox');
+    if(cb) cb.checked = false;
+  });
+  updateSelectionPanel(); 
+}
+
+/* ════ EXPRESSION MODAL ════ */
+async function openExprModal(lineId) {
+  targetLineId = lineId;
+  const line = logData[lineId];
+  const char = charSettings[line.charKey];
+  const title = document.getElementById('expr-modal-title');
+  const grid = document.getElementById('expr-grid-container');
+  
+  title.textContent = `表情を選択: ${char.displayName}`;
+  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:'Share Tech Mono';font-size:10px;color:var(--ink-faint)">LOADING...</div>`;
+  document.getElementById('modal-expr').classList.add('open');
+
+  if (!char.dbCharId) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--seal-body);font-size:12px;">データベースに紐付けされていません。<br>左側のキャラクター設定で選択してください。</div>`;
+    return;
+  }
+
+  const dbChar = allCharacters.find(c => c.id === char.dbCharId);
+  if (!dbChar) { grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--seal-body);">キャラクターが見つかりません</div>`; return; }
+
+  // NPC差分の場合はメモリから取得
+  if (dbChar.isNpc) {
+    const npc = npcs.find(n => n.id === dbChar.npcId);
+    grid.innerHTML = '';
+    if (!npc || !npc.exprs || npc.exprs.length === 0) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--ink-faint);">差分画像がありません<br><span style="font-size:9px">サイドバーのNPCパネルから追加してください</span></div>`;
+      return;
+    }
+    npc.exprs.forEach(ex => {
+      const fullUrl = ex.image_path ? `${npc.dbUrl}/storage/v1/object/public/images/${ex.image_path}` : (ex.localUrl || '');
+      if (!fullUrl) return;
+      const card = document.createElement('div'); card.className = 'expr-card'; card.onclick = () => applyImage(fullUrl);
+      card.innerHTML = `<div class="expr-img"><img src="${fullUrl}" loading="lazy"></div><div class="expr-name">${ex.label || '無名'}</div>`;
+      grid.appendChild(card);
+    });
+    return;
+  }
+
+  // 通常キャラ差分
+  try {
+    const H = { 'Content-Type': 'application/json', 'apikey': dbChar.dbKey, 'Authorization': 'Bearer ' + dbChar.dbKey };
+    const res = await fetch(`${dbChar.dbUrl}/rest/v1/expressions?char_id=eq.${dbChar.id}&order=created_at.asc`, { headers: H });
+    const exprs = await res.json();
+    grid.innerHTML = '';
+    exprs.sort((a,b) => (a.label || '').localeCompare(b.label || ''));
+    if (exprs.length === 0) { grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--ink-faint);">差分画像がありません</div>`; return; }
+    exprs.forEach(ex => {
+      const fullUrl = ex.image_path ? `${dbChar.dbUrl}/storage/v1/object/public/images/${ex.image_path}` : '';
+      if (!fullUrl) return;
+      const card = document.createElement('div'); card.className = 'expr-card'; card.onclick = () => applyImage(fullUrl);
+      card.innerHTML = `<div class="expr-img"><img src="${fullUrl}" loading="lazy"></div><div class="expr-name">${ex.label || '無名'}</div>`;
+      grid.appendChild(card);
+    });
+  } catch (e) { grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--seal-body);">エラーが発生しました</div>`; }
+}
+
+function applyImage(url) { 
+  logData[targetLineId].imgUrl = url; 
+  const row = document.getElementById('row-' + targetLineId);
+  const char = charSettings[logData[targetLineId].charKey];
+  if(row) {
+    const icon = row.querySelector('.log-icon');
+    const transformStr = `translate(${char.x||0}px, ${char.y||0}px) scale(${(char.scale||100)/100})`;
+    if(icon) icon.innerHTML = url ? `<img src="${url}" alt="" style="transform:${transformStr}">` : SVG_USER;
+  }
+  closeModal('modal-expr'); 
+}
+function applyDefaultImage() {
+  const dbChar = allCharacters.find(c => c.id === charSettings[logData[targetLineId].charKey].dbCharId);
+  let url = '';
+  if (dbChar) {
+    if (dbChar.isNpc) { const npc = npcs.find(n => n.id === dbChar.npcId); url = npc?.bustUrl || ''; }
+    else if (dbChar.bustPath) url = `${dbChar.dbUrl}/storage/v1/object/public/images/${dbChar.bustPath}`;
+  }
+  applyImage(url);
+}
+function applyNoImage() { applyImage(''); }
+
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toast(msg) {
+  const el = document.getElementById('toast-el'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2700);
+}
+
+/* ════ HTML EXPORT (探索者記録簿 スタイルベースに統合) ════ */
+let _previewHtml = '';
+
+function buildLogHtml() {
+  const h1Title = document.getElementById('logTitleInput').value || 'LOG';
+  const fileName = document.getElementById('fileNameInput').value || 'log';
+  const systemSelectVal = document.getElementById('systemSelect').value;
+  const headerTitle = systemSelectVal === 'CUSTOM' ? (document.getElementById('customSystemInput').value || 'LOG ARCHIVE') : systemSelectVal;
+
+  const getSafeName = (str) => btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))).replace(/=/g, "");
+
+  const mainTabEntry = Object.values(tabStyleMap).find(t => t.style === 'style-default');
+  const dynamicAccent = mainTabEntry ? mainTabEntry.color : 'var(--pen-body)';
+
+  let customTabStyles = "";
+  Object.keys(tabStyleMap).forEach(tabName => {
+    const config = tabStyleMap[tabName]; const safeName = getSafeName(tabName); const mainColor = config.color;
+    if (config.style === 'style-secret') {
+      customTabStyles += `.tab-custom-${safeName} { background: rgba(0,0,0,0.03) !important; border-left: 3px solid ${mainColor} !important; padding: 16px; border-radius: 4px; border: 1px dashed var(--rule-mid); margin-bottom: 16px; }`;
+    } else if (config.style === 'style-info') {
+      customTabStyles += `.tab-custom-${safeName} { background: var(--paper-base); margin: 24px 0; padding: 24px; border-radius: 4px; border: 1px solid var(--rule-mid); box-shadow: 2px 2px 8px rgba(100,80,50,.1); } .tab-custom-${safeName} .info-separator { display: block; height: 1px; background: var(--rule-light) !important; margin: 8px 0 12px; border: none; }`;
+    }
+  });
+
+  let html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${h1Title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+  :root { 
+    --paper-base: #f4efe6; --paper-warm: #ede5d8; --paper-aged: #e4d8c4; --paper-dark: #d8c9b0;
+    --ink-black: #1a1612; --ink-dark: #2e2820; --ink-body: #3c3428; --ink-muted: #6a5e4e; --ink-faint: #c4b8a8;
+    --seal-body: #a82020; --pen-body: #2a5080;
+    --rule-dark: #8a7a68; --rule-mid: #b0a088; --rule-light: #cfc0a8;
+    --nav-accent: ${dynamicAccent};
+  } 
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body { 
+    background: var(--paper-aged); 
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.3'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.06'/%3E%3C/svg%3E"), repeating-linear-gradient(180deg,transparent,transparent 27px,rgba(160,144,120,.12) 28px);
+    color: var(--ink-body); font-family: 'Noto Serif JP', serif; line-height: 1.8;
+  } 
+  header { position:fixed; top:0; width:100%; background:var(--paper-warm); border-bottom:2px solid var(--rule-dark); border-top:3px solid var(--seal-body); z-index:1000; display:flex; justify-content:center; box-shadow:0 2px 12px rgba(100,80,50,.15); height:60px;} 
+  header::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--rule-mid);}
+  .header-inner { width:90%; max-width:800px; display:flex; justify-content:space-between; align-items:center; } 
+  .header-title { font-family:'Share Tech Mono',monospace; font-weight:bold; font-size:14px; letter-spacing:2px; color:var(--seal-body); } 
+  
+  .nav-uncheck { display:none; } 
+  .nav-open { width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:var(--nav-accent); border:1px solid rgba(0,0,0,0.2); color:#fff; font-size:10px; font-family:'Share Tech Mono'; letter-spacing:1px; z-index:1001; } 
+  .nav-overlay { position:fixed; inset:0; background:rgba(60,40,20,.6); backdrop-filter:blur(3px); opacity:0; visibility:hidden; transition:0.3s; z-index:1500; } .nav-uncheck:checked ~ .nav-overlay { opacity:1; visibility:visible; } 
+  .nav-content { position:fixed; top:0; right:-320px; width:280px; height:100%; background:var(--paper-base); border-left:2px solid var(--rule-mid); transition:0.4s; z-index:2000; overflow-y:auto; visibility:hidden; box-shadow:-4px 0 20px rgba(100,80,50,.2); } .nav-uncheck:checked ~ .nav-content { right:0; visibility:visible; } 
+  .nav-section { padding:30px 20px 10px; border-bottom:1px solid var(--rule-light); } 
+  .nav-label { font-family:'Libre Baskerville',serif; font-weight:700; font-size:12px; color:var(--ink-dark); margin-bottom:15px; display:block; letter-spacing:2px; } 
+  .nav-label::before { content:'§ '; color:var(--seal-body); }
+  
+  .filter-btn { padding:6px 12px; margin:4px; font-size:10px; font-family:'Share Tech Mono'; background:transparent; border:1px solid var(--rule-mid); color:var(--ink-muted); cursor:pointer; transition:0.2s; } 
+  .filter-btn.active { background:var(--nav-accent); color:#fff; border-color:rgba(0,0,0,0.2); box-shadow:inset 0 1px 0 rgba(255,255,255,.2); } 
+  .index-link { display:block; color:var(--ink-body); text-decoration:none; padding:12px 10px; font-size:13px; border-bottom:1px dashed var(--rule-light); transition:background 0.2s; } 
+  .index-link:hover { background:var(--paper-warm); color:var(--seal-body); }
+
+  #log-container.hide-style-default .style-default { display:none !important; } 
+  #log-container.hide-style-info .style-info { display:none !important; } 
+  #log-container.hide-style-secret .style-secret { display:none !important; } 
+  #log-container.hide-style-chat .style-chat { display:none !important; }
+  
+  .container { width:100%; max-width:860px; background:var(--paper-warm); border:1px solid var(--rule-mid); box-shadow:2px 3px 12px rgba(100,80,50,.1); margin:100px auto 40px; display:flex; flex-direction:column; padding:0 30px; } 
+  .hero-title-area { padding:40px 0 24px; border-bottom:2px solid var(--rule-mid); margin-bottom:16px; text-align:center; } 
+  .hero-brand { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--ink-dim); letter-spacing:4px; display:block; margin-bottom:8px; } 
+  .hero-title { font-family:'Libre Baskerville',serif; font-size:24px; font-weight:700; color:var(--ink-black); letter-spacing:2px; } 
+
+  .log-row { padding:16px 0; border-bottom:1px dashed var(--rule-light); } 
+  .log-row:last-child { border-bottom:none; }
+  .log-row-inner { display:flex; gap:18px; }
+  
+  .log-icon { width:72px; height:90px; flex-shrink:0; background:var(--paper-aged); border:1px solid var(--rule-mid); box-shadow:inset 0 0 6px rgba(100,80,50,.15); display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .log-icon img { width:100%; height:100%; object-fit:cover; object-position:top center; transform-origin:center;}
+  .log-icon svg { width:32px; height:32px; fill:var(--ink-faint); }
+  .log-content-wrap { flex:1; min-width:0; }
+  
+  .row-header { display:flex; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px; } 
+  .row-name { font-family:'Libre Baskerville',serif; font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; color:var(--ink-dark); } 
+  .name-line { display:inline-block; width:3px; height:1em; }
+  .row-tab { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--ink-muted); background:var(--paper-base); padding:2px 8px; border:1px solid var(--rule-light); margin-left:auto; } 
+  .row-content { font-size:14px; white-space:pre-wrap; } 
+  
+  .style-chat { opacity:0.8; margin-left:10%; border-left:1px dashed var(--rule-mid); padding-left:16px; } 
+  
+  .row-system { padding:24px 0 !important; font-family:'Share Tech Mono',monospace; color:var(--ink-muted); text-align:left; } 
+  .row-system .log-icon { display:none; }
+  .info-separator { display:none; } 
+  ${customTabStyles} 
+  
+  footer { text-align:center; padding:40px; font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--ink-dim); letter-spacing:2px; } 
+  [id^="log-"] { scroll-margin-top:80px; } 
+  </style></head><body>
+  <input id="nav-input" type="checkbox" class="nav-uncheck"><label for="nav-input" class="nav-overlay"></label>
+  <header><div class="header-inner"><div class="header-title">${headerTitle}</div><label for="nav-input" class="nav-open">MENU</label></div></header>
+  <div class="nav-content"><div class="nav-section"><span class="nav-label">FILTER</span>
+  <div>
+    <button class="filter-btn active" onclick="toggleTab('style-default',this)">MAIN</button>
+    <button class="filter-btn active" onclick="toggleTab('style-info',this)">INFO</button>
+    <button class="filter-btn active" onclick="toggleTab('style-secret',this)">SECRET</button>
+    <button class="filter-btn active" onclick="toggleTab('style-chat',this)">CHAT</button>
+  </div>
+  </div><div class="nav-section" style="border:none;"><span class="nav-label">INDEX</span><div>`;
+
+  logData.forEach((item, i) => { if (item.anchor) html += `<a href="#log-${i}" class="index-link" onclick="document.getElementById('nav-input').checked=false">${item.anchor}</a>`; });
+  html += `</div></div></div><div class="container" id="log-container"><div class="hero-title-area"><span class="hero-brand">SESSION ARCHIVE</span><div class="hero-title">${h1Title}</div></div>`;
+
+  logData.forEach((item, i) => {
+    const char = charSettings[item.charKey]; const config = tabStyleMap[item.tab];
+    let styleClass = config.style; 
+    if (config.style === 'style-secret' || config.style === 'style-info') styleClass += ` tab-custom-${getSafeName(item.tab)}`;
+    
+    const isSystem = (char.displayName && char.displayName.toLowerCase() === 'system');
+    if (isSystem) styleClass += ' row-system';
+
+    const charColor = char.color;
+    
+    const safeContent = item.content.split('\n').join('<br>').replace(/[｜|]([^｜|《》]+)《([^《》]+)》/g, '<ruby>$1<rt>$2</rt></ruby>').replace(/([^ \n\t｜|《》]+)《([^《》]+)》/g, '<ruby>$1<rt>$2</rt></ruby>');
+    
+    const transformStr = `translate(${char.x||0}px, ${char.y||0}px) scale(${(char.scale||100)/100})`;
+    const imgHtml = item.imgUrl ? `<img src="${item.imgUrl}" alt="" style="transform:${transformStr}">` : SVG_USER;
+
+    let headerHtml = '';
+    if (!isSystem) {
+      headerHtml = `<div class="row-header"><div class="row-name"><span class="name-line" style="background:${charColor}"></span>${char.displayName}</div><div class="row-tab">${item.tab}</div></div><hr class="info-separator">`;
+    }
+
+    html += `<div class="log-row ${styleClass}" id="log-${i}"><div class="log-row-inner"><div class="log-icon">${imgHtml}</div><div class="log-content-wrap">${headerHtml}<div class="row-content">${safeContent}</div></div></div></div>`;
+  });
+
+  html += `</div><footer>✦ LOG CONVERTER / 探索者記録簿</footer><script>
+  function toggleTab(cls, btn) { 
+    btn.classList.toggle('active'); 
+    const c = document.getElementById('log-container'); 
+    if(btn.classList.contains('active')) c.classList.remove('hide-'+cls); 
+    else c.classList.add('hide-'+cls); 
+  }
+  <\\\/script></body></html>`;
+
+  return { html, fileName };
+}
+
+function exportLog() {
+  const { html, fileName } = buildLogHtml();
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName + '.html'; a.click();
+}
+
+function openPreview() {
+  const { html } = buildLogHtml();
+  _previewHtml = html;
+  const iframe = document.getElementById('preview-iframe');
+  // srcdocで流し込む
+  iframe.srcdoc = html;
+  document.getElementById('modal-preview').classList.add('open');
+}
+
+function exportFromPreview() {
+  if (!_previewHtml) return;
+  const fileName = document.getElementById('fileNameInput').value || 'log';
+  const blob = new Blob([_previewHtml], { type: 'text/html' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName + '.html'; a.click();
+}
+
+/* START */
+document.getElementById('log-drop-zone').addEventListener('dragover', e => { e.preventDefault(); e.currentTarget.style.background = 'rgba(26,42,58,.04)'; });
+document.getElementById('log-drop-zone').addEventListener('dragleave', e => { e.currentTarget.style.background = 'var(--paper-warm)'; });
+document.getElementById('log-drop-zone').addEventListener('drop', e => { e.preventDefault(); e.currentTarget.style.background = 'var(--paper-warm)'; if(e.dataTransfer.files.length) onLogFileSelect(e); });
+
+init();
+</script>
+</body>
+</html>

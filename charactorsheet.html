@@ -1,0 +1,3349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>探索者記録簿</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Crect width='1024' height='1024' fill='%238a1818'/%3E%3Cpath fill='%23f4efe6' d='M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32zM668 345.9L621.5 312 572 347.4V124h96z'/%3E%3C/svg%3E">
+<style>
+:root {
+  /* ── 紙 ── */
+  --paper-base:   #f4efe6;
+  --paper-warm:   #ede5d8;
+  --paper-aged:   #e4d8c4;
+  --paper-dark:   #d8c9b0;
+  --paper-shadow: #c8b89a;
+  --paper-deep:   #b8a480;
+
+  /* ── テキスト階層 ── */
+  --ink-black:    #1a1612;  /* 見出し・名前 */
+  --ink-dark:     #2e2820;  /* 本文強調 */
+  --ink-body:     #3c3428;  /* 本文 */
+  --ink-muted:    #6a5e4e;  /* 補助テキスト */
+  --ink-dim:      #9a8e7e;  /* ラベル・メタ */
+  --ink-faint:    #c4b8a8;  /* プレースホルダー */
+
+  /* ── ブランド色（装飾のみ） ── */
+  --brand:        #a82020;  /* ヘッダー上線・スタンプ */
+  --brand-dark:   #6a1010;
+  --brand-mid:    #8a1818;
+  --brand-bright: #c83030;
+
+  /* ── 操作色（ボタン・リンク・フォーカス） ── */
+  --action:       #2a5080;
+  --action-dark:  #1a2a3a;
+  --action-mid:   #1e3a5a;
+  --action-light: #3a6898;
+
+  /* ── 危険操作（削除のみ） ── */
+  --danger:       #8a1818;
+  --danger-bg:    rgba(106,16,16,.06);
+
+  /* ── 状態色 ── */
+  --state-hidden: #6a5e4e;  /* 非表示バッジ */
+
+  /* ── 枠線 ── */
+  --rule-dark:    #8a7a68;
+  --rule-mid:     #b0a088;
+  --rule-light:   #cfc0a8;
+  --rule-faint:   #e0d4c0;
+
+  /* 後方互換エイリアス */
+  --seal-dark:    var(--brand-dark);
+  --seal-mid:     var(--brand-mid);
+  --seal-body:    var(--brand);
+  --seal-bright:  var(--brand-bright);
+  --pen-dark:     var(--action-dark);
+  --pen-mid:      var(--action-mid);
+  --pen-body:     var(--action);
+  --pen-bright:   var(--action-light);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+body{
+  background: var(--paper-aged);
+  background-image:
+    /* 紙の繊維テクスチャ */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.3'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.06'/%3E%3C/svg%3E"),
+    /* 上辺の染み */
+    radial-gradient(ellipse 80% 30% at 50% 0%, #c8b898 0%, transparent 70%),
+    radial-gradient(ellipse 40% 20% at 0% 50%, #d0c4a8 0%, transparent 50%),
+    radial-gradient(ellipse 40% 20% at 100% 80%, #c8bc9a 0%, transparent 50%);
+  min-height:100vh;
+  font-family:'Noto Serif JP',serif;
+  color:var(--ink-body);
+  overflow-x:hidden;
+}
+
+/* 横罫線 — 古い便箋 */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(
+    180deg,transparent,transparent 27px,
+    rgba(160,144,120,.12) 28px
+  );
+}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--paper-warm)}
+::-webkit-scrollbar-thumb{background:var(--rule-dark)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-muted)}
+
+/* ══ HEADER ══ */
+.site-header{
+  position:sticky;top:0;z-index:100;
+  background:var(--paper-warm);
+  border-bottom:2px solid var(--rule-dark);
+  padding:0 32px;
+  display:flex;align-items:center;gap:16px;height:64px;
+  box-shadow:0 2px 12px rgba(100,80,50,.15);
+  /* 上の赤ライン — 重要書類の印 */
+  border-top:3px solid var(--seal-body);
+}
+
+/* 二重罫線 */
+.site-header::after{
+  content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;
+  background:var(--rule-mid);
+}
+
+.header-stamp{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:3px;color:var(--seal-body);
+  border:1.5px solid var(--seal-body);
+  padding:3px 8px;transform:rotate(-.8deg);flex-shrink:0;
+  font-weight:bold;
+  box-shadow:1px 1px 0 rgba(168,32,32,.2);
+}
+.site-title{
+  font-family:'Libre Baskerville',serif;
+  font-size:20px;font-weight:700;color:var(--ink-black);letter-spacing:2px;
+}
+.site-title em{
+  font-size:12px;font-weight:400;font-style:italic;
+  color:var(--ink-muted);margin-left:10px;letter-spacing:1px;
+}
+.hfill{flex:1}
+/* 通し番号 — 書類管理番号風 */
+.hstat{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--ink-dim);letter-spacing:2px;
+  border-left:1px solid var(--rule-light);padding-left:16px;
+}
+
+/* ══ APP ══ */
+.app{max-width:1360px;margin:0 auto;padding:32px 26px;position:relative;z-index:1}
+.view{display:none;animation:emerge .3s ease}
+.view.active{display:block}
+@keyframes emerge{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* セクション見出し — 書類の項目見出し */
+.sec-head{
+  margin-bottom:24px;display:flex;align-items:baseline;gap:12px;
+  border-bottom:2px solid var(--rule-dark);padding-bottom:8px;
+}
+.sec-head::before{
+  content:'§';font-family:'Libre Baskerville',serif;
+  font-size:14px;color:var(--ink-dim);
+}
+.sh-title{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--ink-dark);letter-spacing:2px;text-transform:uppercase}
+.sh-fill{flex:1}
+.sh-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:2px}
+
+/* ══ CHARACTER CARDS ══ */
+.chars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:18px}
+
+.char-card{
+  background:var(--paper-base);
+  border:1px solid var(--rule-mid);
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:box-shadow .25s,transform .25s;
+  /* 写真/書類コーナーの折れ */
+  box-shadow:2px 3px 10px rgba(100,80,50,.18);
+}
+/* 折れたコーナー効果 */
+.char-card::after{
+  content:'';position:absolute;top:0;right:0;
+  width:0;height:0;border-style:solid;
+  border-width:0 20px 20px 0;
+  border-color:transparent var(--paper-aged) transparent transparent;
+  transition:border-width .2s;
+}
+.char-card:hover{
+  transform:translateY(-3px);
+  box-shadow:3px 8px 24px rgba(100,80,50,.28);
+}
+.char-card:hover::after{border-width:0 28px 28px 0;}
+
+.card-photo{
+  width:100%;height:230px;
+  background:var(--paper-dark);overflow:hidden;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  border-bottom:1px solid var(--rule-light);
+}
+/* 写真の周囲の影 — 古い写真のマット */
+.card-photo::before{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  box-shadow:inset 0 0 18px rgba(100,80,50,.2);
+}
+.card-photo::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,transparent 55%,rgba(180,160,130,.5) 100%);
+}
+.card-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:transform .5s}
+.char-card:hover .card-photo img{transform:scale(1.04)}
+.card-photo-ph{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--ink-faint);letter-spacing:3px;text-transform:uppercase;
+}
+.card-body{
+  padding:10px 12px 13px;
+  background:var(--paper-base);
+}
+.card-name{font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700;color:var(--ink-black);letter-spacing:.3px;margin-bottom:3px;line-height:1.3}
+.card-meta{font-family:'Noto Serif JP',serif;font-size:11px;color:var(--ink-muted);margin-bottom:0;font-weight:300}
+.card-emoji{
+  font-size:16px;margin-right:5px;vertical-align:middle;line-height:1;
+  display:inline-block;
+}
+.tag{font-family:'Share Tech Mono',monospace;font-size:8px;padding:1px 5px;border:1px solid var(--rule-light);color:var(--ink-dim);letter-spacing:.5px;background:transparent}
+
+/* ── 非表示カード ── */
+.char-card.is-hidden{opacity:.38;filter:grayscale(.6)}
+.char-card.is-hidden:hover{opacity:.55}
+.hidden-badge{
+  position:absolute;top:8px;left:8px;z-index:5;
+  font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2px;
+  background:var(--state-hidden);color:var(--paper-base);
+  padding:2px 6px;pointer-events:none;text-transform:uppercase;opacity:.85;
+}
+/* 非表示トグルボタン */
+.btn-hidden-toggle{
+  background:transparent;border:1px solid var(--rule-mid);color:var(--ink-dim);
+}
+.btn-hidden-toggle:hover{border-color:var(--rule-dark);color:var(--ink-muted);background:var(--paper-warm)}
+.btn-hidden-toggle.is-hidden{border-color:var(--state-hidden);color:var(--state-hidden);background:rgba(106,94,78,.06)}
+.btn-hidden-toggle.is-hidden:hover{background:rgba(106,94,78,.12)}
+/* PDF出力ボタン */
+.btn-pdf{
+  background:transparent;
+  border:1px solid #6a4a10;
+  color:#6a4a10;
+  font-weight:bold;
+  letter-spacing:1.5px;
+}
+.btn-pdf:hover{background:rgba(106,74,16,.08);border-color:#4a3208;color:#4a3208}
+/* PDF生成中オーバーレイ */
+.pdf-generating{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(36,28,20,.72);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;
+}
+.pdf-generating-txt{
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:4px;
+  color:#f4efe6;text-transform:uppercase;
+}
+.pdf-spinner{
+  width:28px;height:28px;border:2px solid rgba(244,239,230,.2);
+  border-top-color:#f4efe6;border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* CCFOLIA出力ボタン */
+.btn-ccfolia{
+  background:transparent;
+  border:1px solid #3a6040;
+  color:#3a6040;
+  font-weight:bold;
+  letter-spacing:1.5px;
+}
+.btn-ccfolia:hover{background:rgba(58,96,64,.08);border-color:#2a5030;color:#2a5030}
+/* CCFOLIA モーダル専用スタイル */
+.ccfolia-section-title{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:4px;
+  color:var(--seal-mid);text-transform:uppercase;margin:20px 0 10px;
+  display:flex;align-items:center;gap:10px;
+}
+.ccfolia-section-title::after{content:'';flex:1;height:1px;background:var(--rule-light)}
+.ccfolia-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:4px}
+.ccfolia-stat-item{
+  background:var(--paper-warm);border:1px solid var(--rule-light);
+  padding:6px 8px;text-align:center;
+}
+.ccfolia-stat-key{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;color:var(--seal-mid);display:block;margin-bottom:3px;font-weight:bold}
+.ccfolia-stat-val{font-family:'Share Tech Mono',monospace;font-size:16px;color:var(--ink-dark)}
+.ccfolia-faces-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;padding-right:4px}
+.ccfolia-face-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--paper-warm);border:1px solid var(--rule-light);
+  padding:8px 10px;
+}
+.ccfolia-face-thumb{
+  width:44px;height:44px;flex-shrink:0;
+  background:var(--paper-aged);border:1px solid var(--rule-light);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+}
+.ccfolia-face-thumb img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.ccfolia-face-thumb-ph{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--ink-faint);text-align:center;letter-spacing:1px}
+.ccfolia-face-label{font-family:'Noto Serif JP',serif;font-size:12px;color:var(--ink-dark);min-width:70px;flex-shrink:0}
+.ccfolia-face-cat{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-dim);letter-spacing:1px;min-width:50px;flex-shrink:0}
+.ccfolia-face-url-input{
+  flex:1;background:var(--paper-base);border:1px solid var(--rule-mid);
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-body);
+  padding:5px 8px;outline:none;min-width:0;
+  caret-color:var(--pen-body);
+}
+.ccfolia-face-url-input:focus{border-color:var(--pen-body)}
+.ccfolia-face-url-input::placeholder{color:var(--ink-faint)}
+.ccfolia-json-preview{
+  background:var(--paper-aged);border:1px solid var(--rule-mid);
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-muted);
+  padding:10px;max-height:120px;overflow-y:auto;
+  white-space:pre;line-height:1.6;letter-spacing:.3px;
+  margin-top:8px;
+}
+.ccfolia-hint{
+  font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-dim);
+  letter-spacing:1px;line-height:1.7;margin-top:6px;
+}
+
+.add-card{
+  background:var(--paper-warm);border:1px dashed var(--rule-mid);min-height:330px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;gap:12px;color:var(--ink-faint);transition:all .25s;
+  box-shadow:1px 2px 6px rgba(100,80,50,.1);
+}
+.add-card:hover{border-color:var(--rule-dark);color:var(--ink-muted);background:var(--paper-base);box-shadow:2px 4px 12px rgba(100,80,50,.2)}
+.add-ico{font-size:28px;color:var(--ink-faint);transition:color .25s}
+.add-card:hover .add-ico{color:var(--seal-mid)}
+.add-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;text-transform:uppercase}
+
+/* ══ BUTTONS ══ */
+.btn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 18px;cursor:pointer;border-radius:0;transition:all .2s;white-space:nowrap;display:inline-block;text-align:center}
+.btn-primary{background:var(--pen-dark);border:1px solid var(--pen-mid);color:#d8e8f4;box-shadow:1px 1px 4px rgba(26,42,58,.3),inset 0 1px 0 rgba(255,255,255,.06)}
+.btn-primary:hover{background:var(--pen-mid);border-color:var(--pen-bright);color:#e8f2fc}
+.btn-ghost{background:transparent;border:1px solid var(--rule-mid);color:var(--ink-muted)}
+.btn-ghost:hover{border-color:var(--rule-dark);color:var(--ink-body);background:var(--paper-warm)}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn-danger:hover{background:var(--danger-bg);border-color:var(--danger);color:var(--danger)}
+.btn-sm{padding:5px 12px;font-size:9px}
+
+/* ══ DETAIL ══ */
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--ink-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;cursor:pointer;padding:0 0 18px;transition:color .2s;text-transform:uppercase}
+.back-btn:hover{color:var(--ink-body)}
+
+/* ファイルカバー */
+.case-file{
+  background:var(--paper-base);
+  border:1px solid var(--rule-mid);
+  border-top:3px solid var(--seal-mid);
+  margin-bottom:4px;position:relative;overflow:hidden;
+  box-shadow:2px 3px 12px rgba(100,80,50,.15);
+}
+/* 機密スタンプ — 編集ボタン列の上部に斜め配置 */
+.case-stamp{
+  display:block;
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;letter-spacing:3px;color:var(--seal-body);
+  border:1.5px solid var(--seal-body);padding:2px 9px;
+  opacity:.4;transform:rotate(-12deg);font-weight:bold;
+  pointer-events:none;margin-bottom:10px;align-self:center;
+  white-space:nowrap;
+}
+.case-inner{display:flex;align-items:stretch}
+
+/* 肖像欄 — バストアップ専用 */
+.portrait-col{
+  width:148px;flex-shrink:0;
+  border-right:1px solid var(--rule-light);
+  background:var(--paper-warm);
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 12px 14px;gap:8px;
+}
+.photo-frame{
+  width:120px;height:150px;
+  border:2px solid var(--rule-mid);
+  overflow:hidden;background:var(--paper-aged);
+  display:flex;align-items:center;justify-content:center;position:relative;
+  box-shadow:inset 0 0 10px rgba(100,80,50,.15),1px 1px 4px rgba(100,80,50,.2);
+}
+.photo-frame img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.photo-frame-ph{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:2px;text-align:center;line-height:1.8;text-transform:uppercase}
+.upload-under-btn{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
+  padding:4px 8px;background:transparent;border:1px dashed var(--rule-light);
+  color:var(--ink-dim);cursor:pointer;transition:all .2s;text-transform:uppercase;width:100%;text-align:center;
+}
+.upload-under-btn:hover{border-color:var(--rule-dark);color:var(--ink-body);background:var(--paper-base)}
+.portrait-label{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:3px;color:var(--ink-faint);text-transform:uppercase;text-align:center}
+
+/* 全身立ち絵 — 差分タブ内セクション */
+.fullbody-section{
+  margin-bottom:22px;padding-bottom:20px;
+  border-bottom:1px solid var(--rule-light);
+}
+.fullbody-section-title{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:4px;
+  color:var(--seal-mid);text-transform:uppercase;margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;
+}
+.fullbody-section-title::after{content:'';flex:1;height:1px;background:var(--rule-light)}
+.fullbody-inner{display:flex;gap:20px;align-items:flex-start}
+.fullbody-display{
+  flex-shrink:0;width:180px;
+  border:2px solid var(--rule-mid);
+  overflow:hidden;background:var(--paper-aged);
+  display:flex;align-items:flex-start;justify-content:center;
+  box-shadow:inset 0 0 10px rgba(100,80,50,.12),2px 2px 8px rgba(100,80,50,.18);
+  min-height:100px;
+}
+/* object-fit:contain で画像を切らずに全体表示 */
+.fullbody-display img{width:100%;object-fit:contain;object-position:top center;display:block}
+.fullbody-display-ph{
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);
+  letter-spacing:2px;text-align:center;line-height:1.8;text-transform:uppercase;padding:24px 16px;
+}
+/* 全身立ち絵タブ — 画像だけシンプルに */
+.fullbody-wrap{
+  display:flex;justify-content:center;padding:8px 0;
+}
+.fullbody-clickable{
+  position:relative;cursor:pointer;
+  display:inline-block;
+}
+.fullbody-clickable img{
+  max-width:360px;width:100%;
+  object-fit:contain;object-position:top center;
+  display:block;
+  border:1px solid var(--rule-light);
+  box-shadow:2px 4px 14px rgba(100,80,50,.15);
+}
+/* ホバーで薄くオーバーレイ + テキスト */
+.fullbody-clickable::after{
+  content:'▲  変更';
+  position:absolute;inset:0;
+  background:rgba(240,230,210,.7);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;
+  color:var(--ink-body);
+  opacity:0;transition:opacity .2s;
+}
+.fullbody-clickable:hover::after{opacity:1}
+.fullbody-ph{
+  width:200px;height:320px;
+  border:1px dashed var(--rule-mid);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  cursor:pointer;transition:all .2s;background:var(--paper-warm);
+}
+.fullbody-ph:hover{border-color:var(--rule-dark);background:var(--paper-base)}
+.fullbody-ph-icon{font-size:28px;color:var(--ink-faint)}
+.fullbody-ph-txt{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--ink-faint);text-transform:uppercase}
+.fullbody-del{
+  display:block;margin:10px auto 0;
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;
+  color:var(--ink-dim);background:none;border:none;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;
+  transition:color .2s;text-transform:uppercase;
+}
+.fullbody-del:hover{color:var(--seal-body)}
+
+/* ── 一括選択チェックボックス ── */
+.expr-card{position:relative}
+.expr-check{
+  position:absolute;top:6px;left:6px;z-index:10;
+  width:18px;height:18px;cursor:pointer;accent-color:var(--seal-body);
+}
+.expr-card.selected{outline:2px solid var(--seal-body)}
+.bulk-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 12px;margin-bottom:8px;
+  background:var(--paper-warm);border:1px solid var(--rule-light);
+  border-left:3px solid var(--seal-mid);
+}
+.bulk-bar-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-muted);letter-spacing:2px;flex:1}
+/* ── タグ候補 ── */
+.tag-candidates{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag-cand{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  padding:2px 8px;border:1px dashed var(--rule-mid);
+  color:var(--pen-body);cursor:pointer;background:var(--paper-warm);
+  transition:all .15s;
+}
+.tag-cand:hover{background:var(--paper-base);border-color:var(--pen-body)}
+.case-quote{
+  font-family:'Libre Baskerville',serif;font-style:italic;
+  font-size:13px;color:var(--ink-muted);
+  border-left:3px solid var(--rule-mid);
+  padding:4px 10px;margin-top:10px;
+  line-height:1.7;
+  background:transparent;border-top:none;border-right:none;border-bottom:1px dashed var(--rule-light);
+  width:100%;outline:none;resize:none;
+  caret-color:var(--pen-body);
+  font-style:italic;text-align:left;
+  display:flex;align-items:center;
+}
+.case-quote::placeholder{color:var(--ink-faint);font-style:italic}
+/* カード一覧のシナリオ名 */
+.card-scenario{
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  color:var(--ink-faint);letter-spacing:1px;
+  margin-top:6px;padding-top:6px;
+  border-top:1px dashed var(--rule-faint);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.case-quote-label{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:3px;color:var(--seal-mid);text-transform:uppercase;margin-top:12px;display:block}
+
+/* データ欄は relative にしてスタンプを絶対配置 */
+.case-data{
+  flex:1;padding:24px 26px;min-width:0;
+  display:flex;flex-direction:column;justify-content:flex-start;gap:0;
+  position:relative;
+  /* 書類の罫線 */
+  background-image:repeating-linear-gradient(180deg,transparent,transparent 27px,rgba(160,144,120,.15) 28px);
+  background-attachment:local;
+}
+/* 機密スタンプ — case-data右寄り、斜め */
+.case-stamp{
+  position:absolute;top:18px;right:18px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;letter-spacing:3px;color:var(--seal-body);
+  border:1.5px solid var(--seal-body);padding:2px 9px;
+  opacity:.38;transform:rotate(-8deg);font-weight:bold;
+  pointer-events:none;white-space:nowrap;
+}
+.case-name{font-family:'Libre Baskerville',serif;font-size:32px;font-weight:700;color:var(--ink-black);letter-spacing:1px;line-height:1.1;margin-bottom:4px}
+.case-ruby{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ink-dim);letter-spacing:3px;margin-bottom:10px}
+.case-scenario-block{margin-bottom:14px;}
+.case-scenario-label{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:3px;color:var(--ink-faint);text-transform:uppercase;display:inline;margin-right:6px}
+.case-scenario-val{font-family:'Libre Baskerville',serif;font-size:12px;font-style:italic;color:var(--ink-muted);letter-spacing:.5px}
+.case-fields-body{margin-bottom:12px;}
+.case-fields-row{display:flex;flex-wrap:wrap;gap:14px 32px;}
+.case-fields-row+.case-fields-row{margin-top:12px;}
+.case-field-k{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--seal-mid);text-transform:uppercase;display:block;margin-bottom:3px}
+.case-field-v{font-family:'Libre Baskerville',serif;font-size:15px;color:var(--ink-dark);letter-spacing:.5px}
+.case-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:0}
+.case-actions{
+  border-left:1px solid var(--rule-light);padding:18px 14px;
+  display:flex;flex-direction:column;gap:7px;
+  background:var(--paper-warm);flex-shrink:0;justify-content:flex-start;
+}
+
+/* ── 能力値 ── */
+.stats-block{
+  background:var(--paper-warm);
+  border-top:2px solid var(--rule-light);
+  padding:16px 22px;
+}
+.stats-title{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:4px;
+  color:var(--seal-mid);text-transform:uppercase;margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.stats-title::after{content:'';flex:1;height:1px;background:var(--rule-light)}
+
+.stats-8{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-bottom:6px}
+.sbox{
+  background:var(--paper-base);
+  border:1px solid var(--rule-light);border-bottom:2px solid var(--rule-mid);
+  padding:5px 4px;text-align:center;
+  box-shadow:1px 1px 3px rgba(100,80,50,.08);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+}
+.sbox-key{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;color:var(--seal-mid);display:block;margin-bottom:3px;font-weight:bold;text-align:center}
+.sbox-in{
+  display:block;
+  width:100%;background:transparent;border:none;outline:none;
+  font-family:'Share Tech Mono',monospace;font-size:20px;
+  color:var(--ink-dark);text-align:center !important;padding:0;margin:0;
+  caret-color:var(--pen-body);letter-spacing:-1px;line-height:1;
+  -moz-appearance:textfield;
+}
+.sbox-in::-webkit-inner-spin-button,
+.sbox-in::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.stats-4{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.ssbox{
+  background:var(--paper-base);
+  border:1px solid var(--rule-light);
+  padding:6px 9px;
+  box-shadow:1px 1px 3px rgba(100,80,50,.08);
+}
+.ssbox-key{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;display:block;margin-bottom:3px;font-weight:bold}
+.ssbox-vals{display:flex;align-items:baseline;gap:3px}
+.ssbox-in{background:transparent;border:none;outline:none;font-family:'Share Tech Mono',monospace;color:var(--ink-dark);text-align:center;caret-color:var(--pen-body)}
+.ssbox-in.cur{font-size:21px;width:38px}
+.ssbox-in.max{font-size:12px;width:30px;color:var(--ink-muted)}
+.ssbox-slash{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--rule-dark)}
+
+/* ══ TABS ══ */
+.tabs-row{display:flex;gap:2px;border-bottom:2px solid var(--rule-mid);position:relative;z-index:1}
+.tab-btn{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;
+  padding:10px 22px 11px;
+  background:var(--paper-aged);
+  border:1px solid var(--rule-light);border-bottom:none;
+  color:var(--ink-dim);cursor:pointer;transition:all .2s;
+  text-transform:uppercase;position:relative;top:1px;margin-bottom:-2px;
+  box-shadow:1px -1px 4px rgba(100,80,50,.08);
+}
+.tab-btn:hover{color:var(--ink-muted);background:var(--paper-warm)}
+.tab-btn.active{
+  background:var(--paper-base);
+  border-color:var(--rule-mid);border-bottom:2px solid var(--paper-base);
+  color:var(--ink-dark);top:0;
+}
+.tab-body{
+  background:var(--paper-base);
+  border:1px solid var(--rule-mid);border-top:none;
+  padding:22px;
+  box-shadow:1px 3px 10px rgba(100,80,50,.1);
+}
+.tab-pane{display:none;animation:emerge .25s ease}
+.tab-pane.active{display:block}
+
+/* ══ EXPR TAB ══ */
+.expr-toolbar{display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap}
+.expr-search{
+  flex:1;min-width:130px;padding:7px 11px;
+  background:var(--paper-warm);
+  border:1px solid var(--rule-light);border-bottom:2px solid var(--rule-dark);
+  color:var(--ink-body);font-family:'Share Tech Mono',monospace;
+  font-size:12px;letter-spacing:1px;outline:none;transition:border-color .2s;
+}
+.expr-search:focus{border-bottom-color:var(--pen-body)}
+.expr-search::placeholder{color:var(--ink-faint)}
+
+.sort-btn,.filter-btn{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;
+  padding:5px 10px;background:var(--paper-warm);
+  border:1px solid var(--rule-light);
+  color:var(--ink-dim);cursor:pointer;transition:all .2s;text-transform:uppercase;
+}
+.sort-btn:hover,.filter-btn:hover{border-color:var(--rule-dark);color:var(--ink-body);background:var(--paper-base)}
+.sort-btn.active,.filter-btn.active{
+  background:var(--pen-dark);border-color:var(--pen-mid);
+  color:#d8e8f4;
+}
+
+.filter-wrap{display:flex;gap:2px;flex-wrap:wrap}
+.expr-meta-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.expr-count{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:2px}
+.expr-count strong{color:var(--ink-body)}
+
+.expr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:14px}
+
+.expr-card{
+  background:var(--paper-base);
+  border:1px solid var(--rule-light);
+  display:flex;flex-direction:column;
+  transition:box-shadow .2s,transform .2s;
+  box-shadow:2px 2px 7px rgba(100,80,50,.12);
+  position:relative;
+}
+/* テープ風の上辺 */
+.expr-card::before{
+  content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+  width:36px;height:12px;z-index:2;
+  background:rgba(200,180,140,.3);
+  border:1px solid rgba(180,160,120,.35);border-top:none;
+}
+.expr-card:hover{
+  box-shadow:3px 6px 18px rgba(100,80,50,.22);
+  transform:translateY(-2px);
+}
+
+.expr-img{
+  width:100%;aspect-ratio:3/4;overflow:hidden;background:var(--paper-aged);
+  position:relative;cursor:zoom-in;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  border-bottom:1px solid var(--rule-light);
+}
+.expr-img::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,transparent 55%,rgba(180,160,130,.4) 100%);
+}
+.expr-img img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:transform .4s;display:block}
+.expr-card:hover .expr-img img{transform:scale(1.03)}
+.expr-img-ph{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:2px;text-transform:uppercase}
+
+/* 差分名バー — 常時表示・クリックでコピー */
+.expr-name-bar{
+  padding:8px 10px 6px;
+  background:var(--paper-warm);
+  border-top:1px solid var(--rule-faint);
+  flex:1;cursor:pointer;
+  transition:background .15s;
+  position:relative;
+}
+.expr-name-bar:hover{background:var(--paper-dark)}
+/* コピーヒント */
+.expr-name-bar::after{
+  content:'TAP TO COPY';
+  position:absolute;top:6px;right:8px;
+  font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;
+  color:var(--ink-faint);opacity:0;transition:opacity .15s;
+}
+.expr-name-bar:hover::after{opacity:1}
+.expr-name{
+  font-family:'Libre Baskerville',serif;
+  font-size:12px;font-weight:700;color:var(--ink-dark);
+  word-break:break-all;line-height:1.4;
+}
+.expr-name.copied-flash{color:var(--pen-body)}
+.expr-cat{
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;letter-spacing:1px;color:var(--ink-dim);
+  text-transform:uppercase;margin-top:2px;
+}
+
+.expr-actions{
+  display:flex;border-top:1px solid var(--rule-faint);
+  background:var(--paper-warm);
+}
+.eact{
+  flex:1;padding:5px 2px;background:transparent;border:none;
+  border-right:1px solid var(--rule-faint);
+  color:var(--ink-dim);
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
+  cursor:pointer;transition:all .2s;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:2px;
+}
+.eact:last-child{border-right:none}
+.eact:hover{background:var(--paper-base);color:var(--ink-body)}
+.eact.edit:hover{color:var(--verdigris)}
+.eact.star.main{color:#9a7a20;background:rgba(200,180,100,.15)}
+.eact.del:hover{color:var(--seal-body);background:rgba(168,32,32,.06)}
+
+.expr-empty{text-align:center;padding:50px 20px;grid-column:1/-1}
+.expr-empty-msg{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:2px;line-height:2.8;text-transform:uppercase;white-space:pre-line;text-align:center}
+
+/* ══ MEMO ══ */
+.memo-wrap{
+  background:var(--paper-warm);border:1px solid var(--rule-light);padding:20px;
+  background-image:repeating-linear-gradient(180deg,transparent,transparent 27px,rgba(160,144,120,.18) 28px);
+  background-attachment:local;
+}
+.memo-label{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:4px;color:var(--seal-mid);text-transform:uppercase;margin-bottom:14px}
+.memo-label::before{content:'§ '}
+.memo-ta{
+  width:100%;min-height:160px;background:transparent;border:none;resize:vertical;
+  font-family:'Noto Serif JP',serif;font-size:14px;font-weight:300;
+  color:var(--ink-body);line-height:1.9;outline:none;caret-color:var(--pen-body);
+}
+.memo-ta::placeholder{color:var(--ink-faint);font-style:italic}
+.memo-foot{display:flex;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--rule-faint)}
+/* 背景情報グリッド */
+.bg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bg-field{}
+.bg-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--seal-mid);text-transform:uppercase;display:block;margin-bottom:4px}
+.bg-ta{
+  width:100%;background:var(--paper-base);
+  border:none;border-bottom:1.5px solid var(--rule-light);border-left:2px solid var(--rule-light);
+  padding:6px 8px;resize:none;
+  font-family:'Noto Serif JP',serif;font-size:13px;font-weight:300;
+  color:var(--ink-body);line-height:1.7;outline:none;caret-color:var(--pen-body);
+  transition:border-color .2s;
+}
+.bg-ta:focus{border-bottom-color:var(--pen-body);border-left-color:var(--seal-mid)}
+.bg-ta::placeholder{color:var(--ink-faint);font-style:italic;font-size:11px}
+
+/* ══ MODALS ══ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(60,40,20,.6);backdrop-filter:blur(3px);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--paper-base);
+  border:1px solid var(--rule-mid);
+  padding:30px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;
+  position:relative;
+  box-shadow:4px 8px 40px rgba(60,40,20,.35);
+  animation:emerge .3s ease;
+}
+.modal::before{
+  content:'CASE FILE';position:absolute;top:12px;right:14px;
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;
+  color:var(--seal-body);border:1.5px solid var(--seal-body);padding:2px 7px;
+  opacity:.4;transform:rotate(1.5deg);font-weight:bold;
+}
+.modal-title{font-family:'Libre Baskerville',serif;font-size:17px;font-weight:700;color:var(--ink-dark);margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--rule-light);letter-spacing:1px}
+.modal-close{position:absolute;top:12px;left:14px;background:none;border:none;color:var(--ink-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:color .2s;text-transform:uppercase}
+.modal-close:hover{color:var(--ink-body)}
+.form-row{margin-bottom:13px}
+.form-lbl{display:block;font-family:'Share Tech Mono',monospace;font-size:8px;font-weight:bold;letter-spacing:3px;color:var(--seal-mid);margin-bottom:5px;text-transform:uppercase}
+.form-hint{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);margin-bottom:7px;line-height:1.6}
+.form-input,.form-sel{
+  width:100%;padding:8px 11px;
+  background:var(--paper-warm);
+  border:none;border-bottom:2px solid var(--rule-mid);border-left:3px solid var(--rule-mid);
+  color:var(--ink-body);font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:1px;
+  outline:none;transition:border-color .2s;border-radius:0;-webkit-appearance:none;
+}
+.form-input:focus,.form-sel:focus{border-bottom-color:var(--action);border-left-color:var(--action)}
+.form-sel option{background:var(--paper-warm)}
+.form-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-g4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.form-section{font-family:'Share Tech Mono',monospace;font-size:8px;font-weight:bold;letter-spacing:4px;color:var(--seal-mid);text-transform:uppercase;margin:16px 0 10px;padding-top:12px;border-top:1px solid var(--rule-light)}
+.upload-zone{
+  border:1px dashed var(--rule-mid);border-left:3px solid var(--seal-mid);
+  padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--paper-warm);
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--pen-mid);background:rgba(26,42,58,.04)}
+.upload-zone p{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink-dim);line-height:1.8;letter-spacing:1px}
+.upload-prev{width:72px;height:90px;object-fit:cover;object-position:top center;border:2px solid var(--rule-mid);margin:0 auto 8px;display:block;box-shadow:2px 2px 6px rgba(100,80,50,.2)}
+.upload-cnt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--pen-body);letter-spacing:2px;margin-top:6px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:12px;border-top:1px solid var(--rule-faint)}
+
+/* ══ LIGHTBOX ══ */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(20,14,8,.94);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.lightbox.open{display:flex}
+.lightbox img{max-width:88vw;max-height:78vh;object-fit:contain;border:2px solid var(--rule-mid);box-shadow:0 0 50px rgba(0,0,0,.8)}
+.lb-name{font-family:'Libre Baskerville',serif;font-size:13px;color:var(--paper-warm);letter-spacing:2px}
+.lb-close{position:absolute;top:16px;right:20px;color:var(--ink-faint);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;cursor:pointer;background:none;border:none;transition:color .2s;text-transform:uppercase}
+.lb-close:hover{color:var(--paper-base)}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(20,14,8,.7);border:1px solid var(--rule-dark);color:var(--ink-faint);font-size:22px;width:42px;height:58px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.lb-nav:hover{border-color:var(--paper-dark);color:var(--paper-warm)}
+.lb-prev{left:14px}
+.lb-next{right:14px}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--paper-base);border:1px solid var(--rule-mid);border-left:3px solid var(--pen-body);color:var(--ink-dark);padding:10px 20px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;opacity:0;transform:translateY(6px);transition:all .25s;z-index:400;pointer-events:none;box-shadow:2px 4px 16px rgba(100,80,50,.2)}
+.toast.show{opacity:1;transform:translateY(0)}
+
+.db-loading{position:fixed;inset:0;background:var(--paper-base);z-index:500;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.db-loading-txt{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:5px;color:var(--ink-dim);text-transform:uppercase}
+
+/* ══ MOBILE ══ */
+@media (max-width: 600px) {
+  /* ヘッダー */
+  .site-header{padding:0 14px;gap:8px;height:auto;min-height:54px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+  .header-stamp{font-size:8px;letter-spacing:2px;padding:2px 7px}
+  .header-sub{display:none}
+  .hstat{font-size:8px;letter-spacing:1px}
+
+  /* メインコンテンツ */
+  .main-content{padding:14px 10px}
+
+  /* 一覧：横長リスト */
+  .chars-grid{grid-template-columns:1fr;gap:8px}
+  .char-card{display:flex;flex-direction:row;align-items:stretch}
+  .card-photo{width:80px;min-width:80px;height:80px;flex-shrink:0;border-bottom:none;border-right:1px solid var(--rule-light)}
+  .card-body{flex:1;padding:10px 12px;display:flex;flex-direction:column;justify-content:center}
+  .card-body::before{display:none}
+  .card-name{font-size:14px}
+  .add-card{min-height:64px;flex-direction:row;gap:10px;padding:0 20px}
+
+  /* 詳細：縦積み */
+  .case-inner{flex-direction:column}
+  .portrait-col{
+    width:100%;flex-direction:row;align-items:center;
+    border-right:none;border-bottom:1px solid var(--rule-light);
+    padding:12px 14px;gap:12px;justify-content:flex-start;
+  }
+  .photo-frame{width:80px;height:100px;flex-shrink:0}
+  .portrait-label{display:none}
+  .upload-under-btn{width:auto;font-size:7px;padding:3px 6px}
+
+  .case-data{padding:12px 14px}
+  .case-name{font-size:20px;word-break:break-all}
+  .case-stamp{font-size:6px;top:10px;right:10px;letter-spacing:2px}
+  .case-fields{gap:10px 18px}
+  .case-field-v{font-size:13px}
+
+  .case-actions{
+    flex-direction:row;border-left:none;
+    border-top:1px solid var(--rule-light);
+    padding:8px 14px;justify-content:flex-end;gap:8px;background:var(--paper-warm);
+  }
+
+  /* 能力値 */
+  .stats-block{padding:10px 12px}
+  .stats-8{grid-template-columns:repeat(4,1fr);gap:3px}
+  .stats-4{grid-template-columns:repeat(2,1fr);gap:3px}
+  .sbox-in{font-size:15px}
+
+  /* タブ */
+  .tabs-row{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+  .tab-btn{padding:8px 12px 9px;font-size:7px;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+  .tab-content{padding:12px 10px}
+
+  /* 差分グリッド */
+  .expr-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .filter-wrap{flex-wrap:wrap;gap:4px}
+  .filter-btn{font-size:7px;padding:3px 7px;letter-spacing:1px}
+  .sort-btn{font-size:7px;padding:3px 7px}
+
+  /* 背景情報 */
+  .bg-grid{grid-template-columns:1fr}
+
+  /* モーダル */
+  .modal{padding:18px 14px;margin:8px;max-height:95vh}
+  .form-g4{grid-template-columns:repeat(2,1fr)}
+  .form-g2{grid-template-columns:1fr}
+}
+/* ══ 閲覧モード ══ */
+.view-mode-badge{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;
+  color:var(--pen-body);border:1.5px solid var(--pen-body);
+  padding:2px 10px;opacity:.8;text-transform:uppercase;white-space:nowrap;
+}
+body.readonly .edit-only{display:none !important}
+body.readonly .sbox-in,
+body.readonly .ssbox-in,
+body.readonly .case-quote,
+body.readonly .bg-ta,
+body.readonly .memo-ta{pointer-events:none;user-select:text}
+body.readonly .add-card{display:none}
+
+/* ══ SKILLS TAB ══ */
+.skills-toolbar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.skills-ver-badge{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  padding:6px 14px;background:var(--seal-mid);color:#f4efe6;
+  font-weight:bold;flex-shrink:0;text-transform:uppercase;
+  border:1px solid var(--seal-dark);
+}
+.skills-search{
+  flex:1;min-width:160px;
+  background:var(--paper-base);border:1px solid var(--rule-mid);
+  font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink-body);
+  padding:7px 10px;outline:none;caret-color:var(--pen-body);
+}
+.skills-search:focus{border-color:var(--pen-body);}
+.skills-search::placeholder{color:var(--ink-faint);}
+.btn-skill-add{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;
+  padding:7px 14px;background:transparent;border:1px dashed var(--rule-mid);
+  color:var(--ink-dim);cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+.btn-skill-add:hover{border-color:var(--pen-body);color:var(--pen-body);}
+
+/* ポイントバー */
+.skills-pt-bar{
+  display:flex;gap:24px;align-items:center;flex-wrap:wrap;
+  margin-bottom:14px;
+  padding:10px 16px;
+  background:var(--paper-warm);
+  border:1px solid var(--rule-light);
+  border-left:3px solid var(--rule-dark);
+}
+.skills-pt-group{
+  display:flex;gap:16px;align-items:center;
+}
+.skills-pt-item{
+  font-family:'Share Tech Mono',monospace;
+  display:flex;flex-direction:column;gap:2px;
+}
+.skills-pt-side{
+  border-left:1px solid var(--rule-faint);
+  padding-left:14px;
+}
+.skills-pt-item:last-child{border-right:none;}
+.skills-pt-label{
+  font-size:8px;letter-spacing:2px;color:var(--ink-dim);text-transform:uppercase;
+}
+.skills-pt-val{
+  font-size:26px;font-weight:bold;color:var(--ink-black);line-height:1;
+  font-family:'Share Tech Mono',monospace;
+}
+.skills-pt-sub{
+  font-size:9px;color:var(--ink-faint);letter-spacing:.5px;
+}
+.skills-pt-rem-pos .skills-pt-label{color:var(--ink-dim);}
+.skills-pt-rem-pos .skills-pt-val{color:var(--ink-black);}
+.skills-pt-rem-neg .skills-pt-label{color:var(--danger);}
+.skills-pt-rem-neg .skills-pt-val{color:var(--danger);}
+.skills-pt-rem-neg .skills-pt-sub{color:var(--danger);}
+
+/* カテゴリ */
+.skills-category{margin-bottom:28px;}
+.skills-cat-header{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:0;
+  border-bottom:2px solid var(--rule-mid);
+  padding-bottom:6px;
+}
+.skills-cat-title{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;
+  color:var(--seal-mid);text-transform:uppercase;flex-shrink:0;font-weight:bold;
+}
+.skills-cat-count{
+  font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);
+  letter-spacing:1px;flex:1;
+}
+.skills-cat-add{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
+  padding:4px 12px;background:var(--paper-base);
+  border:1px solid var(--rule-mid);
+  color:var(--ink-body);cursor:pointer;
+  transition:all .15s;
+}
+.skills-cat-add:hover{background:var(--ink-dark);color:var(--paper-base);border-color:var(--ink-dark);}
+.skills-cat-add:hover{border-color:var(--pen-body);color:var(--pen-body);}
+
+/* ── テーブル本体 ── */
+.skills-table{
+  width:100%;border-collapse:collapse;
+}
+/* ヘッダー */
+.skills-table thead th{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
+  color:var(--ink-dim);text-transform:uppercase;text-align:center;
+  padding:6px 4px 6px 4px;background:var(--paper-warm);
+  border-bottom:1px solid var(--rule-light);
+  white-space:nowrap;
+}
+.th-name{text-align:left;padding-left:10px !important;width:auto;}
+.th-base{width:50px;}
+.th-occ {width:58px;}
+.th-int {width:58px;}
+.th-grow{width:58px;}
+.th-etc {width:58px;}
+.th-chk {width:36px;}
+.th-act {width:32px;}
+
+/* 行 */
+.skill-tr{
+  border-bottom:1px solid var(--rule-faint);
+  transition:background .12s;
+}
+.skill-tr:nth-child(even){background:rgba(240,232,218,.35);}
+.skill-tr:hover{background:var(--paper-warm);}
+/* 値が入っている列を強調 */
+.skill-tr.has-occ{border-left:3px solid #5a7a3a;}
+.skill-tr.has-occ .td-name-cell{padding-left:9px;}
+
+/* 技能名セル */
+.td-name-cell{
+  padding:10px 6px 10px 12px;
+  font-family:'Noto Serif JP',serif;font-size:13px;color:var(--ink-body);
+  cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.td-name-cell:hover .skill-name-txt{text-decoration:underline;text-underline-offset:3px;}
+.skill-name-edit{
+  display:none;width:100%;
+  background:var(--paper-base);border:1px solid var(--pen-body);
+  font-family:'Noto Serif JP',serif;font-size:13px;color:var(--ink-body);
+  padding:2px 6px;outline:none;border-radius:0;
+}
+.skill-name-edit.active{display:block;}
+.skill-name-txt.hidden{display:none;}
+.skill-custom-badge{
+  font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;
+  background:var(--paper-aged);border:1px solid var(--rule-light);
+  color:var(--ink-faint);padding:1px 4px;margin-left:6px;vertical-align:middle;
+}
+
+/* 初期値セル */
+.td-base{
+  text-align:center;padding:10px 4px;
+  font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--ink-faint);
+  white-space:nowrap;
+}
+
+/* 数値入力セル（職業・趣味・成長・その他 共通） */
+.td-pts{text-align:center;padding:6px 3px;}
+.skill-pts-in{
+  width:50px;
+  background:transparent;
+  border:none;
+  border-bottom:2px solid var(--rule-light);
+  font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:bold;
+  color:var(--ink-dark);text-align:center;outline:none;padding:3px 2px;
+  caret-color:var(--pen-body);
+  -moz-appearance:textfield;
+  transition:border-color .15s, background .15s;
+}
+.skill-base-in{
+  width:46px;
+  background:transparent;border:none;
+  border-bottom:1px solid var(--rule-faint);
+  font-family:'Share Tech Mono',monospace;font-size:13px;
+  color:var(--ink-muted);text-align:center;outline:none;padding:2px;
+  -moz-appearance:textfield;
+}
+.skill-base-in:focus{border-bottom-color:var(--pen-body);color:var(--ink-body);}
+.skill-sub-sel{
+  background:transparent;border:none;
+  border-bottom:1px solid var(--rule-faint);
+  font-family:'Noto Serif JP',serif;font-size:13px;
+  color:var(--ink-body);outline:none;padding:2px 4px;
+  cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+  width:fit-content;max-width:140px;
+}
+.skill-sub-sel:focus{border-bottom-color:var(--pen-body);}
+.skill-free-in{
+  background:transparent;border:none;
+  border-bottom:1px dashed var(--rule-faint);
+  font-family:'Noto Serif JP',serif;font-size:12px;
+  color:var(--ink-muted);outline:none;padding:2px 4px;width:80px;
+}
+.skill-free-in:focus{border-bottom-color:var(--pen-body);color:var(--ink-body);}
+.skill-free-in::placeholder{color:var(--ink-faint);}
+.skill-pts-in::-webkit-inner-spin-button,
+.skill-pts-in::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.skill-pts-in:focus{border-bottom-color:var(--pen-body);background:var(--paper-base);}
+/* 列ごとの色 */
+.td-occ .skill-pts-in:not(:placeholder-shown){color:#3a6020;border-bottom-color:#5a8030;}
+.td-int .skill-pts-in:not(:placeholder-shown){color:#1a3a6a;border-bottom-color:#2a5080;}
+.td-grow .skill-pts-in:not(:placeholder-shown){color:#6a3a10;border-bottom-color:#8a5020;}
+.td-etc .skill-pts-in:not(:placeholder-shown){color:#3a3a5a;border-bottom-color:#5a5a8a;}
+
+/* 合計値表示 */
+.td-total{
+  text-align:center;padding:10px 4px;
+  font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:bold;
+  color:var(--ink-dark);
+}
+.td-total.total-high{color:var(--seal-mid);}/* 初期値の2倍超など目立てる場合 */
+
+/* 職業チェック */
+.td-chk-cell{text-align:center;padding:10px 4px;}
+.skill-occ-chk{
+  width:17px;height:17px;
+  accent-color:#5a8030;cursor:pointer;
+}
+/* 職業チェック済の行 */
+.skill-tr.is-occ{background:rgba(90,128,48,.05);}
+.skill-tr.is-occ .td-name-cell{font-weight:500;}
+
+/* 操作ボタン */
+.td-act{padding:4px 6px;text-align:right;}
+.skill-del-btn{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  background:none;border:none;color:var(--ink-faint);cursor:pointer;
+  padding:3px 4px;transition:color .15s;
+}
+.skill-del-btn:hover{color:var(--danger);}
+.skill-sub-dot{
+  color:var(--ink-faint);margin-right:4px;font-size:11px;
+}
+.skill-sub-label{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--ink-muted);letter-spacing:.5px;
+}
+.skill-tr .td-name-cell .skill-sub-label{
+  margin-left:2px;
+}
+.skill-empty{
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);
+  letter-spacing:3px;text-align:center;padding:28px;
+}
+/* 合計行（フッター） */
+.skills-table tfoot td{
+  font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:bold;
+  padding:7px 4px;border-top:2px solid var(--rule-mid);
+  background:var(--paper-warm);text-align:center;color:var(--ink-muted);
+}
+.skills-table tfoot .td-total-sum{
+  font-size:15px;font-weight:bold;color:var(--ink-dark);
+}
+@media(max-width:700px){
+  .th-grow,.th-etc,.td-grow,.td-etc{display:none;}
+  .th-occ,.th-int{width:50px;}
+  .skill-pts-in{width:44px;font-size:14px;}
+  .td-name-cell{font-size:12px;padding:8px 4px 8px 8px;}
+}
+/* 版切り替えスイッチ */
+.ver-switch{
+  display:inline-flex;gap:0;
+  border:1px solid var(--rule-dark);
+  overflow:hidden;width:fit-content;
+}
+.ver-switch-btn{
+  font-family:'Noto Serif JP',serif;font-size:12px;font-weight:500;
+  padding:6px 20px;border:none;cursor:pointer;
+  background:var(--paper-base);color:var(--ink-dim);
+  transition:background .15s,color .15s;
+  letter-spacing:1px;
+}
+.ver-switch-btn + .ver-switch-btn{
+  border-left:1px solid var(--rule-dark);
+}
+.ver-switch-btn.active{
+  background:var(--ink-dark);color:var(--paper-base);
+  font-weight:700;
+}
+.ver-switch-btn:not(.active):hover{
+  background:var(--paper-warm);color:var(--ink-body);
+}
+.site-nav{
+  display:flex;align-items:center;gap:2px;
+  margin-left:16px;padding-left:16px;
+  border-left:1px solid var(--rule-light);
+}
+.nav-link{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  color:var(--ink-dim);text-decoration:none;padding:4px 10px;
+  border:1px solid transparent;transition:all .2s;text-transform:uppercase;
+  white-space:nowrap;
+}
+.nav-link:hover{color:var(--ink-body);border-color:var(--rule-mid);background:var(--paper-aged)}
+.nav-link.current{color:var(--seal-body);border-color:var(--seal-mid);background:var(--paper-base)}
+.btn-rerender{
+  background:none;border:none;
+  font-size:18px;color:var(--ink-dim);
+  cursor:pointer;padding:4px 6px;
+  transition:color .2s,transform .4s;
+  line-height:1;
+}
+.btn-rerender:hover{color:var(--ink-body);transform:rotate(180deg);}
+
+/* ════ COMBAT TAB ════ */
+.combat-section{margin-bottom:24px;}
+.combat-section-title{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;
+  color:var(--seal-mid);text-transform:uppercase;margin-bottom:8px;
+}
+.combat-table{width:100%;border-collapse:collapse;}
+.combat-table thead th{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
+  color:var(--ink-dim);text-align:left;padding:6px 8px;
+  border-bottom:1px solid var(--rule-mid);background:var(--paper-warm);
+}
+.combat-table th.w-sm{width:60px;}
+.combat-tr{border-bottom:1px solid var(--rule-faint);}
+.combat-in{
+  width:100%;background:transparent;border:none;
+  border-bottom:1px solid var(--rule-faint);
+  font-family:'Noto Serif JP',serif;font-size:13px;
+  color:var(--ink-body);padding:6px 4px;outline:none;
+}
+.combat-in:focus{border-bottom-color:var(--pen-body);}
+.combat-del{
+  background:none;border:none;color:var(--ink-faint);
+  cursor:pointer;font-size:12px;padding:4px;
+  transition:color .15s;
+}
+.combat-del:hover{color:var(--danger);}
+.combat-add{
+  margin-top:8px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  background:var(--paper-base);border:1px solid var(--rule-mid);
+  color:var(--ink-body);cursor:pointer;padding:6px 16px;
+  transition:all .15s;
+}
+.combat-add:hover{background:var(--ink-dark);color:var(--paper-base);border-color:var(--ink-dark);}
+
+.combat-tr-main td{
+  padding:8px 6px 2px;
+  border-top:1px solid var(--rule-faint);
+}
+.combat-tr-sub td{padding:2px 6px;}
+.combat-tr-note td{padding:2px 6px 8px;}
+.combat-note{width:100%;}
+.combat-del-cell{
+  vertical-align:middle;text-align:center;
+  border-top:1px solid var(--rule-faint);
+  padding:0 4px;
+}
+
+/* ════ COMBAT CARD ════ */
+.combat-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
+.combat-card{
+  background:var(--paper-base);
+  border:1px solid var(--rule-light);
+  border-left:3px solid var(--rule-dark);
+  padding:10px 14px 12px;
+}
+.combat-card-head{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  margin-bottom:8px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--rule-faint);
+}
+.combat-card-fields{
+  display:flex;flex-wrap:nowrap;gap:4px 8px;
+  align-items:flex-end;
+}
+.combat-field{
+  display:flex;flex-direction:column;gap:2px;
+  min-width:44px;flex:1;
+}
+.combat-field-lg{min-width:120px;flex:1;}
+.combat-field-full{width:100%;margin-top:6px;}
+.combat-lbl{
+  font-family:'Share Tech Mono',monospace;
+  font-size:7px;letter-spacing:1.5px;
+  color:var(--ink-faint);text-transform:uppercase;
+}
+.combat-card .combat-in{
+  width:100%;border-bottom:1px solid var(--rule-faint);
+  font-size:12px;padding:3px 2px;
+}
+
+.items-asset-row{
+  display:flex;gap:24px;flex-wrap:wrap;
+  padding:10px 14px;
+  background:var(--paper-base);
+  border:1px solid var(--rule-light);
+  border-left:3px solid var(--rule-dark);
+}
+.items-asset-field{
+  display:flex;flex-direction:column;gap:4px;
+  min-width:100px;flex:1;
+}
+.items-asset-field .combat-in{
+  font-family:'Share Tech Mono',monospace;
+  font-size:18px;font-weight:bold;
+}
+
+.items-yen-wrap{
+  display:flex;align-items:baseline;gap:2px;
+  border-bottom:1px solid var(--rule-faint);
+}
+.items-yen-wrap .combat-in{border-bottom:none;}
+.items-yen{
+  font-family:'Share Tech Mono',monospace;
+  font-size:14px;color:var(--ink-muted);
+  flex-shrink:0;
+}
+.items-yen-sm .items-yen{font-size:11px;}
+</style>
+<body>
+
+<div class="db-loading" id="db-loading"><div class="db-loading-txt">LOADING ARCHIVE</div></div>
+
+<header class="site-header">
+  <div class="header-stamp">CASE FILE</div>
+  <div class="site-title">探索者記録簿 <em>Investigator's Dossier</em></div>
+  <div class="hfill"></div>
+  <div id="view-mode-badge" class="view-mode-badge" style="display:none">VIEW ONLY</div>
+  <nav class="site-nav">
+    <a class="nav-link" href="index.html" style="text-transform:none">TOP</a>
+    <a class="nav-link current" href="charactorsheet.html">探索者</a>
+    <a class="nav-link" href="npc.html">NPC</a>
+    <a class="nav-link" href="log.html">ログ変換</a>
+  </nav>
+  <button class="btn btn-ghost btn-sm edit-only" onclick="copyViewUrl()" style="font-size:8px;letter-spacing:2px" title="閲覧専用URLをコピー" >🔗 閲覧用URL</button>
+  <button class="btn btn-ghost btn-sm edit-only" onclick="showView('setup')" style="font-size:8px;letter-spacing:2px" title="DB設定">⚙ 設定</button>
+  <button class="btn-rerender" onclick="rerender()" title="再描画">↺</button>
+  <div class="hstat" id="hstat">0 FILES</div>
+</header>
+
+<div class="app">
+
+  <!-- LIST -->
+  <div id="view-list" class="view active">
+    <div class="sec-head">
+      <div class="sh-title">登録済み探索者</div>
+      <div class="sh-fill"></div>
+      <div class="sh-sub" id="char-count-sub"></div>
+    </div>
+    <div class="chars-grid" id="chars-grid"></div>
+  </div>
+
+  <!-- DETAIL -->
+  <div id="view-detail" class="view">
+    <button class="back-btn" onclick="showView('list')">← 一覧へ戻る</button>
+    <div class="case-file" id="d-casefile"></div>
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="showTab('expr')">表情差分</button>
+      <button class="tab-btn" onclick="showTab('full')">立ち絵 · 全身</button>
+      <button class="tab-btn" onclick="showTab('skills')">技能</button>
+      <button class="tab-btn" onclick="showTab('combat')">武器 · 防具</button>
+      <button class="tab-btn" onclick="showTab('items')">所持品</button>
+      <button class="tab-btn" onclick="showTab('memo')">設定 · メモ</button>
+    </div>
+    <div class="tab-body">
+      <div id="tab-expr" class="tab-pane active"></div>
+      <div id="tab-full" class="tab-pane"></div>
+      <div id="tab-skills" class="tab-pane"></div>
+      <div id="tab-combat" class="tab-pane"></div>
+      <div id="tab-items" class="tab-pane"></div>
+      <div id="tab-memo" class="tab-pane"></div>
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <div id="view-setup" class="view">
+    <div class="sec-head">
+      <div class="sh-title">INITIAL SETUP</div>
+    </div>
+    <div style="max-width:520px;margin:32px auto;padding:0 16px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--ink-dim);margin-bottom:24px;line-height:2">
+        Supabaseのプロジェクト情報を入力してください。<br>
+        設定はこのブラウザにのみ保存されます。
+      </div>
+      <div class="form-row" style="margin-bottom:16px">
+        <label class="form-lbl">Project URL</label>
+        <input type="text" class="form-input" id="setup-url" placeholder="https://xxxxxxxxxx.supabase.co">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);margin-top:4px">Supabase → Settings → Data API → API URL</div>
+      </div>
+      <div class="form-row" style="margin-bottom:24px">
+        <label class="form-lbl">Anon Key</label>
+        <input type="text" class="form-input" id="setup-key" placeholder="eyJhbGci...">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);margin-top:4px">Supabase → Settings → API Keys → Legacy anon, service_role API keys → anon public</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary" onclick="saveSetup()">接続する</button>
+        <span id="setup-status" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim)"></span>
+      </div>
+      <div id="setup-current" style="margin-top:24px;padding:12px;background:var(--paper-warm);border:1px solid var(--rule-light);display:none">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-dim);letter-spacing:2px;margin-bottom:8px">CURRENT CONNECTION</div>
+        <div id="setup-current-url" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink-muted);word-break:break-all"></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="showView('list')">← 一覧へ戻る</button>
+          <button class="btn btn-danger btn-sm" onclick="clearSetup()">設定を削除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: キャラクター -->
+<div class="modal-overlay" id="modal-char">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-char')">[ close ]</button>
+    <div class="modal-title" id="modal-char-title">新規ファイルを作成</div>
+    <div class="form-row"><label class="form-lbl">探索者名 *</label><input type="text" class="form-input" id="f-name" placeholder="例: 山田 太郎"></div>
+    <div class="form-row"><label class="form-lbl">ふりがな</label><input type="text" class="form-input" id="f-ruby" placeholder="例: やまだ たろう"></div>
+    <div class="form-g2">
+      <div class="form-row"><label class="form-lbl">職業</label><input type="text" class="form-input" id="f-job" placeholder="例: 私立探偵"></div>
+      <div class="form-row"><label class="form-lbl">性別</label><input type="text" class="form-input" id="f-gender" placeholder="例: 男性"></div>
+    </div>
+    <div class="form-g4">
+      <div class="form-row"><label class="form-lbl">年齢</label><input type="text" class="form-input" id="f-age" placeholder="例: 28歳"></div>
+      <div class="form-row"><label class="form-lbl">身長</label><input type="text" class="form-input" id="f-height" placeholder="例: 170cm"></div>
+      <div class="form-row"><label class="form-lbl">体重</label><input type="text" class="form-input" id="f-weight" placeholder="例: 60kg"></div>
+      <div class="form-row"><label class="form-lbl">誕生日</label><input type="text" class="form-input" id="f-birthday" placeholder="例: 3月14日"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-g2">
+      <div class="form-row">
+        <label class="form-lbl">カラー（発言色）</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="color" class="in-color-picker" id="f-color" value="#3c3428" oninput="document.getElementById('f-color-hex').value=this.value" style="width:32px;height:32px;padding:0;border:1px solid var(--rule-mid);background:none;cursor:pointer;flex-shrink:0">
+          <input type="text" class="form-input" id="f-color-hex" value="#3c3428" style="width:100px" oninput="if(/^#[0-9A-F]{6}$/i.test(this.value))document.getElementById('f-color').value=this.value">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-lbl">マーク</label>
+        <input type="text" class="form-input" id="f-emoji" placeholder="👓" maxlength="4" style="width:80px;font-size:22px;text-align:center;padding:2px 6px">
+      </div>
+    </div>
+    <div class="form-section">基本能力値</div>
+    <div class="form-g4" style="margin-bottom:6px">
+      <div><label class="form-lbl" style="font-size:9px">STR</label><input type="number" class="form-input" id="f-STR" min="1" max="99" placeholder="—"></div>
+      <div><label class="form-lbl" style="font-size:9px">CON</label><input type="number" class="form-input" id="f-CON" min="1" max="99" placeholder="—"></div>
+      <div><label class="form-lbl" style="font-size:9px">POW</label><input type="number" class="form-input" id="f-POW" min="1" max="99" placeholder="—"></div>
+      <div><label class="form-lbl" style="font-size:9px">DEX</label><input type="number" class="form-input" id="f-DEX" min="1" max="99" placeholder="—"></div>
+      <div><label class="form-lbl" style="font-size:9px">APP</label><input type="number" class="form-input" id="f-APP" min="1" max="99" placeholder="—"></div>
+      <div><label class="form-lbl" style="font-size:9px">SIZ</label><input type="number" class="form-input" id="f-SIZ" min="1" max="99" placeholder="—"></div>
+      <div><label class="form-lbl" style="font-size:9px">INT</label><input type="number" class="form-input" id="f-INT" min="1" max="99" placeholder="—"></div>
+      <div><label class="form-lbl" style="font-size:9px">EDU</label><input type="number" class="form-input" id="f-EDU" min="1" max="99" placeholder="—"></div>
+    </div>
+    <div class="form-section">二次ステータス</div>
+    <div class="form-g2">
+      <div class="form-row"><label class="form-lbl">HP（現在 / 最大）</label><div style="display:flex;gap:5px"><input type="number" class="form-input" id="f-hp-cur" placeholder="現在" style="flex:1"><input type="number" class="form-input" id="f-hp-max" placeholder="最大" style="flex:1"></div></div>
+      <div class="form-row"><label class="form-lbl">MP（現在 / 最大）</label><div style="display:flex;gap:5px"><input type="number" class="form-input" id="f-mp-cur" placeholder="現在" style="flex:1"><input type="number" class="form-input" id="f-mp-max" placeholder="最大" style="flex:1"></div></div>
+      <div class="form-row"><label class="form-lbl">SAN（現在 / 最大）</label><div style="display:flex;gap:5px"><input type="number" class="form-input" id="f-san-cur" placeholder="現在" style="flex:1"><input type="number" class="form-input" id="f-san-max" placeholder="最大" style="flex:1"></div></div>
+      <div class="form-row"><label class="form-lbl">幸運（現在 / 最大）</label><div style="display:flex;gap:5px"><input type="number" class="form-input" id="f-luk-cur" placeholder="現在" style="flex:1"><input type="number" class="form-input" id="f-luk-max" placeholder="最大" style="flex:1"></div></div>
+    </div>
+    <div class="form-section">出身シナリオ</div>
+    <div class="form-row"><label class="form-lbl">シナリオ名</label><input type="text" class="form-input" id="f-scenario" placeholder="例: 永遠の嘘つきたち"></div>
+    <div class="form-row">
+      <label class="form-lbl">ルールブック版</label>
+      <div class="ver-switch">
+        <button type="button" id="f-ver-6" class="ver-switch-btn active" onclick="selectVer('6')">6版</button>
+        <button type="button" id="f-ver-7" class="ver-switch-btn" onclick="selectVer('7')">7版</button>
+      </div>
+    </div>
+    <!-- 7版：職業P計算式選択 -->
+    <div class="form-row" id="f-row-occformula" style="display:none">
+      <label class="form-lbl">職業技能ポイント計算式 <span style="font-size:8px;color:var(--ink-faint)">(7版)</span></label>
+      <select class="form-sel" id="f-occformula">
+        <option value="EDU4">EDU×4</option>
+        <option value="EDU2STR2">EDU×2＋STR×2</option>
+        <option value="EDU2DEX2">EDU×2＋DEX×2</option>
+        <option value="EDU2INT2">EDU×2＋INT×2</option>
+        <option value="EDU2CON2">EDU×2＋CON×2</option>
+        <option value="EDU2POW2">EDU×2＋POW×2</option>
+        <option value="EDU2APP2">EDU×2＋APP×2</option>
+        <option value="EDU2SIZ2">EDU×2＋SIZ×2</option>
+      </select>
+    </div>
+    <!-- 補正値 -->
+    <div class="form-row">
+      <label class="form-lbl">ポイント補正値</label>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#3a6020;letter-spacing:1px">職業P補正</span>
+          <input type="number" class="form-input" id="f-occ-bonus" placeholder="0" style="width:70px;text-align:center">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#1a3a6a;letter-spacing:1px">趣味P補正</span>
+          <input type="number" class="form-input" id="f-int-bonus" placeholder="0" style="width:70px;text-align:center">
+        </div>
+      </div>
+      <p class="form-hint" style="margin-top:4px">年齢補正・特殊ルールなどによる加減算。マイナスも可。</p>
+    </div>
+    <div class="form-row">
+      <label class="form-lbl">タグ（カンマ区切り）</label>
+      <input type="text" class="form-input" id="f-tags" placeholder="例: 現役, KP, お気に入り" oninput="refreshTagCands()">
+      <div class="tag-candidates" id="tag-cands"></div>
+    </div>
+    <div class="form-section">バストアップ写真</div>
+    <div class="form-row">
+      <p class="form-hint">一覧・詳細ページに表示されます。全身立ち絵は登録後に「表情差分・立ち絵」タブから設定できます。</p>
+      <div class="upload-zone" id="main-zone" onclick="document.getElementById('main-file').click()">
+        <img class="upload-prev" id="main-prev" src="" style="display:none">
+        <div id="main-ph"><p>クリック / ドラッグ</p></div>
+      </div>
+      <input type="file" id="main-file" accept="image/*" style="display:none" onchange="onMainImg(event,'bust')">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-char')">キャンセル</button>
+      <button class="btn btn-primary" id="char-save-btn" onclick="saveChar()">ファイルを作成</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 差分追加 -->
+<div class="modal-overlay" id="modal-expr">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('modal-expr')">[ close ]</button>
+    <div class="modal-title">差分画像を追加</div>
+    <div class="form-row">
+      <label class="form-lbl">差分名（ラベル）</label>
+      <p class="form-hint">Cocofolia上での差分選択名になります。複数選択時は「笑顔01」「笑顔02」と自動連番。空白のままにするとファイル名を使用します。</p>
+      <input type="text" class="form-input" id="e-label" placeholder="例: 通常, 笑顔, @通常（空白でファイル名）">
+    </div>
+    <div class="form-row">
+      <label class="form-lbl">カテゴリ</label>
+      <select class="form-sel" id="e-cat">
+        <option value="通常">通常</option>
+        <option value="喜び">喜び</option>
+        <option value="怒り">怒り</option>
+        <option value="哀しみ">哀しみ</option>
+        <option value="楽しい">楽しい</option>
+        <option value="状態">状態変化</option>
+        <option value="立ち絵">立ち絵</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-lbl">画像ファイル（複数可 · 100枚以上対応）</label>
+      <div class="upload-zone" id="expr-zone" onclick="document.getElementById('expr-file').click()">
+        <img class="upload-prev" id="expr-prev" src="" style="display:none">
+        <div id="expr-ph"><p>クリック または ドラッグ＆ドロップ<br>PNG · JPG · WEBP · GIF</p></div>
+        <div class="upload-cnt" id="expr-cnt" style="display:none"></div>
+      </div>
+      <input type="file" id="expr-file" accept="image/*" multiple style="display:none" onchange="onExprImg(event)">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-expr')">キャンセル</button>
+      <button class="btn btn-primary" id="expr-save-btn" onclick="saveExpr()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ラベル編集 -->
+<div class="modal-overlay" id="modal-edit-expr">
+  <div class="modal" style="max-width:370px">
+    <button class="modal-close" onclick="closeModal('modal-edit-expr')">[ close ]</button>
+    <div class="modal-title">差分名を編集</div>
+    <input type="hidden" id="edit-id">
+    <div class="form-row"><label class="form-lbl">差分名</label><input type="text" class="form-input" id="edit-label" placeholder="例: 笑顔"></div>
+    <div class="form-row"><label class="form-lbl">カテゴリ</label>
+      <select class="form-sel" id="edit-cat">
+        <option value="通常">通常</option><option value="喜び">喜び</option>
+        <option value="怒り">怒り</option><option value="哀しみ">哀しみ</option>
+        <option value="楽しい">楽しい</option>
+        <option value="状態">状態変化</option><option value="立ち絵">立ち絵</option><option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-expr')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEditExpr()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 一括カテゴリ変更 -->
+<div class="modal-overlay" id="modal-bulk-cat">
+  <div class="modal" style="max-width:320px">
+    <button class="modal-close" onclick="closeModal('modal-bulk-cat')">[ close ]</button>
+    <div class="modal-title">カテゴリをまとめて変更</div>
+    <div class="form-row">
+      <label class="form-lbl">変更後のカテゴリ</label>
+      <select class="form-sel" id="bulk-cat-sel">
+        <option value="通常">通常</option>
+        <option value="喜び">喜び</option>
+        <option value="怒り">怒り</option>
+        <option value="哀しみ">哀しみ</option>
+        <option value="楽しい">楽しい</option>
+        <option value="状態">状態変化</option>
+        <option value="立ち絵">立ち絵</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bulk-cat')">キャンセル</button>
+      <button class="btn btn-primary" onclick="bulkChangeCat()">変更する</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CCFOLIA出力 -->
+<div class="modal-overlay" id="modal-ccfolia">
+  <div class="modal" style="max-width:600px">
+    <button class="modal-close" onclick="closeModal('modal-ccfolia')">[ close ]</button>
+    <div class="modal-title">CCFOLIA 出力</div>
+    <p class="form-hint" style="margin-bottom:4px">ステータス・差分ラベルをCCFOLIA形式のJSONとしてクリップボードにコピーします。<br>CCFOLIAのルーム画面を開き、前景上で <strong>Ctrl+V</strong>（右クリック→貼り付け）でキャラクターコマを作成できます。</p>
+
+    <!-- ステータス確認 -->
+    <div class="ccfolia-section-title">ステータス確認</div>
+    <div id="ccf-status-preview"></div>
+
+    <!-- チャットパレット -->
+    <div class="ccfolia-section-title">チャットパレット（ダイスコマンド）</div>
+    <p class="form-hint">CCFOLIAのコマンド欄に入力されます。編集可能です。</p>
+    <textarea id="ccf-commands" class="form-input" rows="6" style="font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.7;resize:vertical" placeholder="例: {1d6+DB}ダメージ&#10;CON×5 {1d100}で体力ロール"></textarea>
+
+    <!-- 差分画像URL -->
+    <div class="ccfolia-section-title">差分画像 URL 設定 <span style="font-size:8px;letter-spacing:1px;color:var(--ink-dim);margin-left:4px">（任意）</span></div>
+    <p class="form-hint" style="margin-bottom:10px">
+      各差分に対応するCCFOLIA上の画像URLを入力してください。<br>
+      ※ CCFOLIA APIの制限により画像データの直接転送はできません。<br>CCFOLIAに画像をアップロード後、そのURLをここに貼り付けてください。
+    </p>
+    <div id="ccf-faces-list" class="ccfolia-faces-list"></div>
+
+    <!-- JSONプレビュー -->
+    <div class="ccfolia-section-title">JSON プレビュー</div>
+    <div id="ccf-json-preview" class="ccfolia-json-preview"></div>
+
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ccfolia')">閉じる</button>
+      <button class="btn btn-primary" onclick="copyCcfoliaJson()">📋 クリップボードにコピー</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" onclick="closeLightbox()">[ close ]</button>
+  <button class="lb-nav lb-prev" onclick="lbNav(-1)">‹</button>
+  <img id="lb-img" src="" alt="">
+  <div class="lb-name" id="lb-name"></div>
+  <button class="lb-nav lb-next" onclick="lbNav(1)">›</button>
+</div>
+<div class="toast" id="toast-el"></div>
+
+<script>
+/* ════ SUPABASE 設定（動的） ════ */
+const OWNER_URL='https://ahytjvhtvgpvbpoldnsy.supabase.co';
+const OWNER_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
+let SUPA_URL='';
+let SUPA_KEY='';
+let H={};
+
+function loadSupaConfig(){
+  if(IS_READONLY){
+    // 閲覧モード: URLパラメータ優先、なければオーナーのDB
+    SUPA_URL=_urlParam||OWNER_URL;
+    SUPA_KEY=_keyParam||OWNER_KEY;
+  }else{
+    SUPA_URL=localStorage.getItem('supa_url')||'';
+    SUPA_KEY=localStorage.getItem('supa_key')||'';
+  }
+  H={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
+}
+// loadSupaConfig() は IS_READONLY 定義後に呼ぶ
+
+/* REST ヘルパー */
+async function sbSelect(table,filter=''){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${filter}&limit=10000`,{headers:{...H,'Prefer':'return=representation'}});
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+async function sbUpsert(table,body){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}`,{method:'POST',headers:{...H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(await r.text());
+}
+async function sbDelete(table,filter){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:H});
+  if(!r.ok)throw new Error(await r.text());
+}
+
+/* Storage ヘルパー */
+async function storageUpload(path,blob){
+  const r=await fetch(`${SUPA_URL}/storage/v1/object/images/${path}`,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':blob.type||'image/jpeg','x-upsert':'true'},body:blob});
+  if(!r.ok)throw new Error(await r.text());
+}
+async function storageDelete(paths){
+  const r=await fetch(`${SUPA_URL}/storage/v1/object/images`,{method:'DELETE',headers:{...H},body:JSON.stringify({prefixes:paths})});
+  if(!r.ok)throw new Error(await r.text());
+}
+function storageUrl(path){return `${SUPA_URL}/storage/v1/object/public/images/${path}`;}
+
+/* dataURL → Blob */
+function dataUrlToBlob(du){
+  const [head,b64]=du.split(',');
+  const mime=head.match(/:(.*?);/)[1];
+  const bin=atob(b64);const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+
+/* ════ STATE ════ */
+let chars=[];
+let curId=null,bustImg=null,exprBuf=[];
+let filt='all',sq='',sortMode='num'; // 番号順デフォルト
+let lbExprs=[],lbIdx=0;
+const getChar=()=>chars.find(c=>c.id===curId);
+
+/* キャラクターをSupabaseへ保存 */
+async function saveCharToSupa(c){
+  await sbUpsert('characters',{id:c.id,data:c});
+}
+
+/* ════ SORT ════ */
+function naturalSort(a,b){
+  const re=/^(.*?)(\d+)$/;
+  const ma=re.exec(a.label||''),mb=re.exec(b.label||'');
+  if(ma&&mb){const p=ma[1].localeCompare(mb[1],'ja');if(p!==0)return p;return parseInt(ma[2])-parseInt(mb[2]);}
+  return (a.label||'').localeCompare(b.label||'','ja');
+}
+function sortExprs(exprs){
+  const arr=[...exprs];
+  if(sortMode==='num') arr.sort(naturalSort);
+  else if(sortMode==='name') arr.sort((a,b)=>(a.label||'').localeCompare(b.label||'','ja'));
+  else if(sortMode==='cat') arr.sort((a,b)=>(a.category||'').localeCompare(b.category||'','ja')||naturalSort(a,b));
+  else arr.sort((a,b)=>a.id<b.id?-1:1);
+  return arr;
+}
+
+/* ════ VIEWS ════ */
+function showView(n){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+n).classList.add('active');
+  if(n==='list')renderList();
+  if(n==='detail'){showTab('expr');renderDetail();}
+  if(n==='setup')initSetupView();
+}
+function showTab(n){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick="showTab('${n}')"]`).classList.add('active');
+  document.getElementById('tab-'+n).classList.add('active');
+  if(n==='expr')loadExprTab();
+  if(n==='full')loadFullTab();
+  if(n==='skills')loadSkillsTab();
+  if(n==='combat')loadCombatTab();
+  if(n==='items')loadItemsTab();
+}
+
+/* ════ LIST ════ */
+async function renderList(){
+  const g=document.getElementById('chars-grid');g.innerHTML='';
+  const visible=IS_READONLY?chars.filter(c=>!c.hidden):chars;
+  const hs=document.getElementById('hstat');if(hs)hs.textContent=`${visible.length} FILES`;
+  const cs=document.getElementById('char-count-sub');if(cs)cs.textContent=`${visible.length} 件`;
+  for(const c of visible){
+    const el=document.createElement('div');
+    el.className='char-card'+(c.hidden?' is-hidden':'');
+    const bustPath=c.bust_path;
+    const img=bustPath?storageUrl(bustPath):'';
+    el.innerHTML=`
+      ${c.hidden&&!IS_READONLY?'<div class="hidden-badge">HIDDEN</div>':''}
+      <div class="card-photo">
+        ${img?`<img src="${img}" alt="${c.name}">`:`<div class="card-photo-ph">NO PHOTO</div>`}
+      </div>
+      <div class="card-body">
+        <div class="card-name">${c.name}</div>
+        <div class="card-meta">${[c.job,c.age].filter(Boolean).join(' / ')||'—'}</div>
+        ${c.scenario?`<div class="card-scenario">${c.scenario}</div>`:''}
+      </div>`;
+    el.onclick=()=>{curId=c.id;showView('detail');};
+    g.appendChild(el);
+  }
+  if(!IS_READONLY){
+    const add=document.createElement('div');add.className='add-card';
+    add.innerHTML=`<div class="add-ico">+</div><div class="add-lbl">新規ファイルを作成</div>`;
+    add.onclick=openAddModal;g.appendChild(add);
+  }
+  if(_charParam){const tgt=chars.find(c=>c.id===_charParam);if(tgt){curId=tgt.id;_charParam='';showView('detail');}}
+}
+
+/* ════ DETAIL ════ */
+async function renderDetail(){
+  const c=getChar();if(!c)return;
+  const st=c.stats||{},sec=c.secondary||{};
+  const sdefs=[{k:'STR',jp:'筋力'},{k:'CON',jp:'体力'},{k:'POW',jp:'精神'},{k:'DEX',jp:'敏捷'},{k:'APP',jp:'外見'},{k:'SIZ',jp:'体格'},{k:'INT',jp:'知性'},{k:'EDU',jp:'教育'}];
+  const scol={hp:'#8a1818',mp:'#1a3a5a',san:'#5a4a10',luk:'#1a4a2a'};
+  const slbl={hp:'HP',mp:'MP',san:'SAN',luk:'幸運'};
+  const bustUrl=c.bust_path?storageUrl(c.bust_path):'';
+
+  const p8=sdefs.map(({k})=>{
+    const v=st[k]||'';
+    return `<div class="sbox"><span class="sbox-key">${k}</span>
+      <input class="sbox-in" type="number" value="${v}" min="1" max="99" oninput="updStat('${k}',this)" placeholder="—">
+    </div>`;
+  }).join('');
+
+  const s4=['hp','mp','san','luk'].map(k=>{
+    const cur=(sec[k]||{}).cur??'',max=(sec[k]||{}).max??'';
+    return `<div class="ssbox" style="border-left:3px solid ${scol[k]}">
+      <span class="ssbox-key" style="color:${scol[k]}">${slbl[k]}</span>
+      <div class="ssbox-vals">
+        <input class="ssbox-in cur" type="number" value="${cur}" placeholder="—" oninput="updSec('${k}','cur',this.value)">
+        <span class="ssbox-slash">/</span>
+        <input class="ssbox-in max" type="number" value="${max}" placeholder="—" oninput="updSec('${k}','max',this.value)">
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('d-casefile').innerHTML=`
+    <div class="case-inner">
+      <div class="portrait-col">
+        <div class="photo-frame" id="bust-frame">
+          ${bustUrl?`<img src="${bustUrl}" alt="${c.name}">`:`<div class="photo-frame-ph">NO<br>PHOTO</div>`}
+        </div>
+        <button class="upload-under-btn edit-only" onclick="document.getElementById('detail-bust-file').click()">▲ 変更</button>
+        <input type="file" id="detail-bust-file" accept="image/*" style="display:none" onchange="onDetailPortrait(event)" ${IS_READONLY?'disabled':''}>
+        <div class="portrait-label">BUST UP</div>
+      </div>
+      <div class="case-data">
+        <div class="case-stamp">INVESTIGATOR FILE</div>
+        <div>
+          <div class="case-name">${c.name}</div>
+          ${c.ruby?`<div class="case-ruby">${c.ruby}</div>`:''}
+          ${c.scenario?`<div class="case-scenario-block"><span class="case-scenario-label">Scenario</span><span class="case-scenario-val">${c.scenario}</span></div>`:''}
+          <div class="case-fields-body">
+            <div class="case-fields-row">
+              ${c.job?`<div><span class="case-field-k">職業</span><span class="case-field-v">${c.job}</span></div>`:''}
+              ${c.gender?`<div><span class="case-field-k">性別</span><span class="case-field-v">${c.gender}</span></div>`:''}
+              ${c.age?`<div><span class="case-field-k">年齢</span><span class="case-field-v">${c.age}</span></div>`:''}
+              ${c.birthday?`<div><span class="case-field-k">誕生日</span><span class="case-field-v">${c.birthday}</span></div>`:''}
+            </div>
+            ${(c.height||c.weight||c.color)?`<div class="case-fields-row" style="margin-top:14px">
+              ${c.height?`<div><span class="case-field-k">身長</span><span class="case-field-v">${c.height}</span></div>`:''}
+              ${c.weight?`<div><span class="case-field-k">体重</span><span class="case-field-v">${c.weight}</span></div>`:''}
+              ${c.color?`<div><span class="case-field-k">カラー</span><span class="case-field-v" style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:14px;height:14px;background:${c.color};border:1px solid rgba(0,0,0,.15);flex-shrink:0;border-radius:2px"></span>${c.color}</span></div>`:''}
+              ${c.emoji?`<div><span class="case-field-k">マーク</span><span class="case-field-v" style="font-size:20px;line-height:1">${c.emoji}</span></div>`:''}
+            </div>`:''}
+          </div>
+          <div class="case-tags">${(c.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+        <div style="margin-top:16px">
+          <span class="case-quote-label">— QUOTE</span>
+          <textarea class="case-quote" id="case-quote-ta" rows="2" placeholder="「セリフ・キャッチフレーズ・印象的な言葉…」" oninput="updQuote(this.value)">${c.quote||''}</textarea>
+        </div>
+      </div>
+      <div class="case-actions edit-only">
+        <button class="btn btn-ghost btn-sm" onclick="openEditModal()">編集</button>
+        <button id="hidden-toggle-btn" class="btn btn-sm btn-hidden-toggle${c.hidden?' is-hidden':''}" onclick="toggleHidden()">${c.hidden?'非表示中':'非表示'}</button>
+        <button class="btn btn-sm btn-ccfolia" onclick="openCcfoliaModal()">CCFOLIA</button>
+        <button class="btn btn-sm btn-pdf" onclick="openPrintSheet()">📄 PDF</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteChar()">削除</button>
+      </div>
+    </div>
+    <div class="stats-block">
+      <div class="stats-title">基本能力値</div>
+      <div class="stats-8">${p8}</div>
+      <div class="stats-4">${s4}</div>
+    </div>`;
+
+  document.getElementById('tab-memo').innerHTML=`
+    <div class="memo-wrap">
+      <div class="memo-label">背景情報</div>
+      <div class="bg-grid">
+        <div class="bg-field"><label class="bg-lbl">出身 · 居住地</label><textarea class="bg-ta" rows="2" oninput="updBg('origin',this.value)" placeholder="生まれた場所、現在住んでいる場所…">${(c.bg||{}).origin||''}</textarea></div>
+        <div class="bg-field"><label class="bg-lbl">信念 · イデオロギー</label><textarea class="bg-ta" rows="2" oninput="updBg('belief',this.value)" placeholder="大切にしている価値観、信仰…">${(c.bg||{}).belief||''}</textarea></div>
+        <div class="bg-field"><label class="bg-lbl">重要な人物</label><textarea class="bg-ta" rows="2" oninput="updBg('person',this.value)" placeholder="家族、友人、恩師…">${(c.bg||{}).person||''}</textarea></div>
+        <div class="bg-field"><label class="bg-lbl">意味のある場所</label><textarea class="bg-ta" rows="2" oninput="updBg('place',this.value)" placeholder="思い出の場所、帰る場所…">${(c.bg||{}).place||''}</textarea></div>
+        <div class="bg-field"><label class="bg-lbl">宝物 · 大切なもの</label><textarea class="bg-ta" rows="2" oninput="updBg('treasure',this.value)" placeholder="形見、お守り、愛用品…">${(c.bg||{}).treasure||''}</textarea></div>
+        <div class="bg-field"><label class="bg-lbl">特徴 · 癖</label><textarea class="bg-ta" rows="2" oninput="updBg('trait',this.value)" placeholder="口癖、行動の癖、見た目の特徴…">${(c.bg||{}).trait||''}</textarea></div>
+      </div>
+    </div>
+    <div class="memo-wrap" style="margin-top:14px">
+      <div class="memo-label">FIELD NOTES</div>
+      <textarea class="memo-ta" id="memo-text" placeholder="セッション記録 · その他メモ…">${c.memo||''}</textarea>
+      <div class="memo-foot"><button class="btn btn-primary edit-only" onclick="saveMemo()">保存する</button></div>
+    </div>`;
+  loadExprTab();
+}
+
+async function onDetailPortrait(e){
+  if(IS_READONLY)return;
+  const f=e.target.files[0];if(!f)return;const c=getChar();if(!c)return;
+  toast('アップロード中…');
+  try{
+    // 拡張子に関わらず bust.jpg で固定（上書き保証）
+    const ext=f.name.split('.').pop().toLowerCase()||'jpg';
+    const path=`${c.id}/bust.${ext}`;
+    // 古いパスが違う拡張子なら先に削除
+    if(c.bust_path && c.bust_path!==path){
+      try{await storageDelete([c.bust_path]);}catch(e){}
+    }
+    await storageUpload(path,f);
+    c.bust_path=path;
+    await saveCharToSupa(c);
+    const fr=document.getElementById('bust-frame');
+    if(fr)fr.innerHTML=`<img src="${storageUrl(path)}?t=${Date.now()}" alt="">`;
+    toast('バストアップ画像を更新しました');
+  }catch(err){toast('アップロード失敗: '+err.message);}
+}
+
+function updStat(k,inp){
+  const c=getChar();if(!c)return;if(!c.stats)c.stats={};
+  const v=parseInt(inp.value)||0;c.stats[k]=v;
+  debounce('stat',()=>saveCharToSupa(c),800);
+}
+function updSec(k,f,v){
+  const c=getChar();if(!c)return;if(!c.secondary)c.secondary={};if(!c.secondary[k])c.secondary[k]={};
+  c.secondary[k][f]=parseInt(v)||0;
+  debounce('sec',()=>saveCharToSupa(c),800);
+}
+function updQuote(v){const c=getChar();if(!c)return;c.quote=v;debounce('quote',()=>saveCharToSupa(c),800);}
+function updBg(k,v){const c=getChar();if(!c)return;if(!c.bg)c.bg={};c.bg[k]=v;debounce('bg_'+k,()=>saveCharToSupa(c),800);}
+async function saveMemo(){const c=getChar();if(!c)return;c.memo=document.getElementById('memo-text').value;await saveCharToSupa(c);toast('保存しました');}
+
+/* デバウンス（入力中の連続保存を防ぐ） */
+const _dt={};
+function debounce(key,fn,ms){clearTimeout(_dt[key]);_dt[key]=setTimeout(fn,ms);}
+
+/* ════ EXPR TAB ════ */
+async function loadExprTab(){
+  const pane=document.getElementById('tab-expr');if(!pane)return;
+  pane.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--ink-faint);letter-spacing:3px;padding:20px;text-align:center">LOADING...</div>';
+  const c=getChar();if(!c)return;
+  let rows=[];
+  try{rows=await sbSelect('expressions',`char_id=eq.${c.id}&order=created_at.asc`);}catch(e){}
+  const exprs=rows.map(r=>({id:r.id,charId:r.char_id,label:r.label,category:r.category,image_path:r.image_path}));
+  renderExprPane(sortExprs(exprs));
+}
+
+/* ════ FULL TAB ════ */
+async function loadFullTab(){
+  const pane=document.getElementById('tab-full');if(!pane)return;
+  const c=getChar();if(!c)return;
+  const fullUrl=c.full_path?storageUrl(c.full_path):'';
+  pane.innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0">
+      <div id="fullbody-display" style="${IS_READONLY?'':'cursor:pointer'}" ${IS_READONLY?'':'onclick="document.getElementById(\'fullbody-file-input\').click()"'} title="${IS_READONLY?'':'クリックで変更'}">
+        ${fullUrl
+          ?`<img src="${fullUrl}" style="max-width:min(360px,80vw);object-fit:contain;display:block;border:1px solid var(--rule-light);box-shadow:2px 4px 14px rgba(100,80,50,.15);padding:16px;background:var(--paper-warm);box-sizing:border-box">`
+          :`<div style="width:200px;height:320px;border:1px dashed var(--rule-mid);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--paper-warm)">
+              <div style="font-size:28px;color:var(--ink-faint)">${IS_READONLY?'　':'＋'}</div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--ink-faint);text-transform:uppercase">${IS_READONLY?'NO IMAGE':'UPLOAD'}</div>
+            </div>`}
+      </div>
+      <input type="file" id="fullbody-file-input" accept="image/*" style="display:none" onchange="onFullbodyUpload(event)" ${IS_READONLY?'disabled':''}>
+      ${!IS_READONLY && fullUrl?`<button style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--ink-dim);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-transform:uppercase" onclick="deleteFullImg()">✕ 削除</button>`:''}
+    </div>`;
+}
+
+async function onFullbodyUpload(e){
+  if(IS_READONLY)return;
+  const f=e.target.files[0];if(!f)return;const c=getChar();if(!c)return;
+  toast('アップロード中…');
+  try{
+    const path=`${c.id}/full.${f.name.split('.').pop()}`;
+    await storageUpload(path,f);
+    c.full_path=path;
+    await saveCharToSupa(c);
+    loadFullTab();
+    toast('全身立ち絵を更新しました');
+  }catch(err){toast('アップロード失敗: '+err.message);}
+}
+async function deleteFullImg(){
+  if(!confirm('全身立ち絵を削除しますか？'))return;
+  const c=getChar();if(!c)return;
+  if(c.full_path){try{await storageDelete([c.full_path]);}catch(e){}}
+  c.full_path='';await saveCharToSupa(c);loadFullTab();toast('削除しました');
+}
+
+/* ════ EXPR RENDER ════ */
+let selectedExprs=new Set();
+function renderExprPane(exprs){
+  const pane=document.getElementById('tab-expr');if(!pane)return;
+  const cats=['all','通常','喜び','怒り','哀しみ','楽しい','状態','立ち絵','その他'];
+  const filtered=exprs.filter(e=>(filt==='all'||e.category===filt)&&(!sq||(e.label||'').toLowerCase().includes(sq.toLowerCase())));
+  lbExprs=filtered;
+
+  const fbtn=cats.map(cat=>{
+    const n=cat==='all'?exprs.length:exprs.filter(e=>e.category===cat).length;
+    return `<button class="filter-btn${filt===cat?' active':''}" onclick="setFilt('${cat}')">${cat==='all'?'ALL':cat}(${n})</button>`;
+  }).join('');
+
+  const sortDefs=[{k:'num',lbl:'番号順'},{k:'name',lbl:'名前順'},{k:'cat',lbl:'カテゴリ'},{k:'added',lbl:'追加順'}];
+  const sbtn=sortDefs.map(s=>`<button class="sort-btn${sortMode===s.k?' active':''}" onclick="setSort('${s.k}')">${s.lbl}</button>`).join('');
+
+  let grid='';
+  if(filtered.length===0){
+    grid=`<div class="expr-empty"><div class="expr-empty-msg">${exprs.length===0?'NO IMAGES REGISTERED\n\n差分画像がありません\n「差分を追加」から登録してください':'NOT FOUND'}</div></div>`;
+  }else{
+    filtered.forEach((e,i)=>{
+      const isMain=getChar()?.mainExprId===e.id;
+      const sl=(e.label||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const sc=(e.category||'通常').replace(/'/g,"\\'");
+      const imgUrl=e.image_path?storageUrl(e.image_path):'';
+      const checked=selectedExprs.has(e.id)?'checked':'';
+      grid+=`<div class="expr-card${selectedExprs.has(e.id)?' selected':''}" id="ec-${e.id}">
+        ${IS_READONLY?'':`<input type="checkbox" class="expr-check edit-only" ${checked} onchange="toggleExprSel('${e.id}',this.checked)">`}
+        <div class="expr-img" onclick="openLb(${i})">${imgUrl?`<img src="${imgUrl}" alt="${e.label||''}" loading="lazy">`:`<div class="expr-img-ph">NO IMAGE</div>`}</div>
+        <div class="expr-name-bar">
+          <div class="expr-name" id="name-${e.id}">${e.label||'（名前なし）'}</div>
+          <div class="expr-cat">${e.category||''}</div>
+        </div>
+        <div class="expr-actions edit-only">
+          <button class="eact edit" onclick="openEditExpr('${e.id}','${sl}','${sc}')">✎ 編集</button>
+          <button class="eact star${isMain?' main':''}" onclick="setMainExpr('${e.id}')">${isMain?'★ メイン':'☆ メイン'}</button>
+          <button class="eact del" onclick="delExpr('${e.id}','${e.image_path||''}')">✕</button>
+        </div>
+      </div>`;
+    });
+  }
+
+  const bulkBar=!IS_READONLY&&selectedExprs.size>0?`
+    <div class="bulk-bar">
+      <span class="bulk-bar-txt">${selectedExprs.size} 件選択中</span>
+      <button class="btn btn-ghost btn-sm" onclick="selectedExprs.clear();loadExprTab()">選択解除</button>
+      <button class="btn btn-ghost btn-sm" onclick="openBulkCatModal()">カテゴリ変更</button>
+      <button class="btn btn-danger btn-sm" onclick="bulkDeleteExprs()">まとめて削除</button>
+    </div>`:'';
+
+  // 全選択ボタン
+  const selectAllBtn=!IS_READONLY&&filtered.length>0?`
+    <button class="btn btn-ghost btn-sm select-all-btn edit-only" style="font-size:8px" onclick="toggleSelectAll(${JSON.stringify(filtered.map(e=>e.id))})">
+      ${selectedExprs.size===filtered.length&&filtered.length>0?'全解除':'全選択'}
+    </button>`:'';
+
+  pane.innerHTML=`
+    <div class="expr-toolbar">
+      <div class="filter-wrap">${fbtn}</div>
+      <input class="expr-search" type="text" placeholder="差分名を検索…" value="${sq}" oninput="sq=this.value;loadExprTab()">
+    </div>
+    <div class="expr-toolbar" style="margin-top:-4px;margin-bottom:10px">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-dim);letter-spacing:2px;white-space:nowrap">並び順:</span>
+      ${sbtn}
+    </div>
+    ${bulkBar}
+    <div class="expr-meta-row">
+      <div class="expr-count"><strong>${filtered.length}</strong> 件表示 / 全 <strong>${exprs.length}</strong> 件 ${selectAllBtn}</div>
+      <button class="btn btn-primary btn-sm edit-only" onclick="openExprModal()">＋ 差分を追加</button>
+    </div>
+    <div class="expr-grid">${grid}</div>`;
+}
+
+function toggleSelectAll(ids){
+  const allSelected=ids.every(id=>selectedExprs.has(id));
+  ids.forEach(id=>{
+    if(allSelected)selectedExprs.delete(id);else selectedExprs.add(id);
+    const card=document.getElementById('ec-'+id);
+    if(card){
+      card.classList.toggle('selected',!allSelected);
+      const cb=card.querySelector('.expr-check');
+      if(cb)cb.checked=!allSelected;
+    }
+  });
+  // 全選択ボタンのテキストだけ更新
+  const btn=document.querySelector('.select-all-btn');
+  if(btn)btn.textContent=(!allSelected&&ids.length>0)?'全解除':'全選択';
+  updateBulkBar();
+}
+
+function openBulkCatModal(){
+  if(!selectedExprs.size)return;
+  document.getElementById('modal-bulk-cat').classList.add('open');
+}
+
+async function bulkChangeCat(){
+  const cat=document.getElementById('bulk-cat-sel').value;
+  const ids=[...selectedExprs];
+  const btn=document.querySelector('#modal-bulk-cat .btn-primary');
+  btn.disabled=true;btn.textContent='変更中…';
+  try{
+    for(const id of ids){
+      await sbUpsert('expressions',{id,char_id:getChar()?.id,category:cat});
+    }
+    closeModal('modal-bulk-cat');
+    selectedExprs.clear();
+    toast(`${ids.length}件のカテゴリを「${cat}」に変更しました`);
+    loadExprTab();
+  }catch(e){toast('エラー: '+e.message);}
+  btn.disabled=false;btn.textContent='変更する';
+}
+
+function setFilt(c){filt=c;loadExprTab();}
+function setSort(m){sortMode=m;loadExprTab();}
+
+function toggleExprSel(id,checked){
+  if(checked)selectedExprs.add(id);else selectedExprs.delete(id);
+  const card=document.getElementById('ec-'+id);
+  if(card)card.classList.toggle('selected',checked);
+  // bulkBarとカウントだけ更新（ページ再描画しない）
+  updateBulkBar();
+}
+
+function updateBulkBar(){
+  const existing=document.querySelector('.bulk-bar');
+  const metaRow=document.querySelector('.expr-meta-row');
+  if(!metaRow)return;
+  if(selectedExprs.size>0){
+    const bar=existing||document.createElement('div');
+    bar.className='bulk-bar';
+    bar.innerHTML=`
+      <span class="bulk-bar-txt">${selectedExprs.size} 件選択中</span>
+      <button class="btn btn-ghost btn-sm" onclick="selectedExprs.clear();clearAllChecks()">選択解除</button>
+      <button class="btn btn-ghost btn-sm" onclick="openBulkCatModal()">カテゴリ変更</button>
+      <button class="btn btn-danger btn-sm" onclick="bulkDeleteExprs()">まとめて削除</button>`;
+    if(!existing)metaRow.parentNode.insertBefore(bar,metaRow);
+  }else{
+    if(existing)existing.remove();
+  }
+}
+
+function clearAllChecks(){
+  document.querySelectorAll('.expr-check').forEach(cb=>{
+    cb.checked=false;
+    const card=cb.closest('.expr-card');
+    if(card)card.classList.remove('selected');
+  });
+  updateBulkBar();
+}
+
+async function bulkDeleteExprs(){
+  if(!selectedExprs.size)return;
+  if(!confirm(`${selectedExprs.size}件の差分画像を削除しますか？`))return;
+  const ids=[...selectedExprs];
+  toast('削除中…');
+  try{
+    // 画像パスを先に取得
+    const rows=await sbSelect('expressions',`char_id=eq.${getChar().id}`);
+    const paths=rows.filter(r=>ids.includes(r.id)&&r.image_path).map(r=>r.image_path);
+    // DBから削除
+    for(const id of ids){await sbDelete('expressions',`id=eq.${id}`);}
+    // Storageから削除
+    if(paths.length)try{await storageDelete(paths);}catch(e){}
+    selectedExprs.clear();
+    toast(`${ids.length}件を削除しました`);loadExprTab();
+  }catch(e){toast('エラー: '+e.message);}
+}
+
+function refreshTagCands(){
+  const cands=document.getElementById('tag-cands');if(!cands)return;
+  const input=document.getElementById('f-tags');if(!input)return;
+  // 全キャラのタグを収集
+  const allTags=[...new Set(chars.flatMap(c=>c.tags||[]))].filter(Boolean);
+  // 現在入力済みのタグ
+  const current=input.value.split(',').map(t=>t.trim()).filter(Boolean);
+  // 未使用のタグだけ候補表示
+  const unused=allTags.filter(t=>!current.includes(t));
+  if(!unused.length){cands.innerHTML='';return;}
+  cands.innerHTML=unused.map(t=>`<span class="tag-cand" onclick="addTagCand('${t.replace(/'/g,"\\'")}')">${t}</span>`).join('');
+}
+
+function addTagCand(tag){
+  const input=document.getElementById('f-tags');if(!input)return;
+  const current=input.value.split(',').map(t=>t.trim()).filter(Boolean);
+  if(!current.includes(tag))current.push(tag);
+  input.value=current.join(', ');
+  refreshTagCands();
+}
+
+function copyLblByEl(e,lbl,nameId){
+  e.stopPropagation();
+  const nameEl=document.getElementById(nameId);
+  const cp=t=>{if(navigator.clipboard)return navigator.clipboard.writeText(t);
+    const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);return Promise.resolve();};
+  cp(lbl).then(()=>{
+    if(nameEl){nameEl.classList.add('copied-flash');setTimeout(()=>nameEl.classList.remove('copied-flash'),900);}
+    toast(`「${lbl}」をコピーしました`);
+  });
+}
+
+function openLb(i){lbIdx=i;showLbAt(i);document.getElementById('lightbox').classList.add('open');}
+function showLbAt(i){
+  if(!lbExprs[i])return;
+  const url=lbExprs[i].image_path?storageUrl(lbExprs[i].image_path):'';
+  document.getElementById('lb-img').src=url;
+  document.getElementById('lb-name').textContent=lbExprs[i].label||'';
+}
+function lbNav(d){lbIdx=(lbIdx+d+lbExprs.length)%lbExprs.length;showLbAt(lbIdx);}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+document.getElementById('lightbox').addEventListener('click',function(e){if(e.target===this)closeLightbox();});
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('lightbox').classList.contains('open'))return;
+  if(e.key==='ArrowLeft')lbNav(-1);if(e.key==='ArrowRight')lbNav(1);if(e.key==='Escape')closeLightbox();
+});
+
+async function setMainExpr(id){
+  const c=getChar();if(!c)return;
+  try{
+    const rows=await sbSelect('expressions',`id=eq.${id}`);
+    if(!rows.length)return;
+    const ex=rows[0];
+    const imgUrl=ex.image_path?storageUrl(ex.image_path):'';
+    // バストアップとして保存（StorageのURLをbust_pathに）
+    if(ex.image_path){c.bust_path=ex.image_path;c.mainExprId=id;await saveCharToSupa(c);loadExprTab();toast('メイン画像を更新しました');}
+  }catch(e){toast('エラー: '+e.message);}
+}
+
+async function delExpr(id,imgPath){
+  if(!confirm('この差分画像を削除しますか？'))return;
+  try{
+    await sbDelete('expressions',`id=eq.${id}`);
+    if(imgPath){try{await storageDelete([imgPath]);}catch(e){}}
+    toast('削除しました');loadExprTab();
+  }catch(e){toast('エラー: '+e.message);}
+}
+function openEditExpr(id,lbl,cat){
+  document.getElementById('edit-id').value=id;document.getElementById('edit-label').value=lbl;document.getElementById('edit-cat').value=cat;
+  document.getElementById('modal-edit-expr').classList.add('open');
+}
+async function saveEditExpr(){
+  const id=document.getElementById('edit-id').value;
+  const label=document.getElementById('edit-label').value.trim();
+  const category=document.getElementById('edit-cat').value;
+  try{
+    await sbUpsert('expressions',{id,char_id:getChar()?.id,label,category});
+    closeModal('modal-edit-expr');toast('更新しました');loadExprTab();
+  }catch(e){toast('エラー: '+e.message);}
+}
+
+/* ════ CHAR CRUD ════ */
+let _formVer='6';
+function selectVer(v){
+  _formVer=v;
+  const b6=document.getElementById('f-ver-6');
+  const b7=document.getElementById('f-ver-7');
+  if(b6)b6.classList.toggle('active',v==='6');
+  if(b7)b7.classList.toggle('active',v==='7');
+  const formulaRow=document.getElementById('f-row-occformula');
+  if(formulaRow)formulaRow.style.display=v==='7'?'':'none';
+}
+const STATS=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
+function openAddModal(){
+  bustImg=null;
+  ['f-name','f-ruby','f-job','f-age','f-gender','f-height','f-weight','f-birthday','f-scenario','f-tags','f-emoji'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-color').value='#3c3428';
+  document.getElementById('f-color-hex').value='#3c3428';
+  document.getElementById('f-occ-bonus').value='';
+  document.getElementById('f-int-bonus').value='';
+  document.getElementById('f-occformula').value='EDU4';
+  STATS.forEach(s=>document.getElementById('f-'+s).value='');
+  ['hp','mp','san','luk'].forEach(k=>{document.getElementById('f-'+k+'-cur').value='';document.getElementById('f-'+k+'-max').value='';});
+  document.getElementById('main-prev').style.display='none';
+  document.getElementById('main-ph').style.display='block';
+  document.getElementById('modal-char-title').textContent='新規ファイルを作成';
+  document.getElementById('char-save-btn').textContent='ファイルを作成';
+  document.getElementById('char-save-btn').onclick=saveChar;
+  selectVer('6');
+  document.getElementById('modal-char').classList.add('open');
+  refreshTagCands();
+}
+async function openEditModal(){
+  const c=getChar();if(!c)return;bustImg=null;
+  document.getElementById('f-name').value=c.name||'';document.getElementById('f-ruby').value=c.ruby||'';
+  document.getElementById('f-job').value=c.job||'';document.getElementById('f-age').value=c.age||'';
+  document.getElementById('f-gender').value=c.gender||'';
+  document.getElementById('f-height').value=c.height||'';
+  document.getElementById('f-weight').value=c.weight||'';
+  document.getElementById('f-birthday').value=c.birthday||'';
+  document.getElementById('f-scenario').value=c.scenario||'';
+  document.getElementById('f-emoji').value=c.emoji||'';
+  document.getElementById('f-occ-bonus').value=c.occBonus||'';
+  document.getElementById('f-int-bonus').value=c.intBonus||'';
+  document.getElementById('f-occformula').value=c.occFormula||'EDU4';
+  const editColor=c.color||'#3c3428';
+  document.getElementById('f-color').value=editColor;
+  document.getElementById('f-color-hex').value=editColor;
+  document.getElementById('f-tags').value=(c.tags||[]).join(', ');
+  STATS.forEach(s=>document.getElementById('f-'+s).value=(c.stats||{})[s]||'');
+  ['hp','mp','san','luk'].forEach(k=>{const s=(c.secondary||{})[k]||{};document.getElementById('f-'+k+'-cur').value=s.cur||'';document.getElementById('f-'+k+'-max').value=s.max||'';});
+  if(c.bust_path){document.getElementById('main-prev').src=storageUrl(c.bust_path);document.getElementById('main-prev').style.display='block';document.getElementById('main-ph').style.display='none';}
+  else{document.getElementById('main-prev').style.display='none';document.getElementById('main-ph').style.display='block';}
+  selectVer(c.skillVer||'6');
+  document.getElementById('modal-char-title').textContent='ファイルを編集';
+  document.getElementById('char-save-btn').textContent='保存する';
+  document.getElementById('char-save-btn').onclick=()=>updChar(c.id);
+  document.getElementById('modal-char').classList.add('open');
+  refreshTagCands();
+}
+function onMainImg(e,type){
+  const f=e.target.files[0];if(!f)return;bustImg=f;
+  const r=new FileReader();r.onload=ev=>{
+    document.getElementById('main-prev').src=ev.target.result;
+    document.getElementById('main-prev').style.display='block';
+    document.getElementById('main-ph').style.display='none';
+  };r.readAsDataURL(f);
+}
+function collectForm(){
+  const stats={};STATS.forEach(s=>{const v=parseInt(document.getElementById('f-'+s).value);if(v)stats[s]=v;});
+  const secondary={};['hp','mp','san','luk'].forEach(k=>{secondary[k]={cur:parseInt(document.getElementById('f-'+k+'-cur').value)||0,max:parseInt(document.getElementById('f-'+k+'-max').value)||0};});
+  return{
+    name:document.getElementById('f-name').value.trim(),
+    ruby:document.getElementById('f-ruby').value.trim(),
+    job:document.getElementById('f-job').value.trim(),
+    age:document.getElementById('f-age').value.trim(),
+    gender:document.getElementById('f-gender').value.trim(),
+    height:document.getElementById('f-height').value.trim(),
+    weight:document.getElementById('f-weight').value.trim(),
+    birthday:document.getElementById('f-birthday').value.trim(),
+    scenario:document.getElementById('f-scenario').value.trim(),
+    emoji:document.getElementById('f-emoji').value.trim(),
+    color:document.getElementById('f-color').value,
+    tags:document.getElementById('f-tags').value.trim().split(',').map(t=>t.trim()).filter(Boolean),
+    stats,secondary,
+    skillVer:_formVer,
+    occFormula:document.getElementById('f-occformula').value,
+    occBonus:parseInt(document.getElementById('f-occ-bonus').value)||0,
+    intBonus:parseInt(document.getElementById('f-int-bonus').value)||0,
+  };
+}
+async function saveChar(){
+  const d=collectForm();if(!d.name){toast('探索者名を入力してください');return;}
+  const btn=document.getElementById('char-save-btn');btn.disabled=true;btn.textContent='保存中…';
+  const id=Date.now().toString();
+  const c={id,...d,memo:'',quote:'',bg:{},bust_path:'',full_path:'',hidden:false};
+  try{
+    if(bustImg){
+      const ext=bustImg.name.split('.').pop().toLowerCase()||'jpg';
+      const path=`${id}/bust.${ext}`;
+      await storageUpload(path,bustImg);c.bust_path=path;
+    }
+    await saveCharToSupa(c);
+    chars.push(c);
+    closeModal('modal-char');toast(`「${d.name}」を登録しました`);renderList();
+  }catch(e){toast('エラー: '+e.message);}
+  btn.disabled=false;btn.textContent='ファイルを作成';
+}
+async function updChar(id){
+  const c=chars.find(x=>x.id===id);if(!c)return;
+  const d=collectForm();if(!d.name){toast('探索者名を入力してください');return;}
+  const btn=document.getElementById('char-save-btn');btn.disabled=true;btn.textContent='保存中…';
+  try{
+    Object.assign(c,d);
+    if(bustImg){
+      const ext=bustImg.name.split('.').pop().toLowerCase()||'jpg';
+      const path=`${id}/bust.${ext}`;
+      if(c.bust_path && c.bust_path!==path){
+        try{await storageDelete([c.bust_path]);}catch(e){}
+      }
+      await storageUpload(path,bustImg);c.bust_path=path;
+    }
+    await saveCharToSupa(c);
+    closeModal('modal-char');toast('更新しました');renderDetail();
+  }catch(e){toast('エラー: '+e.message);}
+  btn.disabled=false;btn.textContent='保存する';
+}
+async function toggleHidden(){
+  const c=getChar();if(!c)return;
+  c.hidden=!c.hidden;
+  try{
+    await saveCharToSupa(c);
+    const btn=document.getElementById('hidden-toggle-btn');
+    if(btn){
+      btn.textContent=c.hidden?'非表示中':'非表示';
+      btn.classList.toggle('is-hidden',!!c.hidden);
+    }
+    toast(c.hidden?'一覧から非表示にしました':'一覧に表示するようにしました');
+  }catch(e){toast('エラー: '+e.message);c.hidden=!c.hidden;}
+}
+async function deleteChar(){
+  const c=getChar();if(!c)return;
+  if(!confirm(`「${c.name}」とすべての差分画像を削除しますか？`))return;
+  try{
+    // 差分画像をStorageから削除
+    const rows=await sbSelect('expressions',`char_id=eq.${c.id}`);
+    const paths=rows.map(r=>r.image_path).filter(Boolean);
+    if(c.bust_path)paths.push(c.bust_path);
+    if(c.full_path)paths.push(c.full_path);
+    if(paths.length)try{await storageDelete(paths);}catch(e){}
+    // DBから削除（cascadeで差分も消える）
+    await sbDelete('characters',`id=eq.${c.id}`);
+    chars=chars.filter(x=>x.id!==curId);
+    showView('list');toast('削除しました');
+  }catch(e){toast('エラー: '+e.message);}
+}
+
+/* ════ EXPR UPLOAD ════ */
+let exprFiles=[];
+function openExprModal(){
+  exprFiles=[];document.getElementById('e-label').value='';document.getElementById('e-cat').value='通常';
+  document.getElementById('expr-prev').style.display='none';document.getElementById('expr-ph').style.display='block';
+  document.getElementById('expr-cnt').style.display='none';
+  const b=document.getElementById('expr-save-btn');b.disabled=false;b.textContent='追加する';
+  document.getElementById('modal-expr').classList.add('open');
+}
+function onExprImg(e){
+  exprFiles=Array.from(e.target.files);if(!exprFiles.length)return;
+  const r=new FileReader();r.onload=ev=>{document.getElementById('expr-prev').src=ev.target.result;document.getElementById('expr-prev').style.display='block';document.getElementById('expr-ph').style.display='none';};r.readAsDataURL(exprFiles[0]);
+  const cnt=document.getElementById('expr-cnt');cnt.textContent=`${exprFiles.length} 枚 選択中`;cnt.style.display='block';
+}
+async function saveExpr(){
+  if(!exprFiles.length){toast('画像を選択してください');return;}
+  const c=getChar();if(!c)return;
+  const base=document.getElementById('e-label').value.trim();
+  const cat=document.getElementById('e-cat').value;
+  const btn=document.getElementById('expr-save-btn');btn.disabled=true;
+  const total=exprFiles.length,multi=total>1,ts=Date.now();
+  try{
+    for(let i=0;i<total;i++){
+      const f=exprFiles[i];
+      const lbl=multi?(base?`${base}${String(i+1).padStart(2,'0')}`:(f.name.replace(/\.[^.]+$/,''))):(base||(f.name.replace(/\.[^.]+$/,'')));
+      const id=`${c.id}_${ts}_${i}`;
+      const ext=f.name.split('.').pop();
+      const path=`${c.id}/expr/${id}.${ext}`;
+      await storageUpload(path,f);
+      await sbUpsert('expressions',{id,char_id:c.id,label:lbl,category:cat,image_path:path});
+      btn.textContent=`保存中… ${i+1}/${total}`;
+    }
+    closeModal('modal-expr');toast(`${total}枚を追加しました`);loadExprTab();
+  }catch(e){toast('エラー: '+e.message);}
+  exprFiles=[];btn.disabled=false;btn.textContent='追加する';
+}
+
+const readFile=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=()=>rej(r.error);r.readAsDataURL(f);});
+
+/* ════ SKILL DATA ════ */
+/* sub配列がある技能はプルダウンで種類選択 */
+/* ─── 6版（クトゥルフ神話TRPG第6版準拠） ─── */
+const SKILL_DEFS_6 = [
+  {cat:'戦闘', name:'こぶし（パンチ）', base:50},
+  {cat:'戦闘', name:'キック',           base:25},
+  {cat:'戦闘', name:'回避',             baseExpr:'DEX*2'},
+  {cat:'戦闘', name:'組み付き',         base:25},
+  {cat:'戦闘', name:'頭突き',           base:10},
+  {cat:'戦闘', name:'投擲',             base:25},
+  {cat:'戦闘', name:'マーシャルアーツ', base:1},
+  {cat:'戦闘', name:'拳銃',             base:20},
+  {cat:'戦闘', name:'マシンガン',       base:15},
+  {cat:'戦闘', name:'サブマシンガン',   base:15},
+  {cat:'戦闘', name:'ショットガン',     base:30},
+  {cat:'戦闘', name:'ライフル',         base:25},
+  {cat:'探索', name:'目星',     base:25},
+  {cat:'探索', name:'聞き耳',   base:25},
+  {cat:'探索', name:'図書館',   base:25},
+  {cat:'探索', name:'応急手当', base:30},
+  {cat:'探索', name:'精神分析', base:1},
+  {cat:'探索', name:'隠す',     base:15},
+  {cat:'探索', name:'隠れる',   base:10},
+  {cat:'探索', name:'忍び歩き', base:10},
+  {cat:'探索', name:'鍵開け',   base:1},
+  {cat:'探索', name:'写真術',   base:10},
+  {cat:'探索', name:'追跡',     base:10},
+  {cat:'探索', name:'ナビゲート', base:10},
+  {cat:'探索', name:'登攀',     base:40},
+  {cat:'探索', name:'跳躍',     base:25},
+  {cat:'行動', name:'製作',       base:5,  free:true},
+  {cat:'行動', name:'運転',       base:20, free:true},
+  {cat:'行動', name:'操縦',       base:1,  free:true},
+  {cat:'行動', name:'機械修理',   base:20},
+  {cat:'行動', name:'電気修理',   base:10},
+  {cat:'行動', name:'重機械操作', base:1},
+  {cat:'行動', name:'乗馬',       base:5},
+  {cat:'行動', name:'水泳',       base:25},
+  {cat:'行動', name:'変装',       base:1},
+  {cat:'交渉', name:'信用',       base:15},
+  {cat:'交渉', name:'説得',       base:15},
+  {cat:'交渉', name:'言いくるめ', base:5},
+  {cat:'交渉', name:'値切り',     base:5},
+  {cat:'交渉', name:'母国語',     baseExpr:'EDU*5', free:true},
+  {cat:'知識', name:'医学',           base:5},
+  {cat:'知識', name:'オカルト',       base:5},
+  {cat:'知識', name:'心理学',         base:5},
+  {cat:'知識', name:'芸術',           base:5,  free:true},
+  {cat:'知識', name:'経理',           base:10},
+  {cat:'知識', name:'歴史',           base:20},
+  {cat:'知識', name:'法律',           base:5},
+  {cat:'知識', name:'コンピューター', base:1},
+  {cat:'知識', name:'化学',           base:1},
+  {cat:'知識', name:'人類学',         base:1},
+  {cat:'知識', name:'生物学',         base:1},
+  {cat:'知識', name:'地質学',         base:1},
+  {cat:'知識', name:'天文学',         base:1},
+  {cat:'知識', name:'博物学',         base:10},
+  {cat:'知識', name:'物理学',         base:1},
+  {cat:'知識', name:'電子工学',       base:1},
+  {cat:'知識', name:'薬学',           base:1},
+  {cat:'知識', name:'考古学',         base:1},
+  {cat:'知識', name:'クトゥルフ神話', base:0},
+];
+
+/* ─── 7版（新クトゥルフ神話TRPG準拠） ─── */
+const SKILL_DEFS_7 = [
+  {cat:'戦闘',  name:'近接戦闘',       base:25, sub:['格闘','斧','絞殺ひも','チェーンソー','刀剣','フレイル','むち','槍','自由記入'], defaultSub:'格闘'},
+  {cat:'戦闘',  name:'射撃',           base:20, sub:['拳銃','ライフル/ショットガン','サブマシンガン','マシンガン','重火器','弓','火炎放射器','自由記入'], defaultSub:'拳銃'},
+  {cat:'戦闘',  name:'回避',           baseExpr:'DEX/2'},
+  {cat:'戦闘',  name:'投擲',           base:20},
+  {cat:'探索',  name:'目星',           base:25},
+  {cat:'探索',  name:'聞き耳',         base:20},
+  {cat:'探索',  name:'図書館',         base:20},
+  {cat:'探索',  name:'応急手当',       base:30},
+  {cat:'探索',  name:'精神分析',       base:1},
+  {cat:'探索',  name:'鑑定',           base:5},
+  {cat:'行動',  name:'鍵開け',         base:1},
+  {cat:'行動',  name:'変装',           base:5},
+  {cat:'行動',  name:'運転',           base:20, free:true},
+  {cat:'行動',  name:'操縦',           base:1,  free:true},
+  {cat:'行動',  name:'乗馬',           base:5},
+  {cat:'行動',  name:'水泳',           base:20},
+  {cat:'行動',  name:'跳躍',           base:20},
+  {cat:'行動',  name:'登攀',           base:20},
+  {cat:'行動',  name:'追跡',           base:10},
+  {cat:'行動',  name:'ナビゲート',     base:10},
+  {cat:'行動',  name:'隠密',           base:20},
+  {cat:'行動',  name:'手さばき',       base:10},
+  {cat:'行動',  name:'サバイバル',     base:10, free:true},
+  {cat:'交渉',  name:'母国語',         baseExpr:'EDU', free:true},
+  {cat:'交渉',  name:'言いくるめ',     base:5},
+  {cat:'交渉',  name:'説得',           base:10},
+  {cat:'交渉',  name:'威圧',           base:15},
+  {cat:'交渉',  name:'魅惑',           base:15},
+  {cat:'知識',  name:'芸術',           base:5,  free:true},
+  {cat:'知識',  name:'製作',           base:5,  free:true},
+  {cat:'知識',  name:'機械修理',       base:10},
+  {cat:'知識',  name:'電気修理',       base:10},
+  {cat:'知識',  name:'重機械操作',     base:1},
+  {cat:'知識',  name:'コンピューター', base:5},
+  {cat:'知識',  name:'電子工学',       base:1},
+  {cat:'知識',  name:'医学',           base:1},
+  {cat:'知識',  name:'科学',           base:1, sub:['暗号学','化学','気象学','工学','植物学','数学','生物学','地質学','天文学','動物学','物理学','法医学','薬学','自由記入']},
+  {cat:'知識',  name:'自然', base:10},
+  {cat:'知識',  name:'経理',           base:5},
+  {cat:'知識',  name:'考古学',         base:1},
+  {cat:'知識',  name:'オカルト',       base:5},
+  {cat:'知識',  name:'心理学',         base:10},
+  {cat:'知識',  name:'人類学',         base:1},
+  {cat:'知識',  name:'法律',           base:5},
+  {cat:'知識',  name:'歴史',           base:5},
+  {cat:'知識',  name:'他の言語',       base:1, free:true},
+  {cat:'知識',  name:'クトゥルフ神話', base:0},
+  {cat:'知識',  name:'ヒプノーシス',   base:1},
+];
+
+/* ════ SKILLS TAB ════ */
+let skillSearch = '';
+function getSkillVer(c){ return (c && c.skillVer) || '6'; }
+
+function loadSkillsTab(){
+  const pane = document.getElementById('tab-skills');
+  if(!pane) return;
+  const c = getChar(); if(!c) return;
+  renderSkillsPane(c);
+}
+
+function renderSkillsPane(c){
+  const pane = document.getElementById('tab-skills');
+  if(!pane) return;
+  const stats = c.stats || {};
+  const skills = c.skills || {};       // {name: {occ,int,grow,etc,isOcc}}
+  const customSkills = c.customSkills || [];
+  const ver = getSkillVer(c);
+  const stdDefs = ver === '7' ? SKILL_DEFS_7 : SKILL_DEFS_6;
+
+  const sq = skillSearch.toLowerCase();
+  const allDefs = [
+    ...stdDefs.filter(d => !d.hidden),
+    ...customSkills.map(d => ({...d, isCustom:true}))
+  ];
+  const filtered = allDefs.filter(d => !sq || d.name.toLowerCase().includes(sq));
+
+  // カテゴリ順
+  const stdCats = [...new Set(stdDefs.filter(d=>!d.hidden).map(d=>d.cat))];
+  const customCats = [...new Set(customSkills.map(d=>d.cat))].filter(c=>!stdCats.includes(c));
+  const allCats = [...stdCats, ...customCats];
+
+  // ポイント計算（版・計算式・補正値ごとに分岐）
+  const edu  = parseInt(stats['EDU'])||0;
+  const int_ = parseInt(stats['INT'])||0;
+  const str_ = parseInt(stats['STR'])||0;
+  const dex  = parseInt(stats['DEX'])||0;
+  const pow_ = parseInt(stats['POW'])||0;
+  const app  = parseInt(stats['APP'])||0;
+  const con  = parseInt(stats['CON'])||0;
+  const siz  = parseInt(stats['SIZ'])||0;
+  const occBonus = parseInt(c.occBonus)||0;
+  const intBonus = parseInt(c.intBonus)||0;
+
+  let occBase, intBase, occFormula, intFormula;
+  if(ver === '7'){
+    const formula = c.occFormula || 'EDU4';
+    const abilityMap = {
+      EDU4:     {base:edu*4,            label:'EDU×4'},
+      EDU2STR2: {base:edu*2+str_*2,     label:'EDU×2＋STR×2'},
+      EDU2DEX2: {base:edu*2+dex*2,      label:'EDU×2＋DEX×2'},
+      EDU2INT2: {base:edu*2+int_*2,     label:'EDU×2＋INT×2'},
+      EDU2CON2: {base:edu*2+con*2,      label:'EDU×2＋CON×2'},
+      EDU2POW2: {base:edu*2+pow_*2,     label:'EDU×2＋POW×2'},
+      EDU2APP2: {base:edu*2+app*2,      label:'EDU×2＋APP×2'},
+      EDU2SIZ2: {base:edu*2+siz*2,      label:'EDU×2＋SIZ×2'},
+    };
+    const f = abilityMap[formula] || abilityMap['EDU4'];
+    occBase = f.base;
+    occFormula = f.label;
+    intBase = int_*2;
+    intFormula = 'INT×2';
+  } else {
+    occBase = edu * 20;
+    occFormula = 'EDU×20';
+    intBase = int_ * 10;
+    intFormula = 'INT×10';
+  }
+  const occMax = occBase + occBonus;
+  const intMax = intBase + intBonus;
+  const occFormulaFull = occBonus!==0 ? `${occFormula}${occBonus>=0?'+':''}${occBonus}` : occFormula;
+  const intFormulaFull = intBonus!==0 ? `${intFormula}${intBonus>=0?'+':''}${intBonus}` : intFormula;
+
+  let usedOcc=0, usedInt=0, usedGrow=0, usedEtc=0;
+  for(const [,sv] of Object.entries(skills)){
+    usedOcc  += parseInt(sv.occ )||0;
+    usedInt  += parseInt(sv.int )||0;
+    usedGrow += parseInt(sv.grow)||0;
+    usedEtc  += parseInt(sv.etc )||0;
+  }
+  const remOcc = occMax - usedOcc;
+  const remInt = intMax - usedInt;
+
+  // ポイントバー
+  const ptBar = `<div class="skills-pt-bar">
+    <div class="skills-pt-item ${remOcc<0?'skills-pt-rem-neg':''}">
+      <span class="skills-pt-label">職業P 残り</span>
+      <span class="skills-pt-val">${remOcc}</span>
+      <span class="skills-pt-sub">使用 ${usedOcc} / 合計 ${occMax}</span>
+    </div>
+    <div style="width:1px;height:36px;background:var(--rule-light);align-self:center"></div>
+    <div class="skills-pt-item ${remInt<0?'skills-pt-rem-neg':''}">
+      <span class="skills-pt-label">趣味P 残り</span>
+      <span class="skills-pt-val">${remInt}</span>
+      <span class="skills-pt-sub">使用 ${usedInt} / 合計 ${intMax}</span>
+    </div>
+    <div style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);letter-spacing:1px;align-self:center;text-align:right;line-height:1.7">
+      <div>職業P: ${occFormulaFull}</div>
+      <div>趣味P: ${intFormulaFull}</div>
+    </div>
+  </div>`;
+
+  // テーブルヘッダー（共通）
+  const thead = `<thead><tr>
+    <th class="th-chk">職</th>
+    <th class="th-name">技能名</th>
+    <th class="th-base">初期値</th>
+    <th class="th-occ" style="color:#3a6020">職業</th>
+    <th class="th-int" style="color:#1a3a6a">趣味</th>
+    <th class="th-grow" style="color:#6a3a10">成長</th>
+    <th class="th-etc" style="color:#3a3a5a">その他</th>
+    <th class="th-act">合計</th>
+  </tr></thead>`;
+
+  let catsHtml = '';
+  const filteredCats = allCats.filter(cat => filtered.some(d=>d.cat===cat));
+  for(const cat of filteredCats){
+    const catDefs = filtered.filter(d=>d.cat===cat);
+    const rows = catDefs.map(def => {
+      const hasSub = def.sub && def.sub.length > 0;
+      if(hasSub){
+        const savedSub=(skills[def.name]||{}).selectedSub||'';
+        const activeSub=savedSub||def.defaultSub||'';
+        const fullName=activeSub?`${def.name}（${activeSub}）`:def.name;
+        const base=getSkillBase(def,stats,c.skillBaseOverrides);
+        const sk=activeSub?(skills[fullName]||{}):{};
+        const occ=sk.occ!==undefined?sk.occ:'';
+        const int_=sk.int!==undefined?sk.int:'';
+        const grow=sk.grow!==undefined?sk.grow:'';
+        const etc=sk.etc!==undefined?sk.etc:'';
+        const isOcc=!!sk.isOcc;
+        const total=base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
+        const hasAny=!!activeSub&&(occ!==''||int_!==''||grow!==''||etc!=='');
+        const tr=document.createElement('tr');
+        tr.className='skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'');
+        // 職チェック（左端）
+        const tdCk=document.createElement('td');tdCk.className='td-chk-cell';
+        const ck=document.createElement('input');ck.type='checkbox';ck.className='skill-occ-chk';ck.checked=isOcc;
+        ck.addEventListener('change',e=>setSkillOcc(fullName,e.target.checked));
+        tdCk.appendChild(ck);tr.appendChild(tdCk);
+        // 技能名＋プルダウン
+        const tdN=document.createElement('td');tdN.className='td-name-cell';
+        const ns=document.createElement('span');ns.className='skill-name-txt';ns.textContent=def.name;tdN.appendChild(ns);
+        const sel=document.createElement('select');sel.className='skill-sub-sel';
+        const opts=(activeSub?[]:['<option value="" disabled selected>(選択)</option>'])
+          .concat(def.sub.map(sv=>`<option value="${_esc(sv)}"${sv===activeSub?' selected':''}>${_esc(sv)}</option>`)).join('');
+        sel.innerHTML=opts;
+        sel.addEventListener('change',e=>changeSkillSub(def.name,e.target.value));
+        tdN.appendChild(sel);tr.appendChild(tdN);
+        // 初期値
+        const tdB=document.createElement('td');tdB.className='td-base';
+        if(def.baseExpr){const sp=document.createElement('input');sp.type='number';sp.className='skill-base-in';sp.value=base||'';sp.placeholder=String(base);sp.title=def.baseExpr+' (上書き可)';sp.addEventListener('input',e=>setSkillBaseOverride(def.name,e.target.value));tdB.appendChild(sp);}
+        else{const bi=document.createElement('input');bi.type='number';bi.className='skill-base-in';bi.min=0;bi.max=99;bi.value=base||'';bi.placeholder=String(base);bi.title='初期値を上書き';bi.addEventListener('input',e=>setSkillBaseOverride(def.name,e.target.value));tdB.appendChild(bi);}
+        tr.appendChild(tdB);
+        // ポイント4列
+        [['td-occ',occ,'occ'],['td-int',int_,'int'],['td-grow',grow,'grow'],['td-etc',etc,'etc']].forEach(([cls,val,key])=>{
+          const td=document.createElement('td');td.className='td-pts '+cls;
+          const inp=document.createElement('input');inp.type='number';inp.className='skill-pts-in';inp.min=0;inp.max=999;inp.placeholder='—';inp.value=val;
+          inp.addEventListener('input',e=>setSkillPts(fullName,key,e.target.value));
+          td.appendChild(inp);tr.appendChild(td);
+        });
+        // 合計
+        const tdA=document.createElement('td');tdA.className='td-act';
+        const ts=document.createElement('span');ts.className='td-total'+(total>base*2?' total-high':'');
+        ts.textContent=total;tdA.appendChild(ts);tr.appendChild(tdA);
+        return tr.outerHTML;
+      } else { return (()=>{
+      // subなし通常技能
+      const base=getSkillBase(def,stats,c.skillBaseOverrides);
+      const sk=skills[def.name]||{};
+      const occ=sk.occ!==undefined?sk.occ:'';
+      const int_=sk.int!==undefined?sk.int:'';
+      const grow=sk.grow!==undefined?sk.grow:'';
+      const etc=sk.etc!==undefined?sk.etc:'';
+      const isOcc=!!sk.isOcc;
+      const total=base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
+      const hasAny=occ!==''||int_!==''||grow!==''||etc!=='';
+      const isCustom=!!def.isCustom;
+      const tr=document.createElement('tr');
+      tr.className='skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'');
+      // 職チェック（左端）
+      const tdCk=document.createElement('td');tdCk.className='td-chk-cell';
+      const ck=document.createElement('input');ck.type='checkbox';ck.className='skill-occ-chk';ck.checked=isOcc;
+      ck.addEventListener('change',e=>setSkillOcc(def.name,e.target.checked));
+      tdCk.appendChild(ck);tr.appendChild(tdCk);
+      // 技能名
+      const tdN=document.createElement('td');tdN.className='td-name-cell';
+      tdN.addEventListener('dblclick',()=>startSkillRename(def.name,tdN));
+      const ns=document.createElement('span');ns.className='skill-name-txt';ns.textContent=def.name;
+      if(isCustom){const b=document.createElement('span');b.className='skill-custom-badge';b.textContent='custom';ns.appendChild(b);}
+      tdN.appendChild(ns);
+      if(def.free){const fi=document.createElement('input');fi.type='text';fi.className='skill-free-in';fi.placeholder='（記入）';fi.value=(skills[def.name]||{}).freeNote||'';fi.addEventListener('input',e=>setSkillFree(def.name,e.target.value));tdN.appendChild(fi);}
+      const ne=document.createElement('input');ne.type='text';ne.className='skill-name-edit';ne.value=def.name;
+      ne.addEventListener('blur',e=>endSkillRename(def.name,e.target,isCustom));
+      ne.addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();if(e.key==='Escape'){e.target.value=def.name;e.target.blur();}});
+      tdN.appendChild(ne);tr.appendChild(tdN);
+      // 初期値
+      const tdB=document.createElement('td');tdB.className='td-base';
+      if(def.baseExpr){const sp=document.createElement('input');sp.type='number';sp.className='skill-base-in';sp.value=base||'';sp.placeholder=String(base);sp.title=def.baseExpr+' (上書き可)';sp.addEventListener('input',e=>setSkillBaseOverride(def.name,e.target.value));tdB.appendChild(sp);}
+      else{const bi=document.createElement('input');bi.type='number';bi.className='skill-base-in';bi.min=0;bi.max=99;bi.value=base||'';bi.placeholder=String(base);bi.title='初期値を上書き';bi.addEventListener('input',e=>setSkillBaseOverride(def.name,e.target.value));tdB.appendChild(bi);}
+      tr.appendChild(tdB);
+      // ポイント4列
+      [['td-occ',occ,'occ'],['td-int',int_,'int'],['td-grow',grow,'grow'],['td-etc',etc,'etc']].forEach(([cls,val,key])=>{
+        const td=document.createElement('td');td.className='td-pts '+cls;
+        const inp=document.createElement('input');inp.type='number';inp.className='skill-pts-in';inp.min=0;inp.max=999;inp.placeholder='—';inp.value=val;
+        inp.addEventListener('input',e=>setSkillPts(def.name,key,e.target.value));
+        td.appendChild(inp);tr.appendChild(td);
+      });
+      // 合計＋削除
+      const tdA=document.createElement('td');tdA.className='td-act';
+      const ts=document.createElement('span');ts.className='td-total'+(total>base*2?' total-high':'');
+      ts.textContent=total;tdA.appendChild(ts);
+      if(isCustom){const db=document.createElement('button');db.className='skill-del-btn';db.title='削除';db.textContent='✕';db.addEventListener('click',()=>deleteCustomSkill(def.name));tdA.appendChild(db);}
+      tr.appendChild(tdA);
+      return tr.outerHTML;
+      })();
+      }
+    }).join('');
+    catsHtml += `<div class="skills-category">
+      <div class="skills-cat-header">
+        <div class="skills-cat-title">${cat}</div>
+        <div class="skills-cat-count">${catDefs.length}件</div>
+        <button class="skills-cat-add edit-only" onclick="addCustomSkill('${cat}')">＋ 追加</button>
+      </div>
+      <table class="skills-table">${thead}<tbody>${rows}</tbody></table>
+    </div>`;
+  }
+  if(!catsHtml) catsHtml = `<div class="skill-empty">NO RESULTS</div>`;
+
+  pane.innerHTML = `
+    <div class="skills-toolbar">
+      <span class="skills-ver-badge">${ver==='7'?'7版（新CoC）':'6版'}</span>
+      <input class="skills-search" type="text" placeholder="技能名を検索…"
+        value="${skillSearch}"
+        oninput="skillSearch=this.value;loadSkillsTab()">
+    </div>
+    ${ptBar}
+    ${catsHtml}`;
+}
+
+function setSkillVer(v){
+  const c = getChar(); if(!c) return;
+  c.skillVer = v;
+  debounce('skillver', ()=>saveCharToSupa(c), 500);
+  loadSkillsTab();
+}
+
+/* occ / int / grow / etc の入力 */
+function setSkillPts(name, col, val){
+  const c = getChar(); if(!c) return;
+  if(!c.skills) c.skills = {};
+  if(!c.skills[name]) c.skills[name] = {};
+  const num = val===''||val===null ? undefined : parseInt(val)||0;
+  if(num === undefined) delete c.skills[name][col];
+  else c.skills[name][col] = num;
+  // 全列空＆職業チェックなしなら削除
+  const sk = c.skills[name];
+  if(sk && !sk.occ && !sk.int && !sk.grow && !sk.etc && !sk.isOcc) delete c.skills[name];
+  debounce('skills', ()=>saveCharToSupa(c), 600);
+  // ポイントバーのみリアルタイム更新
+  _updatePtBar(c);
+}
+
+function setSkillOcc(name, checked){
+  const c = getChar(); if(!c) return;
+  if(!c.skills) c.skills = {};
+  if(!c.skills[name]) c.skills[name] = {};
+  c.skills[name].isOcc = checked;
+  if(!checked && !c.skills[name].occ && !c.skills[name].int && !c.skills[name].grow && !c.skills[name].etc)
+    delete c.skills[name];
+  debounce('skills', ()=>saveCharToSupa(c), 600);
+}
+
+/* ポイントバーのみ差分更新（全再描画なし） */
+function _updatePtBar(c){
+  const stats = c.stats || {};
+  const skills = c.skills || {};
+  const ver = getSkillVer(c);
+  const edu  = parseInt(stats['EDU'])||0;
+  const int_ = parseInt(stats['INT'])||0;
+  const occBonus = parseInt(c.occBonus)||0;
+  const intBonus = parseInt(c.intBonus)||0;
+  let occBase, intBase;
+  if(ver==='7'){
+    const formula = c.occFormula||'EDU4';
+    const sMap={EDU4:edu*4,EDU2STR2:edu*2+(parseInt(stats.STR)||0)*2,EDU2DEX2:edu*2+(parseInt(stats.DEX)||0)*2,EDU2INT2:edu*2+int_*2,EDU2CON2:edu*2+(parseInt(stats.CON)||0)*2,EDU2POW2:edu*2+(parseInt(stats.POW)||0)*2,EDU2APP2:edu*2+(parseInt(stats.APP)||0)*2,EDU2SIZ2:edu*2+(parseInt(stats.SIZ)||0)*2};
+    occBase=sMap[formula]||edu*4;
+    intBase=int_*2;
+  } else {
+    occBase=edu*20;
+    intBase=int_*10;
+  }
+  const occMax=occBase+occBonus, intMax=intBase+intBonus;
+  let usedOcc=0,usedInt=0,usedGrow=0,usedEtc=0;
+  for(const [,sv] of Object.entries(skills)){
+    usedOcc  += parseInt(sv.occ )||0;
+    usedInt  += parseInt(sv.int )||0;
+    usedGrow += parseInt(sv.grow)||0;
+    usedEtc  += parseInt(sv.etc )||0;
+  }
+  const remOcc=occMax-usedOcc, remInt=intMax-usedInt;
+  const bar=document.querySelector('.skills-pt-bar');
+  if(!bar)return;
+  const items=bar.querySelectorAll('.skills-pt-item');
+  if(items.length<2)return;
+  // 職業P残り
+  items[0].className=`skills-pt-item${remOcc<0?' skills-pt-rem-neg':''}`;
+  items[0].querySelector('.skills-pt-val').textContent=remOcc;
+  items[0].querySelector('.skills-pt-sub').textContent=`使用 ${usedOcc} / 合計 ${occMax}`;
+  // 趣味P残り
+  items[1].className=`skills-pt-item ${remInt<0?'skills-pt-rem-neg':'skills-pt-rem-pos'}`;
+  items[1].querySelector('.skills-pt-val').textContent=remInt;
+  items[1].querySelector('.skills-pt-sub').textContent=`使用 ${usedInt} / 合計 ${intMax}`;
+}
+
+/* 技能名ダブルクリック編集 */
+function startSkillRename(name, td){
+  const txt = td.querySelector('.skill-name-txt');
+  const inp = td.querySelector('.skill-name-edit');
+  if(!txt||!inp) return;
+  txt.classList.add('hidden');
+  inp.classList.add('active');
+  inp.focus(); inp.select();
+}
+function endSkillRename(oldName, inp, isCustom){
+  const td = inp.closest('td');
+  const txt = td ? td.querySelector('.skill-name-txt') : null;
+  inp.classList.remove('active');
+  if(txt) txt.classList.remove('hidden');
+  const newName = inp.value.trim();
+  if(!newName || newName === oldName) return;
+  const c = getChar(); if(!c) return;
+  if(isCustom){
+    if(!c.customSkills) c.customSkills=[];
+    const def = c.customSkills.find(d=>d.name===oldName);
+    if(def) def.name = newName;
+  }
+  if(c.skills && c.skills[oldName]){
+    c.skills[newName] = c.skills[oldName];
+    delete c.skills[oldName];
+  }
+  debounce('skillrename', ()=>{ saveCharToSupa(c); loadSkillsTab(); }, 300);
+}
+
+/* カスタム技能追加 */
+function addCustomSkill(cat){
+  const c = getChar(); if(!c) return;
+  const name = prompt('技能名を入力してください', '新しい技能');
+  if(!name || !name.trim()) return;
+  const baseStr = prompt('初期値を入力してください\n（数値 例: 5 ／ 能力値参照 例: DEX*2）', '1');
+  if(baseStr === null) return;
+  const trimBase = (baseStr||'1').trim();
+  const newCat = cat || prompt('カテゴリを入力してください', 'カスタム') || 'カスタム';
+  if(!c.customSkills) c.customSkills = [];
+  const isExpr = /^[A-Z]/.test(trimBase);
+  c.customSkills.push(isExpr
+    ? {id:Date.now().toString(), cat:newCat, name:name.trim(), baseExpr:trimBase}
+    : {id:Date.now().toString(), cat:newCat, name:name.trim(), base:parseInt(trimBase)||0}
+  );
+  saveCharToSupa(c).then(()=>loadSkillsTab());
+}
+
+/* カスタム技能削除 */
+function deleteCustomSkill(name){
+  if(!confirm(`「${name}」を削除しますか？`)) return;
+  const c = getChar(); if(!c) return;
+  c.customSkills = (c.customSkills||[]).filter(d=>d.name!==name);
+  if(c.skills && c.skills[name]) delete c.skills[name];
+  saveCharToSupa(c).then(()=>loadSkillsTab());
+}
+
+/* 能力値参照式を計算 */
+function calcBaseFromExpr(expr, stats){
+  if(!expr) return 0;
+  const s = stats || {};
+  const solo = expr.match(/^([A-Z]+)$/);
+  if(solo) return parseInt(s[solo[1]])||0;
+  const divMatch = expr.match(/^([A-Z]+)\/([0-9]+)$/);
+  if(divMatch) return Math.floor((parseInt(s[divMatch[1]])||0) / parseInt(divMatch[2]));
+  const mulMatch = expr.match(/^([A-Z]+)\*([0-9]+)$/);
+  if(mulMatch) return Math.floor((parseInt(s[mulMatch[1]])||0) * parseInt(mulMatch[2]));
+  const addMatch = expr.match(/^([A-Z]+)\+([A-Z]+)$/);
+  if(addMatch) return (parseInt(s[addMatch[1]])||0) + (parseInt(s[addMatch[2]])||0);
+  return parseInt(expr)||0;
+}
+function getSkillBase(def, stats, overrides){
+  if(overrides && overrides[def.name] !== undefined) return overrides[def.name];
+  if(def.baseExpr !== undefined) return calcBaseFromExpr(def.baseExpr, stats);
+  return def.base ?? 0;
+}
+
+let _ccfExprs=[];
+
+function buildCcfoliaParams(c){
+  const st=c.stats||{},sec=c.secondary||{};
+  const status=[];
+  // HP / MP / SAN
+  const secDefs=[{k:'hp',lbl:'HP'},{k:'mp',lbl:'MP'},{k:'san',lbl:'SAN'}];
+  for(const {k,lbl} of secDefs){
+    const cur=parseInt((sec[k]||{}).cur)||0;
+    const max=parseInt((sec[k]||{}).max)||0;
+    if(max>0||cur>0) status.push({label:lbl,value:cur,max:max});
+  }
+  // 幸運
+  const lukCur=parseInt((sec['luk']||{}).cur)||0;
+  const lukMax=parseInt((sec['luk']||{}).max)||0;
+  if(lukMax>0||lukCur>0) status.push({label:'幸運',value:lukCur,max:lukMax});
+
+  // 能力値 params
+  const params=[];
+  const sdefs=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
+  for(const k of sdefs){
+    const v=parseInt(st[k])||0;
+    if(v>0) params.push({label:k,value:String(v)});
+  }
+  if(c.job) params.push({label:'職業',value:c.job});
+
+  return {status,params};
+}
+
+function buildDefaultCommands(c){
+  const st=c.stats||{},sec=c.secondary||{};
+  const ver = getSkillVer(c);
+  const defs = ver==='7' ? SKILL_DEFS_7 : SKILL_DEFS_6;
+  const allDefs = [...defs.filter(d=>!d.hidden), ...(c.customSkills||[])];
+  const skills = c.skills || {};
+  const lines=[];
+  lines.push('//── 能力値ロール ──');
+  const sdefs=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
+  for(const k of sdefs){
+    const v=parseInt(st[k])||0;
+    if(v>0) lines.push(`${k}ロール(×5=${v*5}) {1d100}<=${v*5}`);
+  }
+  // 技能ロール：初期値＋各配分の合計が初期値より大きいものだけ出力
+  const skillLines = [];
+  for(const def of allDefs){
+    const base = getSkillBase(def, st);
+    const sk = skills[def.name] || {};
+    const total = base
+      + (parseInt(sk.occ )||0)
+      + (parseInt(sk.int )||0)
+      + (parseInt(sk.grow)||0)
+      + (parseInt(sk.etc )||0);
+    if(total > 0 && (sk.occ||sk.int||sk.grow||sk.etc))
+      skillLines.push(`${def.name}(${total}) {1d100}<=${total}`);
+  }
+  if(skillLines.length){
+    lines.push('');lines.push('//── 技能ロール ──');
+    lines.push(...skillLines);
+  }
+  const sanMax=parseInt((sec['san']||{}).max)||0;
+  if(sanMax>0){
+    lines.push('');lines.push('//── SAN ──');
+    lines.push(`正気度ロール {1d100}<=${sanMax}`);
+  }
+  return lines.join('\n');
+}
+
+async function openCcfoliaModal(){
+  const c=getChar();if(!c)return;
+
+  // 差分リストを取得して番号順にソート
+  _ccfExprs=[];
+  try{
+    const rows=await sbSelect('expressions',`char_id=eq.${c.id}&order=created_at.asc`);
+    const exprs=rows.map(r=>({id:r.id,label:r.label,category:r.category,image_path:r.image_path,ccfUrl:''}));
+    _ccfExprs=exprs.sort(naturalSort); // 番号順
+  }catch(e){}
+
+  // ステータスプレビュー
+  const {status,params}=buildCcfoliaParams(c);
+  const statHtml=`
+    <div class="ccfolia-status-grid">
+      ${status.map(s=>`<div class="ccfolia-stat-item"><span class="ccfolia-stat-key">${s.label}</span><span class="ccfolia-stat-val">${s.value}<span style="font-size:10px;color:var(--ink-dim)">/${s.max}</span></span></div>`).join('')}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px">
+      ${params.filter(p=>['STR','CON','SIZ','DEX','APP','INT','POW','EDU'].includes(p.label)).map(p=>`<div class="ccfolia-stat-item" style="padding:4px 8px"><span class="ccfolia-stat-key">${p.label}</span><span class="ccfolia-stat-val" style="font-size:13px">${p.value}</span></div>`).join('')}
+    </div>`;
+  document.getElementById('ccf-status-preview').innerHTML=statHtml;
+
+  // チャットパレット初期値（毎回再生成）
+  const cmdTa=document.getElementById('ccf-commands');
+  cmdTa.value=buildDefaultCommands(c);
+
+  // 差分リスト
+  renderCcfoliaFaces();
+  updateCcfoliaPreview();
+  document.getElementById('modal-ccfolia').classList.add('open');
+}
+
+function renderCcfoliaFaces(){
+  const list=document.getElementById('ccf-faces-list');
+  if(_ccfExprs.length===0){
+    list.innerHTML=`<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:3px;text-align:center;padding:16px">差分画像が登録されていません</div>`;
+    return;
+  }
+  list.innerHTML=_ccfExprs.map((e,i)=>{
+    const imgUrl=e.image_path?storageUrl(e.image_path):'';
+    const safeLabel=(e.label||'').replace(/"/g,'&quot;');
+    const safeUrl=(e.ccfUrl||'').replace(/"/g,'&quot;');
+    return `<div class="ccfolia-face-row">
+      <div class="ccfolia-face-thumb">
+        ${imgUrl?`<img src="${imgUrl}" alt="">`:`<div class="ccfolia-face-thumb-ph">NO<br>IMG</div>`}
+      </div>
+      <span class="ccfolia-face-label">${e.label||'（名前なし）'}</span>
+      <span class="ccfolia-face-cat">${e.category||''}</span>
+      <input class="ccfolia-face-url-input" type="text" placeholder="https://ccfolia.com/... （任意）"
+        value="${safeUrl}"
+        oninput="_ccfExprs[${i}].ccfUrl=this.value;updateCcfoliaPreview()"
+      >
+    </div>`;
+  }).join('');
+}
+
+function buildCcfoliaJson(){
+  const c=getChar();if(!c)return null;
+  const {status,params}=buildCcfoliaParams(c);
+  const commands=document.getElementById('ccf-commands').value.trim();
+
+  const faces=_ccfExprs
+    .filter(e=>e.label)
+    .map(e=>({iconUrl:e.ccfUrl||null,label:e.label}));
+
+  // バストアップのiconUrlは最初のURLを持つ差分か、ccfExprsの最初のURL
+  const firstWithUrl=_ccfExprs.find(e=>e.ccfUrl);
+  const iconUrl=firstWithUrl?firstWithUrl.ccfUrl:null;
+
+  const data={
+    name:c.name||'',
+    memo:c.quote||'',
+    status,
+    params,
+    commands,
+    color:c.color||'#3c3428',
+  };
+  if(iconUrl) data.iconUrl=iconUrl;
+  if(faces.length>0) data.faces=faces;
+
+  return {kind:'character',data};
+}
+
+function updateCcfoliaPreview(){
+  const obj=buildCcfoliaJson();
+  const el=document.getElementById('ccf-json-preview');
+  if(!obj){el.textContent='—';return;}
+  el.textContent=JSON.stringify(obj,null,2);
+}
+
+async function copyCcfoliaJson(){
+  const obj=buildCcfoliaJson();
+  if(!obj){toast('データを取得できませんでした');return;}
+  const text=JSON.stringify(obj);
+  try{
+    if(navigator.clipboard){
+      await navigator.clipboard.writeText(text);
+    }else{
+      const t=document.createElement('textarea');
+      t.value=text;document.body.appendChild(t);t.select();
+      document.execCommand('copy');document.body.removeChild(t);
+    }
+    toast('CCFOLIAデータをコピーしました！ CCFOLIAのルームで Ctrl+V で貼り付けてください');
+    closeModal('modal-ccfolia');
+  }catch(e){
+    toast('コピーに失敗しました: '+e.message);
+  }
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toast(msg){const el=document.getElementById('toast-el');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2700);}
+
+['main-zone','expr-zone'].forEach(id=>{
+  const z=document.getElementById(id);if(!z)return;
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+  z.addEventListener('drop',e=>{
+    e.preventDefault();z.classList.remove('drag');if(!e.dataTransfer.files.length)return;
+    if(id==='main-zone')onMainImg({target:{files:e.dataTransfer.files}},'bust');
+    else onExprImg({target:{files:e.dataTransfer.files}});
+  });
+});
+
+/* ════ 閲覧モード ════ */
+const VERSION='1.0.0';
+let skillEditMode=true;
+const _params=new URLSearchParams(location.search);
+const IS_READONLY=_params.get('view')==='1';
+const _urlParam=_params.get('url')||'';
+const _keyParam=_params.get('key')||'';
+let _charParam=_params.get('char')||'';
+loadSupaConfig(); // IS_READONLY 確定後に接続設定を読み込む
+
+if(IS_READONLY){
+  document.body.classList.add('readonly');
+  document.getElementById('view-mode-badge').style.display='';
+  skillEditMode=false;
+}
+function copyViewUrl(){
+  const base=location.href.split('?')[0];
+  let url=base+'?view=1&url='+encodeURIComponent(SUPA_URL)+'&key='+encodeURIComponent(SUPA_KEY);
+  if(curId) url+='&char='+encodeURIComponent(curId);
+  navigator.clipboard?navigator.clipboard.writeText(url).then(()=>toast(curId?'このキャラの閲覧用URLをコピーしました':'閲覧用URLをコピーしました')):
+    (()=>{const t=document.createElement('textarea');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('閲覧用URLをコピーしました');})();
+}
+
+/* ════ 起動 ════ */
+function initSetupView(){
+  const url=localStorage.getItem('supa_url')||'';
+  const key=localStorage.getItem('supa_key')||'';
+  document.getElementById('setup-url').value=url;
+  document.getElementById('setup-key').value=key;
+  const cur=document.getElementById('setup-current');
+  if(url){
+    cur.style.display='block';
+    document.getElementById('setup-current-url').textContent=url;
+  }else{
+    cur.style.display='none';
+  }
+  document.getElementById('setup-status').textContent='';
+}
+
+async function saveSetup(){
+  const url=document.getElementById('setup-url').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('setup-key').value.trim();
+  const status=document.getElementById('setup-status');
+  if(!url||!key){status.textContent='URLとKeyを入力してください';return;}
+  status.textContent='接続確認中…';
+  // 接続テスト
+  try{
+    const r=await fetch(`${url}/rest/v1/characters?limit=1`,{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+    if(!r.ok)throw new Error('接続失敗: '+r.status);
+    localStorage.setItem('supa_url',url);
+    localStorage.setItem('supa_key',key);
+    loadSupaConfig();
+    status.textContent='接続成功！';
+    setTimeout(async()=>{
+      chars=[];
+      try{
+        const rows=await sbSelect('characters','order=created_at.asc');
+        chars=rows.map(r=>({...r.data,id:r.id}));
+        showView('list');
+      }catch(e){
+        status.textContent='エラー: '+e.message;
+      }
+    },800);
+  }catch(e){
+    status.textContent='エラー: '+e.message;
+  }
+}
+
+function clearSetup(){
+  if(!confirm('接続設定を削除しますか？'))return;
+  localStorage.removeItem('supa_url');
+  localStorage.removeItem('supa_key');
+  location.reload();
+}
+
+async function init(){
+  loadSupaConfig();
+  if(!IS_READONLY&&(!SUPA_URL||!SUPA_KEY)){
+    document.getElementById('db-loading').style.display='none';
+    showView('setup');
+    return;
+  }
+  try{
+    const rows=await sbSelect('characters','order=created_at.asc');
+    chars=rows.map(r=>({...r.data,id:r.id}));
+    document.getElementById('db-loading').style.display='none';
+    renderList();
+  }catch(err){
+    document.getElementById('db-loading').innerHTML=`<div style="color:var(--seal-body);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;text-align:center;padding:20px">CONNECTION ERROR<br><span style="opacity:.5;font-size:9px">${err.message}</span><br><br><button class="btn btn-ghost btn-sm" onclick="showView('setup')">設定を確認する</button></div>`;
+  }
+}
+/* ═══ 追加機能 ═══ */
+function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+function rerender(){
+  const v=document.querySelector('.view.active');if(!v)return;
+  const id=v.id;
+  if(id==='view-list'){renderList();return;}
+  if(id==='view-detail'){
+    const t=document.querySelector('.tab-pane.active');
+    const tid=t?t.id.replace('tab-',''):'expr';
+    renderDetail();
+    if(tid!=='expr')showTab(tid);
+    else loadExprTab();
+  }
+}
+
+function toggleSkillEditMode(){if(IS_READONLY)return;skillEditMode=!skillEditMode;loadSkillsTab();}
+function setSkillFree(name,val){const ch=getChar();if(!ch)return;if(!ch.skills)ch.skills={};if(!ch.skills[name])ch.skills[name]={};ch.skills[name].freeNote=val;debounce('free_'+name,()=>saveCharToSupa(ch),600);}
+function changeSkillSub(defName,newSub){
+  const ch=getChar();if(!ch)return;if(!ch.skills)ch.skills={};if(!ch.skills[defName])ch.skills[defName]={};
+  const oldSub=ch.skills[defName].selectedSub;
+  const of2=oldSub?`${defName}（${oldSub}）`:null;
+  const nf=`${defName}（${newSub}）`;
+  if(of2&&ch.skills[of2]){ch.skills[nf]=ch.skills[of2];delete ch.skills[of2];}
+  ch.skills[defName].selectedSub=newSub;
+  debounce('sub_'+defName,()=>saveCharToSupa(ch),400);
+  loadSkillsTab();
+}
+function setSkillBaseOverride(name,val){const ch=getChar();if(!ch)return;if(!ch.skillBaseOverrides)ch.skillBaseOverrides={};const num=val===''?null:parseInt(val);if(num===null)delete ch.skillBaseOverrides[name];else ch.skillBaseOverrides[name]=num;debounce('base_'+name,()=>saveCharToSupa(ch),600);}
+
+function loadCombatTab(){
+  const pane=document.getElementById('tab-combat');if(!pane)return;
+  const ch=getChar();if(!ch)return;
+  const wp=ch.weapons||[],ar=ch.armors||[];
+
+  const wr=wp.map((w,i)=>{
+    const n=_esc(w.name||''),sk=_esc(w.skill||''),ht=_esc(w.hit||'');
+    const dm=_esc(w.damage||''),rg=_esc(w.range||''),sh=_esc(w.shots||'');
+    const am=_esc(w.ammo||''),hp=_esc(w.hp||''),ml=_esc(w.mal||''),nt=_esc(w.note||'');
+    return '<div class="combat-card">'
+      +'<div class="combat-card-head">'
+      +'<div class="combat-card-fields">'
+      +'<div class="combat-field combat-field-lg"><span class="combat-lbl">武器名</span><input class="combat-in" type="text" value="'+n+'" placeholder="—" oninput="updWeapon('+i+',\'name\',this.value)"></div>'
+      +'<div class="combat-field combat-field-lg"><span class="combat-lbl">技能名</span><input class="combat-in" type="text" value="'+sk+'" placeholder="—" oninput="updWeapon('+i+',\'skill\',this.value)"></div>'
+      +'</div>'
+      +'<button class="combat-del edit-only" onclick="delWeapon('+i+')">✕</button>'
+      +'</div>'
+      +'<div class="combat-card-fields">'
+      +'<div class="combat-field"><span class="combat-lbl">成功率</span><input class="combat-in" type="text" value="'+ht+'" placeholder="—" oninput="updWeapon('+i+',\'hit\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">ダメージ</span><input class="combat-in" type="text" value="'+dm+'" placeholder="—" oninput="updWeapon('+i+',\'damage\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">射程</span><input class="combat-in" type="text" value="'+rg+'" placeholder="—" oninput="updWeapon('+i+',\'range\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">回数</span><input class="combat-in" type="text" value="'+sh+'" placeholder="—" oninput="updWeapon('+i+',\'shots\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">装弾</span><input class="combat-in" type="text" value="'+am+'" placeholder="—" oninput="updWeapon('+i+',\'ammo\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">耐久</span><input class="combat-in" type="text" value="'+hp+'" placeholder="—" oninput="updWeapon('+i+',\'hp\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">故障</span><input class="combat-in" type="text" value="'+ml+'" placeholder="—" oninput="updWeapon('+i+',\'mal\',this.value)"></div>'
+      +'</div>'
+      +'<div class="combat-field combat-field-full"><span class="combat-lbl">備考</span><input class="combat-in" type="text" value="'+nt+'" placeholder="—" oninput="updWeapon('+i+',\'note\',this.value)"></div>'
+      +'</div>';
+  }).join('');
+
+  const ar2=ar.map((a,i)=>{
+    const n=_esc(a.name||''),lc=_esc(a.location||'');
+    const av=_esc(a.armor||''),hp=_esc(a.hp||''),nt=_esc(a.note||'');
+    return '<div class="combat-card">'
+      +'<div class="combat-card-head">'
+      +'<div class="combat-card-fields">'
+      +'<div class="combat-field combat-field-lg"><span class="combat-lbl">防具名</span><input class="combat-in" type="text" value="'+n+'" placeholder="—" oninput="updArmor('+i+',\'name\',this.value)"></div>'
+      +'<div class="combat-field combat-field-lg"><span class="combat-lbl">装備箇所</span><input class="combat-in" type="text" value="'+lc+'" placeholder="—" oninput="updArmor('+i+',\'location\',this.value)"></div>'
+      +'</div>'
+      +'<button class="combat-del edit-only" onclick="delArmor('+i+')">✕</button>'
+      +'</div>'
+      +'<div class="combat-card-fields">'
+      +'<div class="combat-field"><span class="combat-lbl">装甲</span><input class="combat-in" type="text" value="'+av+'" placeholder="—" oninput="updArmor('+i+',\'armor\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">耐久値</span><input class="combat-in" type="text" value="'+hp+'" placeholder="—" oninput="updArmor('+i+',\'hp\',this.value)"></div>'
+      +'<div class="combat-field combat-field-lg"><span class="combat-lbl">備考</span><input class="combat-in" type="text" value="'+nt+'" placeholder="—" oninput="updArmor('+i+',\'note\',this.value)"></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  pane.innerHTML=
+    '<div class="combat-section"><div class="combat-section-title">武器</div>'
+    +'<div class="combat-cards">'+wr+'</div>'
+    +'<button class="combat-add edit-only" onclick="addWeapon()">＋ 武器を追加</button></div>'
+    +'<div class="combat-section"><div class="combat-section-title">防具</div>'
+    +'<div class="combat-cards">'+ar2+'</div>'
+    +'<button class="combat-add edit-only" onclick="addArmor()">＋ 防具を追加</button></div>';
+}
+function addWeapon(){const ch=getChar();if(!ch)return;if(!ch.weapons)ch.weapons=[];ch.weapons.push({name:'',skill:'',hit:'',damage:'',range:'',shots:'',ammo:'',hp:'',mal:'',note:''});saveCharToSupa(ch).then(()=>loadCombatTab());}
+function delWeapon(i){const ch=getChar();if(!ch)return;ch.weapons.splice(i,1);saveCharToSupa(ch).then(()=>loadCombatTab());}
+function updWeapon(i,k,v){const ch=getChar();if(!ch||!ch.weapons||!ch.weapons[i])return;ch.weapons[i][k]=v;debounce('w'+i,()=>saveCharToSupa(ch),600);}
+function addArmor(){const ch=getChar();if(!ch)return;if(!ch.armors)ch.armors=[];ch.armors.push({name:'',location:'',armor:'',hp:'',note:''});saveCharToSupa(ch).then(()=>loadCombatTab());}
+function delArmor(i){const ch=getChar();if(!ch)return;ch.armors.splice(i,1);saveCharToSupa(ch).then(()=>loadCombatTab());}
+function updArmor(i,k,v){const ch=getChar();if(!ch||!ch.armors||!ch.armors[i])return;ch.armors[i][k]=v;debounce('a'+i,()=>saveCharToSupa(ch),600);}
+
+
+
+function loadItemsTab(){
+  const pane=document.getElementById('tab-items');if(!pane)return;
+  const ch=getChar();if(!ch)return;
+  const assets=ch.assets||{cash:'',wealth:'',debt:''};
+  const items=ch.items||[];
+
+  // 所持品カード
+  const cards=items.map((it,i)=>{
+    const n=_esc(it.name||''),price=_esc(it.price||''),qty=_esc(it.qty||'');
+    const total=_esc(it.total||''),nt=_esc(it.note||'');
+    return '<div class="combat-card">'
+      +'<div class="combat-card-head">'
+      +'<div class="combat-card-fields">'
+      +'<div class="combat-field combat-field-lg"><span class="combat-lbl">名称</span><input class="combat-in" type="text" value="'+n+'" placeholder="—" oninput="updItem('+i+',\'name\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">単価</span><input class="combat-in" type="text" value="'+price+'" placeholder="—" oninput="updItem('+i+',\'price\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">個数</span><input class="combat-in" type="text" value="'+qty+'" placeholder="—" oninput="updItem('+i+',\'qty\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">価格</span><div class="items-yen-wrap items-yen-sm"><span class="items-yen">¥</span><input class="combat-in" type="text" value="'+total+'" placeholder="0" oninput="updItem('+i+',\'total\',this.value)"></div></div>'
+      +'</div>'
+      +'<button class="combat-del edit-only" onclick="delItem('+i+')">✕</button>'
+      +'</div>'
+      +'<div class="combat-field combat-field-full"><span class="combat-lbl">効果・備考</span><input class="combat-in" type="text" value="'+nt+'" placeholder="—" oninput="updItem('+i+',\'note\',this.value)"></div>'
+      +'</div>';
+  }).join('');
+
+  pane.innerHTML=
+    '<div class="combat-section">'
+    +'<div class="combat-section-title">資産</div>'
+    +'<div class="items-asset-row">'
+    +'<div class="items-asset-field"><span class="combat-lbl">現金</span><div class="items-yen-wrap"><span class="items-yen">¥</span><input class="combat-in" type="text" value="'+_esc(assets.cash)+'" placeholder="0" oninput="updAssets(\'cash\',this.value)"></div></div>'
+    +'<div class="items-asset-field"><span class="combat-lbl">資産</span><div class="items-yen-wrap"><span class="items-yen">¥</span><input class="combat-in" type="text" value="'+_esc(assets.wealth)+'" placeholder="0" oninput="updAssets(\'wealth\',this.value)"></div></div>'
+    +'<div class="items-asset-field"><span class="combat-lbl">借金</span><div class="items-yen-wrap"><span class="items-yen">¥</span><input class="combat-in" type="text" value="'+_esc(assets.debt)+'" placeholder="0" oninput="updAssets(\'debt\',this.value)"></div></div>'
+    +'</div></div>'
+    +'<div class="combat-section">'
+    +'<div class="combat-section-title">所持品</div>'
+    +'<div class="combat-cards">'+cards+'</div>'
+    +'<button class="combat-add edit-only" onclick="addItem()">＋ 追加</button>'
+    +'</div>';
+}
+function updAssets(k,v){const ch=getChar();if(!ch)return;if(!ch.assets)ch.assets={};ch.assets[k]=v;debounce('assets',()=>saveCharToSupa(ch),600);}
+function addItem(){const ch=getChar();if(!ch)return;if(!ch.items)ch.items=[];ch.items.push({name:'',price:'',qty:'',total:'',note:''});saveCharToSupa(ch).then(()=>loadItemsTab());}
+function delItem(i){const ch=getChar();if(!ch)return;ch.items.splice(i,1);saveCharToSupa(ch).then(()=>loadItemsTab());}
+function updItem(i,k,v){const ch=getChar();if(!ch||!ch.items||!ch.items[i])return;ch.items[i][k]=v;debounce('it'+i,()=>saveCharToSupa(ch),600);}
+/* ════ PDF エクスポート ════ */
+function openPrintSheet(){
+  const c=getChar();if(!c){toast('キャラクターが見つかりません');return;}
+  if(!SUPA_URL||!SUPA_KEY){toast('DB設定が見つかりません');return;}
+  const url='print_sheet.html'
+    +'?url='+encodeURIComponent(SUPA_URL)
+    +'&key='+encodeURIComponent(SUPA_KEY)
+    +'&char='+encodeURIComponent(c.id);
+  window.open(url,'_blank');
+}
+
+init();
+</script>
+</body>
+</html>
