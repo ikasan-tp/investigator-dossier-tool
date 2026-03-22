@@ -2749,144 +2749,164 @@ function renderSkillsPane(c){
     </div>
   </div>`;
 
-  // テーブルヘッダー（共通）
-  const thead = `<thead><tr>
-    <th class="th-chk">職</th>
-    <th class="th-name">技能名</th>
-    <th class="th-base">初期値</th>
-    <th class="th-occ" style="color:#3a6020">職業</th>
-    <th class="th-int" style="color:#1a3a6a">趣味</th>
-    <th class="th-grow" style="color:#6a3a10">成長</th>
-    <th class="th-etc" style="color:#3a3a5a">その他</th>
-    <th class="th-act">合計</th>
-  </tr></thead>`;
+  // ── DOM直接構築（outerHTML経由を廃止してイベントリスナーを保持）──
 
-  let catsHtml = '';
-  const filteredCats = allCats.filter(cat => filtered.some(d=>d.cat===cat));
-  for(const cat of filteredCats){
-    const catDefs = filtered.filter(d=>d.cat===cat);
-    const rows = catDefs.map(def => {
-      const hasSub = def.sub && def.sub.length > 0;
-      if(hasSub){
-        const savedSub=(skills[def.name]||{}).selectedSub||'';
-        const activeSub=savedSub||def.defaultSub||'';
-        const fullName=activeSub?`${def.name}（${activeSub}）`:def.name;
-        const base=getSkillBase(def,stats,c.skillBaseOverrides);
-        const sk=activeSub?(skills[fullName]||{}):{};
-        const occ=sk.occ!==undefined?sk.occ:'';
-        const int_=sk.int!==undefined?sk.int:'';
-        const grow=sk.grow!==undefined?sk.grow:'';
-        const etc=sk.etc!==undefined?sk.etc:'';
-        const isOcc=!!sk.isOcc;
-        const total=base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
-        const hasAny=!!activeSub&&(occ!==''||int_!==''||grow!==''||etc!=='');
-        const occMismatch=!isOcc&&(parseInt(sk.occ)||0)>0;
-        const tr=document.createElement('tr');
-        tr.className='skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'')+(occMismatch?' occ-mismatch':'');
-        // 職チェック（左端）
-        const tdCk=document.createElement('td');tdCk.className='td-chk-cell';
-        const ck=document.createElement('input');ck.type='checkbox';ck.className='skill-occ-chk';ck.checked=isOcc;
-        ck.addEventListener('change',e=>setSkillOcc(fullName,e.target.checked));
-        tdCk.appendChild(ck);tr.appendChild(tdCk);
-        // 技能名＋プルダウン
-        const tdN=document.createElement('td');tdN.className='td-name-cell';
-        const ns=document.createElement('span');ns.className='skill-name-txt';ns.textContent=def.name;tdN.appendChild(ns);
-        const sel=document.createElement('select');sel.className='skill-sub-sel';
-        const opts=(activeSub?[]:['<option value="" disabled selected>(選択)</option>'])
-          .concat(def.sub.map(sv=>`<option value="${_esc(sv)}"${sv===activeSub?' selected':''}>${_esc(sv)}</option>`)).join('');
-        sel.innerHTML=opts;
-        sel.addEventListener('change',e=>changeSkillSub(def.name,e.target.value));
-        tdN.appendChild(sel);tr.appendChild(tdN);
-        // 初期値
-        const tdB=document.createElement('td');tdB.className='td-base';
-        if(def.baseExpr){const sp=document.createElement('input');sp.type='number';sp.className='skill-base-in';sp.value=base||'';sp.placeholder=String(base);sp.title=def.baseExpr+' (上書き可)';sp.addEventListener('input',e=>setSkillBaseOverride(def.name,e.target.value));tdB.appendChild(sp);}
-        else{const bi=document.createElement('input');bi.type='number';bi.className='skill-base-in';bi.min=0;bi.max=99;bi.value=base||'';bi.placeholder=String(base);bi.title='初期値を上書き';bi.addEventListener('input',e=>setSkillBaseOverride(def.name,e.target.value));tdB.appendChild(bi);}
-        tr.appendChild(tdB);
-        // ポイント4列
-        [['td-occ',occ,'occ'],['td-int',int_,'int'],['td-grow',grow,'grow'],['td-etc',etc,'etc']].forEach(([cls,val,key])=>{
-          const td=document.createElement('td');td.className='td-pts '+cls;
-          const inp=document.createElement('input');inp.type='number';inp.className='skill-pts-in';inp.min=0;inp.max=999;inp.placeholder='—';inp.value=val;
-          inp.addEventListener('input',e=>setSkillPts(fullName,key,e.target.value));
-          td.appendChild(inp);tr.appendChild(td);
-        });
-        // 合計
-        const tdA=document.createElement('td');tdA.className='td-act';
-        const ts=document.createElement('span');ts.className='td-total'+(total>base*2?' total-high':'');
-        ts.textContent=total;tdA.appendChild(ts);tr.appendChild(tdA);
-        return tr.outerHTML;
-      } else { return (()=>{
-      // subなし通常技能
-      const base=getSkillBase(def,stats,c.skillBaseOverrides);
-      const sk=skills[def.name]||{};
-      const occ=sk.occ!==undefined?sk.occ:'';
-      const int_=sk.int!==undefined?sk.int:'';
-      const grow=sk.grow!==undefined?sk.grow:'';
-      const etc=sk.etc!==undefined?sk.etc:'';
-      const isOcc=!!sk.isOcc;
-      const total=base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
-      const hasAny=occ!==''||int_!==''||grow!==''||etc!=='';
-      const isCustom=!!def.isCustom;
-      const occMismatch=!isOcc&&(parseInt(sk.occ)||0)>0;
-      const tr=document.createElement('tr');
-      tr.className='skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'')+(occMismatch?' occ-mismatch':'');
-      // 職チェック（左端）
-      const tdCk=document.createElement('td');tdCk.className='td-chk-cell';
-      const ck=document.createElement('input');ck.type='checkbox';ck.className='skill-occ-chk';ck.checked=isOcc;
-      ck.addEventListener('change',e=>setSkillOcc(def.name,e.target.checked));
-      tdCk.appendChild(ck);tr.appendChild(tdCk);
-      // 技能名
-      const tdN=document.createElement('td');tdN.className='td-name-cell';
-      tdN.addEventListener('dblclick',()=>startSkillRename(def.name,tdN));
-      const ns=document.createElement('span');ns.className='skill-name-txt';ns.textContent=def.name;
+  // ヘルパー：技能行DOMを作る
+  function makeSkillRow(def, skillName, sk, base, isSub){
+    const occ  = sk.occ  !== undefined ? sk.occ  : '';
+    const int_ = sk.int  !== undefined ? sk.int  : '';
+    const grow = sk.grow !== undefined ? sk.grow : '';
+    const etc  = sk.etc  !== undefined ? sk.etc  : '';
+    const isOcc = !!sk.isOcc;
+    const total = base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
+    const hasAny = occ!==''||int_!==''||grow!==''||etc!=='';
+    const occMismatch = !isOcc&&(parseInt(sk.occ)||0)>0;
+    const tr = document.createElement('tr');
+    tr.className = 'skill-tr'+(hasAny?' has-occ':'')+(isOcc?' is-occ':'')+(occMismatch?' occ-mismatch':'');
+
+    // 職業チェック
+    const tdCk = document.createElement('td'); tdCk.className='td-chk-cell';
+    const ck = document.createElement('input'); ck.type='checkbox'; ck.className='skill-occ-chk'; ck.checked=isOcc;
+    ck.addEventListener('change', e=>setSkillOcc(skillName, e.target.checked));
+    tdCk.appendChild(ck); tr.appendChild(tdCk);
+
+    // 技能名
+    const tdN = document.createElement('td'); tdN.className='td-name-cell';
+    if(isSub){
+      const ns = document.createElement('span'); ns.className='skill-name-txt'; ns.textContent=def.name; tdN.appendChild(ns);
+      const sel = document.createElement('select'); sel.className='skill-sub-sel';
+      const savedSub = (skills[def.name]||{}).selectedSub||'';
+      const activeSub = savedSub||def.defaultSub||'';
+      const opts = (activeSub?[]:['<option value="" disabled selected>(選択)</option>'])
+        .concat(def.sub.map(sv=>`<option value="${_esc(sv)}"${sv===activeSub?' selected':''}>${_esc(sv)}</option>`)).join('');
+      sel.innerHTML = opts;
+      sel.addEventListener('change', e=>changeSkillSub(def.name, e.target.value));
+      tdN.appendChild(sel);
+    } else {
+      const isCustom = !!def.isCustom;
+      tdN.addEventListener('dblclick', ()=>startSkillRename(def.name, tdN));
+      const ns = document.createElement('span'); ns.className='skill-name-txt'; ns.textContent=def.name;
       if(isCustom){const b=document.createElement('span');b.className='skill-custom-badge';b.textContent='custom';ns.appendChild(b);}
       tdN.appendChild(ns);
       if(def.free){const fi=document.createElement('input');fi.type='text';fi.className='skill-free-in';fi.placeholder='（記入）';fi.value=(skills[def.name]||{}).freeNote||'';fi.addEventListener('input',e=>setSkillFree(def.name,e.target.value));tdN.appendChild(fi);}
-      const ne=document.createElement('input');ne.type='text';ne.className='skill-name-edit';ne.value=def.name;
+      const ne = document.createElement('input'); ne.type='text'; ne.className='skill-name-edit'; ne.value=def.name;
       ne.addEventListener('blur',e=>endSkillRename(def.name,e.target,isCustom));
       ne.addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();if(e.key==='Escape'){e.target.value=def.name;e.target.blur();}});
-      tdN.appendChild(ne);tr.appendChild(tdN);
-      // 初期値
-      const tdB=document.createElement('td');tdB.className='td-base';
-      if(def.baseExpr){const sp=document.createElement('input');sp.type='number';sp.className='skill-base-in';sp.value=base||'';sp.placeholder=String(base);sp.title=def.baseExpr+' (上書き可)';sp.addEventListener('input',e=>setSkillBaseOverride(def.name,e.target.value));tdB.appendChild(sp);}
-      else{const bi=document.createElement('input');bi.type='number';bi.className='skill-base-in';bi.min=0;bi.max=99;bi.value=base||'';bi.placeholder=String(base);bi.title='初期値を上書き';bi.addEventListener('input',e=>setSkillBaseOverride(def.name,e.target.value));tdB.appendChild(bi);}
-      tr.appendChild(tdB);
-      // ポイント4列
-      [['td-occ',occ,'occ'],['td-int',int_,'int'],['td-grow',grow,'grow'],['td-etc',etc,'etc']].forEach(([cls,val,key])=>{
-        const td=document.createElement('td');td.className='td-pts '+cls;
-        const inp=document.createElement('input');inp.type='number';inp.className='skill-pts-in';inp.min=0;inp.max=999;inp.placeholder='—';inp.value=val;
-        inp.addEventListener('input',e=>setSkillPts(def.name,key,e.target.value));
-        td.appendChild(inp);tr.appendChild(td);
-      });
-      // 合計＋削除
-      const tdA=document.createElement('td');tdA.className='td-act';
-      const ts=document.createElement('span');ts.className='td-total'+(total>base*2?' total-high':'');
-      ts.textContent=total;tdA.appendChild(ts);
-      if(isCustom){const db=document.createElement('button');db.className='skill-del-btn';db.title='削除';db.textContent='✕';db.addEventListener('click',()=>deleteCustomSkill(def.name));tdA.appendChild(db);}
-      tr.appendChild(tdA);
-      return tr.outerHTML;
-      })();
-      }
-    }).join('');
-    catsHtml += `<div class="skills-category">
-      <div class="skills-cat-header">
-        <div class="skills-cat-title">${cat}</div>
-        <div class="skills-cat-count">${catDefs.length}件</div>
-        <button class="skills-cat-add edit-only" onclick="addCustomSkill('${cat}')">＋ 追加</button>
-      </div>
-      <table class="skills-table">${thead}<tbody>${rows}</tbody></table>
-    </div>`;
-  }
-  if(!catsHtml) catsHtml = `<div class="skill-empty">NO RESULTS</div>`;
+      tdN.appendChild(ne);
+    }
+    tr.appendChild(tdN);
 
-  pane.innerHTML = `
-    <div class="skills-toolbar">
-      <span class="skills-ver-badge">${ver==='7'?'7版（新CoC）':'6版'}</span>
-      <input class="skills-search" type="text" placeholder="技能名を検索…"
-        value="${skillSearch}"
-        oninput="skillSearch=this.value;loadSkillsTab()">
-    </div>
-    ${ptBar}
-    ${catsHtml}`;
+    // 初期値
+    const tdB = document.createElement('td'); tdB.className='td-base';
+    const bi = document.createElement('input'); bi.type='number'; bi.className='skill-base-in';
+    bi.min=0; bi.max=99; bi.value=base||''; bi.placeholder=String(base);
+    bi.title = def.baseExpr ? def.baseExpr+' (上書き可)' : '初期値を上書き';
+    bi.addEventListener('input', e=>setSkillBaseOverride(def.name, e.target.value));
+    tdB.appendChild(bi); tr.appendChild(tdB);
+
+    // ポイント4列（入力のたびに合計セルをリアルタイム更新）
+    const totalSpan = document.createElement('span');
+    totalSpan.className = 'td-total'+(total>base*2?' total-high':'');
+    totalSpan.textContent = total;
+
+    [['td-occ',occ,'occ'],['td-int',int_,'int'],['td-grow',grow,'grow'],['td-etc',etc,'etc']].forEach(([cls,val,key])=>{
+      const td = document.createElement('td'); td.className='td-pts '+cls;
+      const inp = document.createElement('input'); inp.type='number'; inp.className='skill-pts-in';
+      inp.min=0; inp.max=999; inp.placeholder='—'; inp.value=val;
+      inp.addEventListener('input', e=>{
+        setSkillPts(skillName, key, e.target.value);
+        // 合計をリアルタイム更新
+        const cur = getChar();
+        if(cur){
+          const curSk = (cur.skills&&cur.skills[skillName])||{};
+          const newTotal = base+(parseInt(curSk.occ)||0)+(parseInt(curSk.int)||0)+(parseInt(curSk.grow)||0)+(parseInt(curSk.etc)||0);
+          totalSpan.textContent = newTotal;
+          totalSpan.className = 'td-total'+(newTotal>base*2?' total-high':'');
+          // occ-mismatch をリアルタイム反映
+          const newIsOcc = !!curSk.isOcc;
+          const newOccMismatch = !newIsOcc&&(parseInt(curSk.occ)||0)>0;
+          tr.classList.toggle('occ-mismatch', newOccMismatch);
+          tr.classList.toggle('has-occ', !!(curSk.occ!==undefined||curSk.int!==undefined||curSk.grow!==undefined||curSk.etc!==undefined));
+        }
+      });
+      td.appendChild(inp); tr.appendChild(td);
+    });
+
+    // 合計列
+    const tdA = document.createElement('td'); tdA.className='td-act';
+    tdA.appendChild(totalSpan);
+    if(!isSub && def.isCustom){
+      const db = document.createElement('button'); db.className='skill-del-btn'; db.title='削除'; db.textContent='✕';
+      db.addEventListener('click', ()=>deleteCustomSkill(def.name));
+      tdA.appendChild(db);
+    }
+    tr.appendChild(tdA);
+    return tr;
+  }
+
+  // ツールバーをDOMで構築
+  pane.innerHTML = '';
+  const toolbar = document.createElement('div'); toolbar.className='skills-toolbar';
+  const verBadge = document.createElement('span'); verBadge.className='skills-ver-badge';
+  verBadge.textContent = ver==='7'?'7版（新CoC）':'6版';
+  toolbar.appendChild(verBadge);
+  const searchIn = document.createElement('input'); searchIn.className='skills-search';
+  searchIn.type='text'; searchIn.placeholder='技能名を検索…'; searchIn.value=skillSearch;
+  searchIn.addEventListener('input', e=>{skillSearch=e.target.value;loadSkillsTab();});
+  toolbar.appendChild(searchIn);
+  pane.appendChild(toolbar);
+
+  // ポイントバー
+  const ptBarEl = document.createElement('div'); ptBarEl.innerHTML=ptBar;
+  pane.appendChild(ptBarEl.firstElementChild);
+
+  // カテゴリ→テーブル
+  const filteredCats = allCats.filter(cat => filtered.some(d=>d.cat===cat));
+  if(!filteredCats.length){
+    const empty = document.createElement('div'); empty.className='skill-empty'; empty.textContent='NO RESULTS';
+    pane.appendChild(empty);
+  } else {
+    for(const cat of filteredCats){
+      const catDefs = filtered.filter(d=>d.cat===cat);
+      const catDiv = document.createElement('div'); catDiv.className='skills-category';
+
+      // カテゴリヘッダー
+      const catHead = document.createElement('div'); catHead.className='skills-cat-header';
+      const catTitle = document.createElement('div'); catTitle.className='skills-cat-title'; catTitle.textContent=cat;
+      const catCount = document.createElement('div'); catCount.className='skills-cat-count'; catCount.textContent=catDefs.length+'件';
+      const catAdd = document.createElement('button'); catAdd.className='skills-cat-add edit-only'; catAdd.textContent='＋ 追加';
+      catAdd.addEventListener('click', ()=>addCustomSkill(cat));
+      catHead.appendChild(catTitle); catHead.appendChild(catCount); catHead.appendChild(catAdd);
+      catDiv.appendChild(catHead);
+
+      // テーブル
+      const table = document.createElement('table'); table.className='skills-table';
+      table.innerHTML = `<thead><tr>
+        <th class="th-chk">職</th><th class="th-name">技能名</th><th class="th-base">初期値</th>
+        <th class="th-occ" style="color:#3a6020">職業</th><th class="th-int" style="color:#1a3a6a">趣味</th>
+        <th class="th-grow" style="color:#6a3a10">成長</th><th class="th-etc" style="color:#3a3a5a">その他</th>
+        <th class="th-act">合計</th>
+      </tr></thead>`;
+      const tbody = document.createElement('tbody');
+
+      for(const def of catDefs){
+        const hasSub = def.sub && def.sub.length > 0;
+        if(hasSub){
+          const savedSub = (skills[def.name]||{}).selectedSub||'';
+          const activeSub = savedSub||def.defaultSub||'';
+          const fullName = activeSub?`${def.name}（${activeSub}）`:def.name;
+          const base = getSkillBase(def, stats, c.skillBaseOverrides);
+          const sk = activeSub?(skills[fullName]||{}):{};
+          tbody.appendChild(makeSkillRow(def, fullName, sk, base, true));
+        } else {
+          const base = getSkillBase(def, stats, c.skillBaseOverrides);
+          const sk = skills[def.name]||{};
+          tbody.appendChild(makeSkillRow(def, def.name, sk, base, false));
+        }
+      }
+      table.appendChild(tbody); catDiv.appendChild(table); pane.appendChild(catDiv);
+    }
+  }
 }
 
 function setSkillVer(v){
@@ -2907,7 +2927,8 @@ function setSkillPts(name, col, val){
   // 全列空＆職業チェックなしなら削除
   const sk = c.skills[name];
   if(sk && !sk.occ && !sk.int && !sk.grow && !sk.etc && !sk.isOcc) delete c.skills[name];
-  debounce('skills', ()=>saveCharToSupa(c), 600);
+  // 技能ごとに個別キーでdebounce（共通キーだと複数マス入力時に上書きされる）
+  debounce('skill_'+name, ()=>saveCharToSupa(c), 600);
   // ポイントバーのみリアルタイム更新
   _updatePtBar(c);
 }
@@ -2919,7 +2940,7 @@ function setSkillOcc(name, checked){
   c.skills[name].isOcc = checked;
   if(!checked && !c.skills[name].occ && !c.skills[name].int && !c.skills[name].grow && !c.skills[name].etc)
     delete c.skills[name];
-  debounce('skills', ()=>saveCharToSupa(c), 600);
+  debounce('skill_'+name, ()=>saveCharToSupa(c), 600);
 }
 
 /* ポイントバーのみ差分更新（全再描画なし） */
