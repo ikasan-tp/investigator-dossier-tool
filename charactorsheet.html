@@ -649,6 +649,7 @@ body::before{
   width:36px;height:12px;z-index:2;
   background:rgba(200,180,140,.3);
   border:1px solid rgba(180,160,120,.35);border-top:none;
+  pointer-events:none;
 }
 .expr-card:hover{
   box-shadow:3px 6px 18px rgba(100,80,50,.22);
@@ -681,7 +682,7 @@ body::before{
 .expr-name-bar:hover{background:var(--paper-dark)}
 /* コピーヒント */
 .expr-name-bar::after{
-  content:'TAP TO COPY';
+  content:'CLICK TO EXPAND';
   position:absolute;top:6px;right:8px;
   font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;
   color:var(--ink-faint);opacity:0;transition:opacity .15s;
@@ -2115,7 +2116,7 @@ function renderExprPane(exprs){
       grid+=`<div class="expr-card${selectedExprs.has(e.id)?' selected':''}" id="ec-${e.id}">
         ${IS_READONLY?'':`<input type="checkbox" class="expr-check edit-only" ${checked} onchange="toggleExprSel('${e.id}',this.checked)">`}
         <div class="expr-img" onclick="openLb(${i})">${imgUrl?`<img src="${imgUrl}" alt="${e.label||''}" loading="lazy">`:`<div class="expr-img-ph">NO IMAGE</div>`}</div>
-        <div class="expr-name-bar">
+        <div class="expr-name-bar" onclick="openLb(${i})">
           <div class="expr-name" id="name-${e.id}">${e.label||'（名前なし）'}</div>
           <div class="expr-cat">${e.category||''}</div>
         </div>
@@ -2131,7 +2132,7 @@ function renderExprPane(exprs){
   const bulkBar=!IS_READONLY&&selectedExprs.size>0?`
     <div class="bulk-bar">
       <span class="bulk-bar-txt">${selectedExprs.size} 件選択中</span>
-      <button class="btn btn-ghost btn-sm" onclick="selectedExprs.clear();loadExprTab()">選択解除</button>
+      <button class="btn btn-ghost btn-sm" onclick="selectedExprs.clear();clearAllChecks()">選択解除</button>
       <button class="btn btn-ghost btn-sm" onclick="openBulkCatModal()">カテゴリ変更</button>
       <button class="btn btn-danger btn-sm" onclick="bulkDeleteExprs()">まとめて削除</button>
     </div>`:'';
@@ -2177,7 +2178,7 @@ function toggleSelectAll(ids){
 }
 
 function openBulkCatModal(){
-  if(!selectedExprs.size)return;
+  if(!selectedExprs.size){toast('差分を選択してください');return;}
   document.getElementById('modal-bulk-cat').classList.add('open');
 }
 
