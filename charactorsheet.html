@@ -1827,6 +1827,7 @@ const getChar=()=>chars.find(c=>c.id===curId);
 
 /* キャラクターをSupabaseへ保存 */
 async function saveCharToSupa(c){
+  _ccfCmdCache=null; // 技能・能力値変更時にコマンドキャッシュをリセット
   await sbUpsert('characters',{id:c.id,data:c});
 }
 
@@ -1887,7 +1888,7 @@ async function renderList(){
         <div class="card-meta">${[c.job,c.age].filter(Boolean).join(' / ')||'—'}</div>
         ${c.scenario?`<div class="card-scenario">${c.scenario}</div>`:''}
       </div>`;
-    el.onclick=()=>{curId=c.id;showView('detail');};
+    el.onclick=()=>{curId=c.id;_ccfCmdCache=null;showView('detail');};
     g.appendChild(el);
   }
   if(!IS_READONLY){
@@ -1895,7 +1896,7 @@ async function renderList(){
     add.innerHTML=`<div class="add-ico">+</div><div class="add-lbl">新規ファイルを作成</div>`;
     add.onclick=openAddModal;g.appendChild(add);
   }
-  if(_charParam){const tgt=chars.find(c=>c.id===_charParam);if(tgt){curId=tgt.id;_charParam='';showView('detail');}}
+  if(_charParam){const tgt=chars.find(c=>c.id===_charParam);if(tgt){curId=tgt.id;_ccfCmdCache=null;_charParam='';showView('detail');}}
 }
 
 /* ════ DETAIL ════ */
@@ -3063,6 +3064,7 @@ function getSkillBase(def, stats, overrides){
 }
 
 let _ccfExprs=[];
+let _ccfCmdCache = null; // buildDefaultCommands キャッシュ
 
 function buildCcfoliaParams(c){
   const st=c.stats||{},sec=c.secondary||{};
@@ -3151,13 +3153,15 @@ async function openCcfoliaModal(){
     </div>`;
   document.getElementById('ccf-status-preview').innerHTML=statHtml;
 
-  // チャットパレット初期値（毎回再生成）
+  // チャットパレット（キャッシュ利用 — キャラが変わったらリセット）
   const cmdTa=document.getElementById('ccf-commands');
-  cmdTa.value=buildDefaultCommands(c);
+  if(_ccfCmdCache===null) _ccfCmdCache=buildDefaultCommands(c);
+  cmdTa.value=_ccfCmdCache;
 
   // 差分リスト
   renderCcfoliaFaces();
-  updateCcfoliaPreview();
+  // JSON プレビューは描画後に非同期で更新（モーダル表示をブロックしない）
+  requestAnimationFrame(updateCcfoliaPreview);
   document.getElementById('modal-ccfolia').classList.add('open');
 }
 
@@ -3173,13 +3177,13 @@ function renderCcfoliaFaces(){
     const safeUrl=(e.ccfUrl||'').replace(/"/g,'&quot;');
     return `<div class="ccfolia-face-row">
       <div class="ccfolia-face-thumb">
-        ${imgUrl?`<img src="${imgUrl}" alt="">`:`<div class="ccfolia-face-thumb-ph">NO<br>IMG</div>`}
+        ${imgUrl?`<img src="${imgUrl}" alt="" loading="lazy">`:`<div class="ccfolia-face-thumb-ph">NO<br>IMG</div>`}
       </div>
       <span class="ccfolia-face-label">${e.label||'（名前なし）'}</span>
       <span class="ccfolia-face-cat">${e.category||''}</span>
       <input class="ccfolia-face-url-input" type="text" placeholder="https://ccfolia.com/... （任意）"
         value="${safeUrl}"
-        oninput="_ccfExprs[${i}].ccfUrl=this.value;updateCcfoliaPreview()"
+        oninput="_ccfExprs[${i}].ccfUrl=this.value;debounce('ccfPreview',updateCcfoliaPreview,300)"
       >
     </div>`;
   }).join('');
