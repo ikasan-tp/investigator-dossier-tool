@@ -311,6 +311,40 @@ body::before{
   letter-spacing:1px;line-height:1.7;margin-top:6px;
 }
 
+/* ══ 技能追加モーダル ══ */
+.skill-add-toggle{
+  display:flex;margin-bottom:20px;
+  border:1px solid var(--rule-mid);overflow:hidden;
+}
+.skill-add-toggle-btn{
+  flex:1;padding:8px 0;
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  background:var(--paper-warm);border:none;color:var(--ink-dim);
+  cursor:pointer;transition:all .2s;text-transform:uppercase;
+  border-right:1px solid var(--rule-mid);
+}
+.skill-add-toggle-btn:last-child{border-right:none}
+.skill-add-toggle-btn.active{background:var(--pen-dark);color:#d8e8f4}
+.skill-add-toggle-btn:not(.active):hover{background:var(--paper-base);color:var(--ink-body)}
+/* サブ技能リスト */
+.skill-sub-cat{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;
+  color:var(--seal-mid);text-transform:uppercase;
+  padding:6px 12px 4px;background:var(--paper-aged);
+  border-bottom:1px solid var(--rule-light);
+  position:sticky;top:0;z-index:1;
+}
+.skill-sub-row{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 12px;border-bottom:1px solid var(--rule-faint);
+  background:var(--paper-warm);
+}
+.skill-sub-row:hover{background:var(--paper-base)}
+.skill-sub-row input[type="checkbox"]{width:14px;height:14px;flex-shrink:0;accent-color:var(--action);cursor:pointer}
+.skill-sub-name{font-family:'Noto Serif JP',serif;font-size:13px;color:var(--ink-dark);flex:1}
+.skill-sub-name.added{color:var(--ink-faint);text-decoration:line-through}
+.skill-sub-base-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:1px;flex-shrink:0}
+
 .add-card{
   background:var(--paper-warm);border:1px dashed var(--rule-mid);min-height:330px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -1431,6 +1465,7 @@ body.readonly .add-card{display:none}
 }
 .items-yen-sm .items-yen{font-size:11px;}
 </style>
+</head>
 <body>
 
 <div class="db-loading" id="db-loading"><div class="db-loading-txt">LOADING ARCHIVE</div></div>
@@ -1540,8 +1575,7 @@ body.readonly .add-card{display:none}
       <div class="form-row"><label class="form-lbl">体重</label><input type="text" class="form-input" id="f-weight" placeholder="例: 60kg"></div>
       <div class="form-row"><label class="form-lbl">誕生日</label><input type="text" class="form-input" id="f-birthday" placeholder="例: 3月14日"></div>
     </div>
-    <div class="form-row">
-      <div class="form-g2">
+    <div class="form-g2">
       <div class="form-row">
         <label class="form-lbl">カラー（発言色）</label>
         <div style="display:flex;gap:8px;align-items:center">
@@ -1713,6 +1747,50 @@ body.readonly .add-card{display:none}
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-bulk-cat')">キャンセル</button>
       <button class="btn btn-primary" onclick="bulkChangeCat()">変更する</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 技能追加 -->
+<div class="modal-overlay" id="modal-add-skill">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('modal-add-skill')">[ close ]</button>
+    <div class="modal-title">技能を追加</div>
+
+    <!-- モード切り替えトグル -->
+    <div class="skill-add-toggle">
+      <button class="skill-add-toggle-btn active" id="skill-toggle-free" onclick="switchSkillAddMode('free')">✏ 自由入力</button>
+      <button class="skill-add-toggle-btn" id="skill-toggle-select" onclick="switchSkillAddMode('select')">☰ リストから選択</button>
+    </div>
+
+    <!-- 自由入力パネル -->
+    <div id="skill-add-free-panel">
+      <div class="form-row">
+        <label class="form-lbl">技能名</label>
+        <input id="skill-add-name" class="form-input" type="text" placeholder="例: 芸術（ピアノ）" autocomplete="off" onkeydown="if(event.key==='Enter')submitAddSkill()">
+      </div>
+      <div class="form-g2">
+        <div class="form-row">
+          <label class="form-lbl">初期値</label>
+          <input id="skill-add-base" class="form-input" type="text" placeholder="例: 5 または DEX*2" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <label class="form-lbl">カテゴリ</label>
+          <input id="skill-add-cat" class="form-input" type="text" placeholder="例: 知識" autocomplete="off">
+        </div>
+      </div>
+      <p class="form-hint">初期値は数値（例: <strong>5</strong>）または能力値参照式（例: <strong>DEX*2</strong>、<strong>EDU*5</strong>）が使えます。</p>
+    </div>
+
+    <!-- リスト選択パネル -->
+    <div id="skill-add-select-panel" style="display:none">
+      <p class="form-hint" style="margin-bottom:10px">チェックを入れた技能を追加します。初期値は個別に変更できます。</p>
+      <div id="skill-sub-list" style="max-height:360px;overflow-y:auto;border:1px solid var(--rule-light);"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-skill')">閉じる</button>
+      <button class="btn btn-primary" id="skill-add-submit" onclick="submitAddSkill()">＋ 追加</button>
     </div>
   </div>
 </div>
@@ -2599,8 +2677,18 @@ const SKILL_DEFS_6 = [
 
 /* ─── 7版（新クトゥルフ神話TRPG準拠） ─── */
 const SKILL_DEFS_7 = [
-  {cat:'戦闘',  name:'近接戦闘',       base:25, sub:['格闘','斧','絞殺ひも','チェーンソー','刀剣','フレイル','むち','槍','自由記入'], defaultSub:'格闘'},
-  {cat:'戦闘',  name:'射撃',           base:20, sub:['拳銃','ライフル/ショットガン','サブマシンガン','マシンガン','重火器','弓','火炎放射器','自由記入'], defaultSub:'拳銃'},
+  {cat:'特殊',  name:'信用',           base:0},
+  {cat:'戦闘',  name:'近接戦闘',       base:25, sub:[
+    {name:'格闘',base:25},{name:'斧',base:20},{name:'絞殺ひも',base:15},
+    {name:'チェーンソー',base:10},{name:'刀剣',base:20},{name:'フレイル',base:10},
+    {name:'むち',base:5},{name:'槍',base:20},{name:'自由記入',base:1}
+  ], defaultSub:'格闘'},
+  {cat:'戦闘',  name:'射撃',           base:20, sub:[
+    {name:'拳銃',base:20},{name:'ライフル/ショットガン',base:25},
+    {name:'サブマシンガン',base:15},{name:'マシンガン',base:10},
+    {name:'重火器',base:10},{name:'弓',base:15},
+    {name:'火炎放射器',base:10},{name:'自由記入',base:1}
+  ], defaultSub:'拳銃'},
   {cat:'戦闘',  name:'回避',           baseExpr:'DEX/2'},
   {cat:'戦闘',  name:'投擲',           base:20},
   {cat:'探索',  name:'目星',           base:25},
@@ -2635,7 +2723,13 @@ const SKILL_DEFS_7 = [
   {cat:'知識',  name:'コンピューター', base:5},
   {cat:'知識',  name:'電子工学',       base:1},
   {cat:'知識',  name:'医学',           base:1},
-  {cat:'知識',  name:'科学',           base:1, sub:['暗号学','化学','気象学','工学','植物学','数学','生物学','地質学','天文学','動物学','物理学','法医学','薬学','自由記入']},
+  {cat:'知識',  name:'科学',           base:1, sub:[
+    {name:'暗号学',base:1},{name:'化学',base:1},{name:'気象学',base:1},
+    {name:'工学',base:1},{name:'植物学',base:1},{name:'数学',base:1},
+    {name:'生物学',base:1},{name:'地質学',base:1},{name:'天文学',base:1},
+    {name:'動物学',base:1},{name:'物理学',base:1},{name:'法医学',base:1},
+    {name:'薬学',base:1},{name:'自由記入',base:1}
+  ]},
   {cat:'知識',  name:'自然', base:10},
   {cat:'知識',  name:'経理',           base:5},
   {cat:'知識',  name:'考古学',         base:1},
@@ -2780,7 +2874,7 @@ function renderSkillsPane(c){
       const savedSub = (skills[def.name]||{}).selectedSub||'';
       const activeSub = savedSub||def.defaultSub||'';
       const opts = (activeSub?[]:['<option value="" disabled selected>(選択)</option>'])
-        .concat(def.sub.map(sv=>`<option value="${_esc(sv)}"${sv===activeSub?' selected':''}>${_esc(sv)}</option>`)).join('');
+        .concat(def.sub.map(sv=>`<option value="${_esc(sv.name)}"${sv.name===activeSub?' selected':''}>${_esc(sv.name)}</option>`)).join('');
       sel.innerHTML = opts;
       sel.addEventListener('change', e=>changeSkillSub(def.name, e.target.value));
       tdN.appendChild(sel);
@@ -2852,10 +2946,17 @@ function renderSkillsPane(c){
   const verBadge = document.createElement('span'); verBadge.className='skills-ver-badge';
   verBadge.textContent = ver==='7'?'7版（新CoC）':'6版';
   toolbar.appendChild(verBadge);
-  const searchIn = document.createElement('input'); searchIn.className='skills-search';
+const searchIn = document.createElement('input'); searchIn.className='skills-search';
   searchIn.type='text'; searchIn.placeholder='技能名を検索…'; searchIn.value=skillSearch;
   searchIn.addEventListener('input', e=>{skillSearch=e.target.value;loadSkillsTab();});
   toolbar.appendChild(searchIn);
+  
+  const addGlobalBtn = document.createElement('button');
+  addGlobalBtn.className = 'btn-skill-add edit-only';
+  addGlobalBtn.textContent = '＋ 技能を追加';
+  addGlobalBtn.addEventListener('click', () => openAddSkillModal(''));
+  toolbar.appendChild(addGlobalBtn);
+  
   pane.appendChild(toolbar);
 
   // ポイントバー
@@ -2897,7 +2998,7 @@ function renderSkillsPane(c){
           const savedSub = (skills[def.name]||{}).selectedSub||'';
           const activeSub = savedSub||def.defaultSub||'';
           const fullName = activeSub?`${def.name}（${activeSub}）`:def.name;
-          const base = getSkillBase(def, stats, c.skillBaseOverrides);
+          const base = getSkillBase(def, stats, c.skillBaseOverrides, activeSub);
           const sk = activeSub?(skills[fullName]||{}):{};
           tbody.appendChild(makeSkillRow(def, fullName, sk, base, true));
         } else {
@@ -3016,23 +3117,108 @@ function endSkillRename(oldName, inp, isCustom){
   debounce('skillrename', ()=>{ saveCharToSupa(c); loadSkillsTab(); }, 300);
 }
 
-/* カスタム技能追加 */
-function addCustomSkill(cat){
-  const c = getChar(); if(!c) return;
-  const name = prompt('技能名を入力してください', '新しい技能');
-  if(!name || !name.trim()) return;
-  const baseStr = prompt('初期値を入力してください\n（数値 例: 5 ／ 能力値参照 例: DEX*2）', '1');
-  if(baseStr === null) return;
-  const trimBase = (baseStr||'1').trim();
-  const newCat = cat || prompt('カテゴリを入力してください', 'カスタム') || 'カスタム';
-  if(!c.customSkills) c.customSkills = [];
-  const isExpr = /^[A-Z]/.test(trimBase);
-  c.customSkills.push(isExpr
-    ? {id:Date.now().toString(), cat:newCat, name:name.trim(), baseExpr:trimBase}
-    : {id:Date.now().toString(), cat:newCat, name:name.trim(), base:parseInt(trimBase)||0}
-  );
-  saveCharToSupa(c).then(()=>loadSkillsTab());
+/* ════ 技能追加モーダル ════ */
+let _skillAddMode = 'free';
+
+function openAddSkillModal(cat){
+  document.getElementById('skill-add-name').value = '';
+  document.getElementById('skill-add-base').value = '';
+  document.getElementById('skill-add-cat').value  = cat || '';
+  _buildSubList();
+  switchSkillAddMode('free');
+  document.getElementById('modal-add-skill').classList.add('open');
+  setTimeout(()=>document.getElementById('skill-add-name').focus(), 80);
 }
+
+function _buildSubList(){
+  const c = getChar();
+  const ver = c ? getSkillVer(c) : '6';
+  const defs = ver==='7' ? SKILL_DEFS_7 : SKILL_DEFS_6;
+  const existing = new Set((c&&c.customSkills||[]).map(d=>d.name));
+
+  // sub を持つ技能だけ抽出、カテゴリ順に並べる
+  const subDefs = defs.filter(d => d.sub && d.sub.length && !d.hidden);
+
+  const container = document.getElementById('skill-sub-list');
+  let html = '';
+  let lastCat = null;
+  let rowIdx = 0;
+
+  for(const def of subDefs){
+    if(def.cat !== lastCat){
+      html += `<div class="skill-sub-cat">${def.cat}</div>`;
+      lastCat = def.cat;
+    }
+    for(const sub of def.sub){
+      const fullName = `${def.name}（${sub.name}）`;
+      const alreadyAdded = existing.has(fullName);
+      html += `<div class="skill-sub-row" data-def="${def.name}" data-sub="${sub.name}" data-cat="${def.cat}" data-base="${sub.base}" data-isexpr="0">
+        <input type="checkbox" id="ssub-${rowIdx}" ${alreadyAdded?'disabled checked':''}>
+        <label for="ssub-${rowIdx}" class="skill-sub-name${alreadyAdded?' added':''}">
+          ${fullName}${alreadyAdded?' ✓':''}
+        </label>
+        <span class="skill-sub-base-lbl">初期値&nbsp;${sub.base}</span>
+      </div>`;
+      rowIdx++;
+    }
+  }
+  container.innerHTML = html || '<div style="padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--ink-faint)">サブ種別を持つ技能がありません</div>';
+}
+
+function switchSkillAddMode(mode){
+  _skillAddMode = mode;
+  document.getElementById('skill-add-free-panel').style.display   = mode==='free'   ? '' : 'none';
+  document.getElementById('skill-add-select-panel').style.display = mode==='select' ? '' : 'none';
+  document.getElementById('skill-toggle-free').classList.toggle('active',   mode==='free');
+  document.getElementById('skill-toggle-select').classList.toggle('active', mode==='select');
+  document.getElementById('skill-add-submit').textContent = mode==='select' ? '＋ 選択した技能を追加' : '＋ 追加';
+}
+
+function submitAddSkill(){
+  const c = getChar(); if(!c) return;
+  if(!c.customSkills) c.customSkills = [];
+
+  if(_skillAddMode === 'free'){
+    const name    = (document.getElementById('skill-add-name').value||'').trim();
+    const baseStr = (document.getElementById('skill-add-base').value||'1').trim();
+    const cat     = (document.getElementById('skill-add-cat').value||'カスタム').trim();
+    if(!name){ alert('技能名を入力してください'); document.getElementById('skill-add-name').focus(); return; }
+    if(c.customSkills.some(d=>d.name===name)){ alert('同名の技能が既に存在します'); return; }
+    const isExpr = /^[A-Z]/.test(baseStr);
+    c.customSkills.push(isExpr
+      ? {id:Date.now().toString(), cat, name, baseExpr:baseStr}
+      : {id:Date.now().toString(), cat, name, base:parseInt(baseStr)||0}
+    );
+    loadSkillsTab();
+    closeModal('modal-add-skill');
+    saveCharToSupa(c).then(()=>toast(`「${name}」を追加しました`)).catch(e=>toast('保存エラー: '+e.message));
+
+  } else {
+    const rows = [...document.querySelectorAll('#skill-sub-list .skill-sub-row')];
+    const checked = rows.filter(r => r.querySelector('input[type="checkbox"]').checked && !r.querySelector('input[type="checkbox"]').disabled);
+    if(!checked.length){ alert('追加する技能にチェックを入れてください'); return; }
+
+    let addCount = 0;
+    checked.forEach((row, i) => {
+      const defName = row.dataset.def;
+      const sub     = row.dataset.sub;
+      const cat     = row.dataset.cat;
+      const baseVal = parseInt(row.dataset.base) || 0;
+      const fullName = `${defName}（${sub}）`;
+      if(c.customSkills.some(d=>d.name===fullName)) return;
+      const id = Date.now().toString() + '_' + i;
+      c.customSkills.push({id, cat, name:fullName, base:baseVal});
+      addCount++;
+    });
+
+    if(!addCount){ toast('追加できる技能がありませんでした'); return; }
+    loadSkillsTab();
+    closeModal('modal-add-skill');
+    saveCharToSupa(c).then(()=>toast(`${addCount}件の技能を追加しました`)).catch(e=>toast('保存エラー: '+e.message));
+  }
+}
+
+function addCustomSkill(cat){ openAddSkillModal(cat); }
 
 /* カスタム技能削除 */
 function deleteCustomSkill(name){
@@ -3057,9 +3243,14 @@ function calcBaseFromExpr(expr, stats){
   if(addMatch) return (parseInt(s[addMatch[1]])||0) + (parseInt(s[addMatch[2]])||0);
   return parseInt(expr)||0;
 }
-function getSkillBase(def, stats, overrides){
+function getSkillBase(def, stats, overrides, selectedSub){
   if(overrides && overrides[def.name] !== undefined) return overrides[def.name];
   if(def.baseExpr !== undefined) return calcBaseFromExpr(def.baseExpr, stats);
+  // subがオブジェクト配列の場合、選択中のサブ種別のbaseを使う
+  if(def.sub && selectedSub){
+    const subDef = def.sub.find(s=>s.name===selectedSub);
+    if(subDef !== undefined) return subDef.base ?? def.base ?? 0;
+  }
   return def.base ?? 0;
 }
 
@@ -3484,6 +3675,7 @@ function updAssets(k,v){const ch=getChar();if(!ch)return;if(!ch.assets)ch.assets
 function addItem(){const ch=getChar();if(!ch)return;if(!ch.items)ch.items=[];ch.items.push({name:'',price:'',qty:'',total:'',note:''});saveCharToSupa(ch).then(()=>loadItemsTab());}
 function delItem(i){const ch=getChar();if(!ch)return;ch.items.splice(i,1);saveCharToSupa(ch).then(()=>loadItemsTab());}
 function updItem(i,k,v){const ch=getChar();if(!ch||!ch.items||!ch.items[i])return;ch.items[i][k]=v;debounce('it'+i,()=>saveCharToSupa(ch),600);}
+
 /* ════ PDF エクスポート ════ */
 function openPrintSheet(){
   const c=getChar();if(!c){toast('キャラクターが見つかりません');return;}
