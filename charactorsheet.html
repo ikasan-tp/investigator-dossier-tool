@@ -608,6 +608,15 @@ body::before{
 .ssbox-key{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;display:block;margin-bottom:3px;font-weight:bold}
 .ssbox-vals{display:flex;align-items:baseline;gap:3px}
 .ssbox-in{background:transparent;border:none;outline:none;font-family:'Share Tech Mono',monospace;color:var(--ink-dark);text-align:center;caret-color:var(--pen-body)}
+/* 導出ステータス（自動計算） */
+.derived-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--rule-light)}
+.dbox{
+  background:var(--paper-base);border:1px solid var(--rule-faint);
+  padding:4px 10px;display:flex;flex-direction:column;align-items:center;min-width:64px;
+  box-shadow:1px 1px 3px rgba(100,80,50,.06);
+}
+.dbox-key{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;color:var(--ink-dim);display:block;margin-bottom:2px;font-weight:bold}
+.dbox-val{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--ink-dark);letter-spacing:-0.5px;line-height:1.2}
 .ssbox-in.cur{font-size:21px;width:38px}
 .ssbox-in.max{font-size:12px;width:30px;color:var(--ink-muted)}
 .ssbox-slash{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--rule-dark)}
@@ -1570,7 +1579,7 @@ body.readonly .add-card{display:none}
       <div class="form-row"><label class="form-lbl">性別</label><input type="text" class="form-input" id="f-gender" placeholder="例: 男性"></div>
     </div>
     <div class="form-g4">
-      <div class="form-row"><label class="form-lbl">年齢</label><input type="text" class="form-input" id="f-age" placeholder="例: 28歳"></div>
+      <div class="form-row"><label class="form-lbl">年齢</label><input type="text" class="form-input" id="f-age" placeholder="例: 28歳" oninput="autoFillDerivedFields()"></div>
       <div class="form-row"><label class="form-lbl">身長</label><input type="text" class="form-input" id="f-height" placeholder="例: 170cm"></div>
       <div class="form-row"><label class="form-lbl">体重</label><input type="text" class="form-input" id="f-weight" placeholder="例: 60kg"></div>
       <div class="form-row"><label class="form-lbl">誕生日</label><input type="text" class="form-input" id="f-birthday" placeholder="例: 3月14日"></div>
@@ -1590,14 +1599,14 @@ body.readonly .add-card{display:none}
     </div>
     <div class="form-section">基本能力値</div>
     <div class="form-g4" style="margin-bottom:6px">
-      <div><label class="form-lbl" style="font-size:9px">STR</label><input type="number" class="form-input" id="f-STR" min="1" max="99" placeholder="—"></div>
-      <div><label class="form-lbl" style="font-size:9px">CON</label><input type="number" class="form-input" id="f-CON" min="1" max="99" placeholder="—"></div>
-      <div><label class="form-lbl" style="font-size:9px">POW</label><input type="number" class="form-input" id="f-POW" min="1" max="99" placeholder="—"></div>
-      <div><label class="form-lbl" style="font-size:9px">DEX</label><input type="number" class="form-input" id="f-DEX" min="1" max="99" placeholder="—"></div>
-      <div><label class="form-lbl" style="font-size:9px">APP</label><input type="number" class="form-input" id="f-APP" min="1" max="99" placeholder="—"></div>
-      <div><label class="form-lbl" style="font-size:9px">SIZ</label><input type="number" class="form-input" id="f-SIZ" min="1" max="99" placeholder="—"></div>
-      <div><label class="form-lbl" style="font-size:9px">INT</label><input type="number" class="form-input" id="f-INT" min="1" max="99" placeholder="—"></div>
-      <div><label class="form-lbl" style="font-size:9px">EDU</label><input type="number" class="form-input" id="f-EDU" min="1" max="99" placeholder="—"></div>
+      <div><label class="form-lbl" style="font-size:9px">STR</label><input type="number" class="form-input" id="f-STR" min="1" max="99" placeholder="—" oninput="autoFillDerivedFields()"></div>
+      <div><label class="form-lbl" style="font-size:9px">CON</label><input type="number" class="form-input" id="f-CON" min="1" max="99" placeholder="—" oninput="autoFillDerivedFields()"></div>
+      <div><label class="form-lbl" style="font-size:9px">POW</label><input type="number" class="form-input" id="f-POW" min="1" max="99" placeholder="—" oninput="autoFillDerivedFields()"></div>
+      <div><label class="form-lbl" style="font-size:9px">DEX</label><input type="number" class="form-input" id="f-DEX" min="1" max="99" placeholder="—" oninput="autoFillDerivedFields()"></div>
+      <div><label class="form-lbl" style="font-size:9px">APP</label><input type="number" class="form-input" id="f-APP" min="1" max="99" placeholder="—" oninput="autoFillDerivedFields()"></div>
+      <div><label class="form-lbl" style="font-size:9px">SIZ</label><input type="number" class="form-input" id="f-SIZ" min="1" max="99" placeholder="—" oninput="autoFillDerivedFields()"></div>
+      <div><label class="form-lbl" style="font-size:9px">INT</label><input type="number" class="form-input" id="f-INT" min="1" max="99" placeholder="—" oninput="autoFillDerivedFields()"></div>
+      <div><label class="form-lbl" style="font-size:9px">EDU</label><input type="number" class="form-input" id="f-EDU" min="1" max="99" placeholder="—" oninput="autoFillDerivedFields()"></div>
     </div>
     <div class="form-section">二次ステータス</div>
     <div class="form-g2">
@@ -1606,6 +1615,18 @@ body.readonly .add-card{display:none}
       <div class="form-row"><label class="form-lbl">SAN（現在 / 最大）</label><div style="display:flex;gap:5px"><input type="number" class="form-input" id="f-san-cur" placeholder="現在" style="flex:1"><input type="number" class="form-input" id="f-san-max" placeholder="最大" style="flex:1"></div></div>
       <div class="form-row"><label class="form-lbl">幸運（現在 / 最大）</label><div style="display:flex;gap:5px"><input type="number" class="form-input" id="f-luk-cur" placeholder="現在" style="flex:1"><input type="number" class="form-input" id="f-luk-max" placeholder="最大" style="flex:1"></div></div>
     </div>
+
+<div class="form-section">導出ステータス</div>
+    <p class="form-hint" style="margin-bottom:8px">能力値から自動計算されます。手動で上書きも可能です。</p>
+    <div class="form-g4">
+      <div class="form-row"><label class="form-lbl">DB</label><input type="text" class="form-input" id="f-der-db" placeholder="例: 1d4"></div>
+      <div class="form-row" id="f-der-build-row"><label class="form-lbl">ビルド</label><input type="text" class="form-input" id="f-der-build" placeholder="0"></div>
+      <div class="form-row" id="f-der-mov-row"><label class="form-lbl">MOV</label><input type="text" class="form-input" id="f-der-mov" placeholder="8"></div>
+      <div class="form-row"><label class="form-lbl">アイデア</label><input type="text" class="form-input" id="f-der-idea" placeholder="0"></div>
+      <div class="form-row"><label class="form-lbl">知識</label><input type="text" class="form-input" id="f-der-know" placeholder="0"></div>
+      <div class="form-row"><label class="form-lbl">幸運</label><input type="text" class="form-input" id="f-der-luck" placeholder="0"></div>
+    </div>
+
     <div class="form-section">出身シナリオ</div>
     <div class="form-row"><label class="form-lbl">シナリオ名</label><input type="text" class="form-input" id="f-scenario" placeholder="例: 永遠の嘘つきたち"></div>
     <div class="form-row">
@@ -1615,18 +1636,32 @@ body.readonly .add-card{display:none}
         <button type="button" id="f-ver-7" class="ver-switch-btn" onclick="selectVer('7')">7版</button>
       </div>
     </div>
-    <!-- 7版：職業P計算式選択 -->
+    <!-- 職業P計算式選択（6版・7版共通） -->
     <div class="form-row" id="f-row-occformula" style="display:none">
-      <label class="form-lbl">職業技能ポイント計算式 <span style="font-size:8px;color:var(--ink-faint)">(7版)</span></label>
+      <label class="form-lbl">職業技能ポイント計算式</label>
       <select class="form-sel" id="f-occformula">
-        <option value="EDU4">EDU×4</option>
-        <option value="EDU2STR2">EDU×2＋STR×2</option>
-        <option value="EDU2DEX2">EDU×2＋DEX×2</option>
-        <option value="EDU2INT2">EDU×2＋INT×2</option>
-        <option value="EDU2CON2">EDU×2＋CON×2</option>
-        <option value="EDU2POW2">EDU×2＋POW×2</option>
-        <option value="EDU2APP2">EDU×2＋APP×2</option>
-        <option value="EDU2SIZ2">EDU×2＋SIZ×2</option>
+        <!-- 6版オプション -->
+        <optgroup id="f-occ-opts-6" label="6版">
+          <option value="EDU20">EDU×20</option>
+          <option value="EDU10STR10">EDU×10＋STR×10</option>
+          <option value="EDU10DEX10">EDU×10＋DEX×10</option>
+          <option value="EDU10INT10">EDU×10＋INT×10</option>
+          <option value="EDU10CON10">EDU×10＋CON×10</option>
+          <option value="EDU10POW10">EDU×10＋POW×10</option>
+          <option value="EDU10APP10">EDU×10＋APP×10</option>
+          <option value="EDU10SIZ10">EDU×10＋SIZ×10</option>
+        </optgroup>
+        <!-- 7版オプション -->
+        <optgroup id="f-occ-opts-7" label="7版">
+          <option value="EDU4">EDU×4</option>
+          <option value="EDU2STR2">EDU×2＋STR×2</option>
+          <option value="EDU2DEX2">EDU×2＋DEX×2</option>
+          <option value="EDU2INT2">EDU×2＋INT×2</option>
+          <option value="EDU2CON2">EDU×2＋CON×2</option>
+          <option value="EDU2POW2">EDU×2＋POW×2</option>
+          <option value="EDU2APP2">EDU×2＋APP×2</option>
+          <option value="EDU2SIZ2">EDU×2＋SIZ×2</option>
+        </optgroup>
       </select>
     </div>
     <!-- 補正値 -->
@@ -1808,8 +1843,14 @@ body.readonly .add-card{display:none}
 
     <!-- チャットパレット -->
     <div class="ccfolia-section-title">チャットパレット（ダイスコマンド）</div>
-    <p class="form-hint">CCFOLIAのコマンド欄に入力されます。編集可能です。</p>
-    <textarea id="ccf-commands" class="form-input" rows="6" style="font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.7;resize:vertical" placeholder="例: {1d6+DB}ダメージ&#10;CON×5 {1d100}で体力ロール"></textarea>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <p class="form-hint" style="margin:0;flex:1">CCFOLIAのコマンド欄に入力されます。編集可能です。</p>
+      <label style="display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:1px;cursor:pointer;flex-shrink:0">
+        <input type="checkbox" id="ccf-include-base" onchange="onToggleCcfBase()" style="accent-color:var(--action);width:13px;height:13px">
+        初期値を含める
+      </label>
+    </div>
+    <textarea id="ccf-commands" class="form-input" rows="6" style="font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.7;resize:vertical" placeholder="例: CC<=65 【目星】"></textarea>
 
     <!-- 差分画像URL -->
     <div class="ccfolia-section-title">差分画像 URL 設定 <span style="font-size:8px;letter-spacing:1px;color:var(--ink-dim);margin-left:4px">（任意）</span></div>
@@ -2054,6 +2095,7 @@ async function renderDetail(){
       <div class="stats-title">基本能力値</div>
       <div class="stats-8">${p8}</div>
       <div class="stats-4">${s4}</div>
+      <div class="derived-row" id="derived-stats-block"></div>
     </div>`;
 
   document.getElementById('tab-memo').innerHTML=`
@@ -2074,6 +2116,7 @@ async function renderDetail(){
       <div class="memo-foot"><button class="btn btn-primary edit-only" onclick="saveMemo()">保存する</button></div>
     </div>`;
   loadExprTab();
+  renderDerivedStats(c);
 }
 
 async function onDetailPortrait(e){
@@ -2100,6 +2143,7 @@ async function onDetailPortrait(e){
 function updStat(k,inp){
   const c=getChar();if(!c)return;if(!c.stats)c.stats={};
   const v=parseInt(inp.value)||0;c.stats[k]=v;
+  renderDerivedStats(c);
   debounce('stat',()=>saveCharToSupa(c),800);
 }
 function updSec(k,f,v){
@@ -2114,6 +2158,117 @@ async function saveMemo(){const c=getChar();if(!c)return;c.memo=document.getElem
 /* デバウンス（入力中の連続保存を防ぐ） */
 const _dt={};
 function debounce(key,fn,ms){clearTimeout(_dt[key]);_dt[key]=setTimeout(fn,ms);}
+
+/* ════ 導出ステータス自動計算 ════ */
+function _calcDB6(sum){
+  if(sum<=12) return '-1D6';
+  if(sum<=16) return '-1D4';
+  if(sum<=24) return '0';
+  if(sum<=32) return '+1D4';
+  if(sum<=40) return '+1D6';
+  if(sum<=56) return '+2D6';
+  if(sum<=72) return '+3D6';
+  if(sum<=88) return '+4D6';
+  return '+5D6';
+}
+function _calcDBBuild7(sum){
+  if(sum<=64)  return {db:'-2',   build:'-2'};
+  if(sum<=84)  return {db:'-1',   build:'-1'};
+  if(sum<=124) return {db:'0',    build:'0'};
+  if(sum<=164) return {db:'+1D4', build:'1'};
+  if(sum<=204) return {db:'+1D6', build:'2'};
+  if(sum<=284) return {db:'+2D6', build:'3'};
+  if(sum<=364) return {db:'+3D6', build:'4'};
+  if(sum<=444) return {db:'+4D6', build:'5'};
+  return {db:'+5D6', build:'6'};
+}
+function _calcMOV7(str,dex,siz){
+  if(str>siz && dex>siz) return 9;
+  if(str<siz && dex<siz) return 7;
+  return 8;
+}
+function _ageMovPenalty(ageStr){
+  const age=parseInt(ageStr)||0;
+  if(age>=80) return -5;
+  if(age>=70) return -4;
+  if(age>=60) return -3;
+  if(age>=50) return -2;
+  if(age>=40) return -1;
+  return 0;
+}
+function renderDerivedStats(c){
+  const el=document.getElementById('derived-stats-block');
+  if(!el)return;
+  const st=c.stats||{};
+  const der=c.derived||{};
+  const str=parseInt(st.STR)||0, con=parseInt(st.CON)||0,
+        pow=parseInt(st.POW)||0, dex=parseInt(st.DEX)||0,
+        siz=parseInt(st.SIZ)||0, int_=parseInt(st.INT)||0,
+        edu=parseInt(st.EDU)||0;
+  const ver=getSkillVer(c);
+  const dbox=(key,val)=>`<div class="dbox"><span class="dbox-key">${key}</span><span class="dbox-val">${val}</span></div>`;
+
+  const agePen=_ageMovPenalty(c.age||'');
+  if(ver==='7'){
+    const sum=str+siz;
+    const {db,build}=_calcDBBuild7(sum);
+    const movBase=(str||dex||siz)?_calcMOV7(str,dex,siz):0;
+    const mov=movBase?(movBase+agePen):'—';
+    const idea=int_||'—';
+    const know=edu||'—';
+    const luck=pow||'—';
+    el.innerHTML=
+      dbox('DB',      db)+
+      dbox('ビルド',  build)+
+      dbox('MOV',     mov)+
+      dbox('アイデア',idea)+
+      dbox('知識',    know)+
+      dbox('幸運',    luck);
+  } else {
+    const sum=str+siz;
+    const db=(str||siz)?_calcDB6(sum):'—';
+    const idea=int_?int_*5:'—';
+    const know=edu?edu*5:'—';
+    const luck=pow?pow*5:'—';
+    el.innerHTML=
+      dbox('DB',      db)+
+      dbox('アイデア',idea)+
+      dbox('知識',    know)+
+      dbox('幸運',    luck);
+  }
+}
+/* ════ モーダル導出ステータス自動入力 ════ */
+function autoFillDerivedFields(){
+  const g=k=>parseInt(document.getElementById('f-'+k)?.value)||0;
+  const str=g('STR'),dex=g('DEX'),siz=g('SIZ'),pow=g('POW'),int_=g('INT'),edu=g('EDU');
+  const ageStr=(document.getElementById('f-age')?.value||'');
+  const ver=_formVer||'6';
+  const agePen=_ageMovPenalty(ageStr);
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+
+  if(ver==='7'){
+    const sum=str+siz;
+    const {db,build}=_calcDBBuild7(sum);
+    const movBase=(str||dex||siz)?_calcMOV7(str,dex,siz):0;
+    const mov=movBase?(movBase+agePen):0;
+    set('f-der-db',   db);
+    set('f-der-build',build);
+    set('f-der-mov',  mov);
+    set('f-der-idea', int_||0);
+    set('f-der-know', edu||0);
+    set('f-der-luck', pow||0);
+  } else {
+    const sum=str+siz;
+    const db=(str||siz)?_calcDB6(sum):'0';
+    set('f-der-db',   db);
+    set('f-der-build','');
+    set('f-der-mov',  '');
+    // 六版: ビルド・MOVは非表示（selectVer側でも制御済み）
+    set('f-der-idea', int_?int_*5:0);
+    set('f-der-know', edu?edu*5:0);
+    set('f-der-luck', pow?pow*5:0);
+  }
+}
 
 /* ════ EXPR TAB ════ */
 async function loadExprTab(){
@@ -2423,8 +2578,27 @@ function selectVer(v){
   const b7=document.getElementById('f-ver-7');
   if(b6)b6.classList.toggle('active',v==='6');
   if(b7)b7.classList.toggle('active',v==='7');
+  // 両版とも計算式行を表示し、版に合ったoptgroupを見せる
   const formulaRow=document.getElementById('f-row-occformula');
-  if(formulaRow)formulaRow.style.display=v==='7'?'':'none';
+  if(formulaRow)formulaRow.style.display='';
+  const og6=document.getElementById('f-occ-opts-6');
+  const og7=document.getElementById('f-occ-opts-7');
+  if(og6)og6.style.display=v==='6'?'':'none';
+  if(og7)og7.style.display=v==='7'?'':'none';
+  // デフォルト値をセット（版をまたいで不正な値が残らないように）
+  const sel=document.getElementById('f-occformula');
+  if(sel){
+    const cur=sel.value||'';
+    if(v==='6'&&!['EDU20','EDU10STR10','EDU10DEX10','EDU10INT10','EDU10CON10','EDU10POW10','EDU10APP10','EDU10SIZ10'].includes(cur)) sel.value='EDU20';
+    if(v==='7'&&!['EDU4','EDU2STR2','EDU2DEX2','EDU2INT2','EDU2CON2','EDU2POW2','EDU2APP2','EDU2SIZ2'].includes(cur)) sel.value='EDU4';
+  }
+  // 六版ではビルド・MOV欄を非表示
+  const is7=v==='7';
+  const bRow=document.getElementById('f-der-build-row');
+  const mRow=document.getElementById('f-der-mov-row');
+  if(bRow)bRow.style.display=is7?'':'none';
+  if(mRow)mRow.style.display=is7?'':'none';
+  autoFillDerivedFields();
 }
 const STATS=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
 function openAddModal(){
@@ -2434,15 +2608,17 @@ function openAddModal(){
   document.getElementById('f-color-hex').value='#3c3428';
   document.getElementById('f-occ-bonus').value='';
   document.getElementById('f-int-bonus').value='';
-  document.getElementById('f-occformula').value='EDU4';
+  document.getElementById('f-occformula').value='EDU20'; // 6版デフォルト（selectVerで切替）
   STATS.forEach(s=>document.getElementById('f-'+s).value='');
   ['hp','mp','san','luk'].forEach(k=>{document.getElementById('f-'+k+'-cur').value='';document.getElementById('f-'+k+'-max').value='';});
+  ['f-der-db','f-der-build','f-der-mov','f-der-idea','f-der-know','f-der-luck'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('main-prev').style.display='none';
   document.getElementById('main-ph').style.display='block';
   document.getElementById('modal-char-title').textContent='新規ファイルを作成';
   document.getElementById('char-save-btn').textContent='ファイルを作成';
   document.getElementById('char-save-btn').onclick=saveChar;
   selectVer('6');
+  autoFillDerivedFields();
   document.getElementById('modal-char').classList.add('open');
   refreshTagCands();
 }
@@ -2458,7 +2634,9 @@ async function openEditModal(){
   document.getElementById('f-emoji').value=c.emoji||'';
   document.getElementById('f-occ-bonus').value=c.occBonus||'';
   document.getElementById('f-int-bonus').value=c.intBonus||'';
-  document.getElementById('f-occformula').value=c.occFormula||'EDU4';
+  // 版に合ったデフォルト計算式を設定（未保存の場合は版ごとの標準値）
+  const defaultFormula = (c.skillVer||'6')==='7' ? 'EDU4' : 'EDU20';
+  document.getElementById('f-occformula').value=c.occFormula||defaultFormula;
   const editColor=c.color||'#3c3428';
   document.getElementById('f-color').value=editColor;
   document.getElementById('f-color-hex').value=editColor;
@@ -2468,6 +2646,7 @@ async function openEditModal(){
   if(c.bust_path){document.getElementById('main-prev').src=storageUrl(c.bust_path);document.getElementById('main-prev').style.display='block';document.getElementById('main-ph').style.display='none';}
   else{document.getElementById('main-prev').style.display='none';document.getElementById('main-ph').style.display='block';}
   selectVer(c.skillVer||'6');
+  autoFillDerivedFields();
   document.getElementById('modal-char-title').textContent='ファイルを編集';
   document.getElementById('char-save-btn').textContent='保存する';
   document.getElementById('char-save-btn').onclick=()=>updChar(c.id);
@@ -2485,6 +2664,14 @@ function onMainImg(e,type){
 function collectForm(){
   const stats={};STATS.forEach(s=>{const v=parseInt(document.getElementById('f-'+s).value);if(v)stats[s]=v;});
   const secondary={};['hp','mp','san','luk'].forEach(k=>{secondary[k]={cur:parseInt(document.getElementById('f-'+k+'-cur').value)||0,max:parseInt(document.getElementById('f-'+k+'-max').value)||0};});
+  const derived = {
+    db: document.getElementById('f-der-db').value.trim(),
+    build: document.getElementById('f-der-build').value.trim(),
+    mov: document.getElementById('f-der-mov').value.trim(),
+    idea: document.getElementById('f-der-idea').value.trim(),
+    know: document.getElementById('f-der-know').value.trim(),
+    luck: document.getElementById('f-der-luck').value.trim()
+  };
   return{
     name:document.getElementById('f-name').value.trim(),
     ruby:document.getElementById('f-ruby').value.trim(),
@@ -2498,7 +2685,7 @@ function collectForm(){
     emoji:document.getElementById('f-emoji').value.trim(),
     color:document.getElementById('f-color').value,
     tags:document.getElementById('f-tags').value.trim().split(',').map(t=>t.trim()).filter(Boolean),
-    stats,secondary,
+    stats,secondary,derived,
     skillVer:_formVer,
     occFormula:document.getElementById('f-occformula').value,
     occBonus:parseInt(document.getElementById('f-occ-bonus').value)||0,
@@ -2806,8 +2993,20 @@ function renderSkillsPane(c){
     intBase = int_*2;
     intFormula = 'INT×2';
   } else {
-    occBase = edu * 20;
-    occFormula = 'EDU×20';
+    const formula6 = c.occFormula || 'EDU20';
+    const abilityMap6 = {
+      EDU20:      {base:edu*20,            label:'EDU×20'},
+      EDU10STR10: {base:edu*10+str_*10,    label:'EDU×10＋STR×10'},
+      EDU10DEX10: {base:edu*10+dex*10,     label:'EDU×10＋DEX×10'},
+      EDU10INT10: {base:edu*10+int_*10,    label:'EDU×10＋INT×10'},
+      EDU10CON10: {base:edu*10+con*10,     label:'EDU×10＋CON×10'},
+      EDU10POW10: {base:edu*10+pow_*10,    label:'EDU×10＋POW×10'},
+      EDU10APP10: {base:edu*10+app*10,     label:'EDU×10＋APP×10'},
+      EDU10SIZ10: {base:edu*10+siz*10,     label:'EDU×10＋SIZ×10'},
+    };
+    const f6 = abilityMap6[formula6] || abilityMap6['EDU20'];
+    occBase = f6.base;
+    occFormula = f6.label;
     intBase = int_ * 10;
     intFormula = 'INT×10';
   }
@@ -3259,78 +3458,189 @@ let _ccfCmdCache = null; // buildDefaultCommands キャッシュ
 
 function buildCcfoliaParams(c){
   const st=c.stats||{},sec=c.secondary||{};
+  const ver=getSkillVer(c);
   const status=[];
-  // HP / MP / SAN
-  const secDefs=[{k:'hp',lbl:'HP'},{k:'mp',lbl:'MP'},{k:'san',lbl:'SAN'}];
-  for(const {k,lbl} of secDefs){
+
+  // HP / MP / SAN（共通）
+  for(const {k,lbl} of [{k:'hp',lbl:'HP'},{k:'mp',lbl:'MP'},{k:'san',lbl:'SAN'}]){
     const cur=parseInt((sec[k]||{}).cur)||0;
     const max=parseInt((sec[k]||{}).max)||0;
     if(max>0||cur>0) status.push({label:lbl,value:cur,max:max});
   }
-  // 幸運
-  const lukCur=parseInt((sec['luk']||{}).cur)||0;
-  const lukMax=parseInt((sec['luk']||{}).max)||0;
-  if(lukMax>0||lukCur>0) status.push({label:'幸運',value:lukCur,max:lukMax});
+  // 幸運は7版のみ
+  if(ver==='7'){
+    const cur=parseInt((sec['luk']||{}).cur)||0;
+    const max=parseInt((sec['luk']||{}).max)||0;
+    if(max>0||cur>0) status.push({label:'幸運',value:cur,max:max});
+  }
+  // 絵文字ラベルのカスタムバー
+  if(c.emoji){
+    status.push({label:c.emoji,value:0,max:0});
+  }
+  // 銃の装弾バー（ammoが設定されている武器ごとに追加）
+  for(const w of (c.weapons||[])){
+    if(!w.name||!w.ammo) continue;
+    const ammoVal=parseInt(w.ammo)||0;
+    if(ammoVal>0) status.push({label:`${w.name}装弾`,value:ammoVal,max:ammoVal});
+  }
 
-  // 能力値 params
+  // params: 能力値8種＋DB（職業は含めない）
   const params=[];
-  const sdefs=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
-  for(const k of sdefs){
+  for(const k of ['STR','CON','POW','DEX','APP','SIZ','INT','EDU']){
     const v=parseInt(st[k])||0;
     if(v>0) params.push({label:k,value:String(v)});
   }
-  if(c.job) params.push({label:'職業',value:c.job});
+  // DB
+  const str=parseInt(st.STR)||0, siz=parseInt(st.SIZ)||0;
+  if(str||siz){
+    const db=ver==='7'?_calcDBBuild7(str+siz).db:_calcDB6(str+siz);
+    params.push({label:'DB',value:db});
+  }
 
   return {status,params};
 }
 
-function buildDefaultCommands(c){
+function buildDefaultCommands(c, includeBase){
   const st=c.stats||{},sec=c.secondary||{};
-  const ver = getSkillVer(c);
-  const defs = ver==='7' ? SKILL_DEFS_7 : SKILL_DEFS_6;
-  const allDefs = [...defs.filter(d=>!d.hidden), ...(c.customSkills||[])];
-  const skills = c.skills || {};
-  const lines=[];
-  lines.push('//── 能力値ロール ──');
-  const sdefs=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
-  for(const k of sdefs){
-    const v=parseInt(st[k])||0;
-    if(v>0) lines.push(`${k}ロール(×5=${v*5}) {1d100}<=${v*5}`);
+  const ver=getSkillVer(c);
+  const defs=ver==='7'?SKILL_DEFS_7:SKILL_DEFS_6;
+  const skills=c.skills||{};
+  const customSkills=c.customSkills||[];
+  const weapons=c.weapons||[];
+  const int_=parseInt(st.INT)||0, edu=parseInt(st.EDU)||0, pow=parseInt(st.POW)||0;
+  const str=parseInt(st.STR)||0, siz=parseInt(st.SIZ)||0;
+  const dbStr=(str||siz)?(ver==='7'?_calcDBBuild7(str+siz).db:_calcDB6(str+siz)):'0';
+
+  // カテゴリ名の表示ラベル
+  const catLabel={'戦闘':'戦闘','探索':'探索','行動':'行動','交渉':'対人','知識':'知識','特殊':'信用'};
+
+  // 技能合計値
+  function skillTotal(def, subName){
+    const base=getSkillBase(def,st,c.skillBaseOverrides,subName||undefined);
+    const nm=subName?`${def.name}（${subName}）`:def.name;
+    const sk=skills[nm]||{};
+    return base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
   }
-  // 技能ロール：初期値＋各配分の合計が初期値より大きいものだけ出力
-  const skillLines = [];
-  for(const def of allDefs){
-    const base = getSkillBase(def, st);
-    const sk = skills[def.name] || {};
-    const total = base
-      + (parseInt(sk.occ )||0)
-      + (parseInt(sk.int )||0)
-      + (parseInt(sk.grow)||0)
-      + (parseInt(sk.etc )||0);
-    if(total > 0 && (sk.occ||sk.int||sk.grow||sk.etc))
-      skillLines.push(`${def.name}(${total}) {1d100}<=${total}`);
+  function hasPoints(def, subName){
+    const nm=subName?`${def.name}（${subName}）`:def.name;
+    const sk=skills[nm]||{};
+    return !!(sk.occ||sk.int||sk.grow||sk.etc);
   }
-  if(skillLines.length){
-    lines.push('');lines.push('//── 技能ロール ──');
-    lines.push(...skillLines);
-  }
+
+  const L=[];
+
+  // ── 最上部：SAN・アイデア・幸運・知識 ──
   const sanMax=parseInt((sec['san']||{}).max)||0;
-  if(sanMax>0){
-    lines.push('');lines.push('//── SAN ──');
-    lines.push(`正気度ロール {1d100}<=${sanMax}`);
+  if(sanMax>0) L.push('CC<={SAN} 【正気度ロール】');
+  if(ver==='7'){
+    if(int_>0) L.push(`CC<=${int_} 【アイデア】`);
+    L.push('CC<={幸運} 【幸運】');
+    if(edu>0)  L.push(`CC<=${edu} 【知識】`);
+  } else {
+    if(int_>0) L.push(`CCB<=${int_*5} 【アイデア】`);
+    if(pow>0)  L.push(`CCB<=${pow*5} 【幸運】`);
+    if(edu>0)  L.push(`CCB<=${edu*5} 【知識】`);
   }
-  return lines.join('\n');
+
+  // ── ステータス増減 ──
+  L.push(':HP+ 【HP】',':HP- 【HP】',':MP+ 【MP】',':MP- 【MP】',':SAN+ 【SAN】',':SAN- 【SAN】');
+
+  // ── 能力値 ──
+  L.push('── 能力値 ──');
+  for(const k of ['STR','CON','POW','DEX','APP','SIZ','INT','EDU']){
+    if(parseInt(st[k])||0) L.push(`CC<={${k}} 【${k}】`);
+  }
+
+  // ── 武器 ──
+  const weaponLines=[];
+  for(const w of weapons){
+    if(!w.name) continue;
+    const hit=parseInt(w.hit)||0;
+    if(hit>0||w.hit) weaponLines.push(`CC<=${hit||w.hit} 【${w.name}】`);
+    if(w.damage)     weaponLines.push(`${w.damage} 【${w.name}】`);
+  }
+  if(weaponLines.length){ L.push('── 武器 ──'); L.push(...weaponLines); }
+
+  // ── 技能（ポイント配分済みのみ、カテゴリ別） ──
+  const stdCats=[...new Set(defs.filter(d=>!d.hidden).map(d=>d.cat))];
+  const customCats=[...new Set(customSkills.map(d=>d.cat))].filter(ct=>!stdCats.includes(ct));
+
+  for(const cat of [...stdCats,...customCats]){
+    const catDefs=[
+      ...defs.filter(d=>!d.hidden&&d.cat===cat),
+      ...customSkills.filter(d=>d.cat===cat)
+    ];
+    const catLines=[];
+    for(const def of catDefs){
+      if(def.sub&&def.sub.length&&!def.isCustom){
+        // sub技能: selectedSubがあるものだけ
+        const savedSub=(skills[def.name]||{}).selectedSub||def.defaultSub||'';
+        if(!savedSub||!hasPoints(def,savedSub)) continue;
+        const total=skillTotal(def,savedSub);
+        const fullName=`${def.name}（${savedSub}）`;
+        catLines.push(`CC<=${total} 【${fullName}】`);
+        if(def.name==='近接戦闘') catLines.push(`1d3+{DB} 【${fullName}】`);
+      } else {
+        if(!hasPoints(def)) continue;
+        const total=skillTotal(def);
+        catLines.push(`CC<=${total} 【${def.name}】`);
+      }
+    }
+    if(catLines.length){
+      L.push(`── ${catLabel[cat]||cat} ──`);
+      L.push(...catLines);
+    }
+  }
+
+  // ── 初期値（オプション） ──
+  if(includeBase){
+    L.push('── 初期値 ──');
+    for(const def of defs.filter(d=>!d.hidden)){
+      if(def.sub&&def.sub.length){
+        const defaultSub=def.defaultSub||def.sub[0]?.name||'';
+        const base=getSkillBase(def,st,c.skillBaseOverrides,defaultSub);
+        const nm=defaultSub?`${def.name}（${defaultSub}）`:def.name;
+        L.push(`CC<=${base} 【${nm}】`);
+        if(def.name==='近接戦闘') L.push(`1d3+{DB} 【${nm}】`);
+      } else {
+        const base=getSkillBase(def,st,c.skillBaseOverrides);
+        L.push(`CC<=${base} 【${def.name}】`);
+      }
+    }
+    for(const def of customSkills){
+      const base=getSkillBase(def,st,c.skillBaseOverrides);
+      L.push(`CC<=${base} 【${def.name}】`);
+    }
+  }
+
+  // ── ステータス ──
+  L.push('── ステータス ──');
+  for(const k of ['STR','CON','POW','DEX','APP','SIZ','INT','EDU']){
+    const v=parseInt(st[k])||0; if(v) L.push(`//${k} = ${v}`);
+  }
+  if(str||siz) L.push(`//db = ${dbStr.replace('+','')}`);
+
+  return L.join('\n');
+}
+
+function onToggleCcfBase(){
+  _ccfCmdCache=null;
+  const c=getChar(); if(!c) return;
+  const includeBase=document.getElementById('ccf-include-base')?.checked||false;
+  const cmdTa=document.getElementById('ccf-commands');
+  cmdTa.value=buildDefaultCommands(c,includeBase);
+  _ccfCmdCache=cmdTa.value;
+  debounce('ccfPreview',updateCcfoliaPreview,100);
 }
 
 async function openCcfoliaModal(){
   const c=getChar();if(!c)return;
 
-  // 差分リストを取得して番号順にソート
   _ccfExprs=[];
   try{
     const rows=await sbSelect('expressions',`char_id=eq.${c.id}&order=created_at.asc`);
     const exprs=rows.map(r=>({id:r.id,label:r.label,category:r.category,image_path:r.image_path,ccfUrl:''}));
-    _ccfExprs=exprs.sort(naturalSort); // 番号順
+    _ccfExprs=exprs.sort(naturalSort);
   }catch(e){}
 
   // ステータスプレビュー
@@ -3344,14 +3654,13 @@ async function openCcfoliaModal(){
     </div>`;
   document.getElementById('ccf-status-preview').innerHTML=statHtml;
 
-  // チャットパレット（キャッシュ利用 — キャラが変わったらリセット）
+  // チャットパレット（キャッシュ利用）
+  const includeBase=document.getElementById('ccf-include-base')?.checked||false;
   const cmdTa=document.getElementById('ccf-commands');
-  if(_ccfCmdCache===null) _ccfCmdCache=buildDefaultCommands(c);
+  if(_ccfCmdCache===null) _ccfCmdCache=buildDefaultCommands(c,includeBase);
   cmdTa.value=_ccfCmdCache;
 
-  // 差分リスト
   renderCcfoliaFaces();
-  // JSON プレビューは描画後に非同期で更新（モーダル表示をブロックしない）
   requestAnimationFrame(updateCcfoliaPreview);
   document.getElementById('modal-ccfolia').classList.add('open');
 }
@@ -3389,20 +3698,25 @@ function buildCcfoliaJson(){
     .filter(e=>e.label)
     .map(e=>({iconUrl:e.ccfUrl||null,label:e.label}));
 
-  // バストアップのiconUrlは最初のURLを持つ差分か、ccfExprsの最初のURL
   const firstWithUrl=_ccfExprs.find(e=>e.ccfUrl);
   const iconUrl=firstWithUrl?firstWithUrl.ccfUrl:null;
 
+  // initiative = DEX
+  const initiative=parseInt((c.stats||{}).DEX)||0;
+
   const data={
     name:c.name||'',
+    initiative,
     memo:c.quote||'',
     status,
     params,
     commands,
     color:c.color||'#3c3428',
+    invisible:false,
+    secret:false,
+    faces:faces.length>0?faces:[],
   };
   if(iconUrl) data.iconUrl=iconUrl;
-  if(faces.length>0) data.faces=faces;
 
   return {kind:'character',data};
 }
