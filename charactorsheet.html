@@ -1707,7 +1707,7 @@ body.readonly .add-card{display:none}
     <div class="modal-title">差分画像を追加</div>
     <div class="form-row">
       <label class="form-lbl">差分名（ラベル）</label>
-      <p class="form-hint">Cocofolia上での差分選択名になります。複数選択時は「笑顔01」「笑顔02」と自動連番。空白のままにするとファイル名を使用します。</p>
+      <p class="form-hint">複数選択時は「笑顔01」「笑顔02」と自動連番。空白のままにするとファイル名を使用します。</p>
       <input type="text" class="form-input" id="e-label" placeholder="例: 通常, 笑顔, @通常（空白でファイル名）">
     </div>
     <div class="form-row">
@@ -1834,7 +1834,7 @@ body.readonly .add-card{display:none}
 <div class="modal-overlay" id="modal-ccfolia">
   <div class="modal" style="max-width:600px">
     <button class="modal-close" onclick="closeModal('modal-ccfolia')">[ close ]</button>
-    <div class="modal-title">CCFOLIA 出力</div>
+    <div class="modal-title">出力</div>
     <p class="form-hint" style="margin-bottom:4px">ステータス・差分ラベルをCCFOLIA形式のJSONとしてクリップボードにコピーします。<br>CCFOLIAのルーム画面を開き、前景上で <strong>Ctrl+V</strong>（右クリック→貼り付け）でキャラクターコマを作成できます。</p>
 
     <!-- ステータス確認 -->
@@ -1842,7 +1842,7 @@ body.readonly .add-card{display:none}
     <div id="ccf-status-preview"></div>
 
     <!-- チャットパレット -->
-    <div class="ccfolia-section-title">チャットパレット（ダイスコマンド）</div>
+    <div class="ccfolia-section-title">チャットパレット</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <p class="form-hint" style="margin:0;flex:1">CCFOLIAのコマンド欄に入力されます。編集可能です。</p>
       <label style="display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:1px;cursor:pointer;flex-shrink:0">
@@ -1853,12 +1853,17 @@ body.readonly .add-card{display:none}
     <textarea id="ccf-commands" class="form-input" rows="6" style="font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.7;resize:vertical" placeholder="例: CC<=65 【目星】"></textarea>
 
     <!-- 差分画像URL -->
-    <div class="ccfolia-section-title">差分画像 URL 設定 <span style="font-size:8px;letter-spacing:1px;color:var(--ink-dim);margin-left:4px">（任意）</span></div>
-    <p class="form-hint" style="margin-bottom:10px">
-      各差分に対応するCCFOLIA上の画像URLを入力してください。<br>
-      ※ CCFOLIA APIの制限により画像データの直接転送はできません。<br>CCFOLIAに画像をアップロード後、そのURLをここに貼り付けてください。
-    </p>
-    <div id="ccf-faces-list" class="ccfolia-faces-list"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div class="ccfolia-section-title" style="margin:0;flex:1">差分画像の出力</div>
+      <label style="display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:1px;cursor:pointer;flex-shrink:0">
+        <input type="checkbox" id="ccf-include-icon" checked onchange="onToggleCcfIcon()" style="accent-color:var(--action);width:13px;height:13px">
+        画像を出力する
+      </label>
+    </div>
+    <div id="ccf-faces-section">
+      <p class="form-hint" style="margin-bottom:8px">登録済みの差分画像名をjsonに含めます。</p>
+      <div id="ccf-faces-list" class="ccfolia-faces-list"></div>
+    </div>
 
     <!-- JSONプレビュー -->
     <div class="ccfolia-section-title">JSON プレビュー</div>
@@ -2086,8 +2091,8 @@ async function renderDetail(){
       <div class="case-actions edit-only">
         <button class="btn btn-ghost btn-sm" onclick="openEditModal()">編集</button>
         <button id="hidden-toggle-btn" class="btn btn-sm btn-hidden-toggle${c.hidden?' is-hidden':''}" onclick="toggleHidden()">${c.hidden?'非表示中':'非表示'}</button>
-        <button class="btn btn-sm btn-ccfolia" onclick="openCcfoliaModal()">CCFOLIA</button>
-        <button class="btn btn-sm btn-pdf" onclick="openPrintSheet()">📄 PDF</button>
+        <button class="btn btn-sm btn-ccfolia" onclick="openCcfoliaModal()">出力</button>
+        <button class="btn btn-sm btn-pdf" onclick="openPrintSheet()">印刷</button>
         <button class="btn btn-danger btn-sm" onclick="deleteChar()">削除</button>
       </div>
     </div>
@@ -3661,6 +3666,7 @@ async function openCcfoliaModal(){
   cmdTa.value=_ccfCmdCache;
 
   renderCcfoliaFaces();
+  onToggleCcfIcon();
   requestAnimationFrame(updateCcfoliaPreview);
   document.getElementById('modal-ccfolia').classList.add('open');
 }
@@ -3671,43 +3677,55 @@ function renderCcfoliaFaces(){
     list.innerHTML=`<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:3px;text-align:center;padding:16px">差分画像が登録されていません</div>`;
     return;
   }
-  list.innerHTML=_ccfExprs.map((e,i)=>{
+  list.innerHTML=_ccfExprs.map((e)=>{
     const imgUrl=e.image_path?storageUrl(e.image_path):'';
-    const safeLabel=(e.label||'').replace(/"/g,'&quot;');
-    const safeUrl=(e.ccfUrl||'').replace(/"/g,'&quot;');
     return `<div class="ccfolia-face-row">
       <div class="ccfolia-face-thumb">
         ${imgUrl?`<img src="${imgUrl}" alt="" loading="lazy">`:`<div class="ccfolia-face-thumb-ph">NO<br>IMG</div>`}
       </div>
       <span class="ccfolia-face-label">${e.label||'（名前なし）'}</span>
       <span class="ccfolia-face-cat">${e.category||''}</span>
-      <input class="ccfolia-face-url-input" type="text" placeholder="https://ccfolia.com/... （任意）"
-        value="${safeUrl}"
-        oninput="_ccfExprs[${i}].ccfUrl=this.value;debounce('ccfPreview',updateCcfoliaPreview,300)"
-      >
     </div>`;
   }).join('');
+}
+
+function onToggleCcfIcon(){
+  const checked=document.getElementById('ccf-include-icon')?.checked;
+  const section=document.getElementById('ccf-faces-section');
+  if(section) section.style.display=checked?'':'none';
+  debounce('ccfPreview',updateCcfoliaPreview,100);
 }
 
 function buildCcfoliaJson(){
   const c=getChar();if(!c)return null;
   const {status,params}=buildCcfoliaParams(c);
   const commands=document.getElementById('ccf-commands').value.trim();
+  const includeIcon=document.getElementById('ccf-include-icon')?.checked!==false;
 
+  // faces（画像リンク出力チェック時のみiconUrl付き）
   const faces=_ccfExprs
     .filter(e=>e.label)
-    .map(e=>({iconUrl:e.ccfUrl||null,label:e.label}));
+    .map(e=>{
+      const imgUrl=includeIcon&&e.image_path?storageUrl(e.image_path):null;
+      return {iconUrl:imgUrl, label:e.label};
+    });
 
-  const firstWithUrl=_ccfExprs.find(e=>e.ccfUrl);
-  const iconUrl=firstWithUrl?firstWithUrl.ccfUrl:null;
+  const firstWithImg=includeIcon?_ccfExprs.find(e=>e.image_path):null;
+  const iconUrl=firstWithImg?storageUrl(firstWithImg.image_path):null;
 
   // initiative = DEX
   const initiative=parseInt((c.stats||{}).DEX)||0;
 
+  // memo: 名前 - 読み仮名 / 性別/年齢/職業 / 身長/体重
+  const nameLine=[c.name, c.ruby].filter(Boolean).join(' - ');
+  const profileLine=[c.gender, c.age, c.job].filter(Boolean).join('/');
+  const bodyLine=[c.height, c.weight].filter(Boolean).join('/');
+  const memo=[nameLine, profileLine, bodyLine].filter(Boolean).join('\n');
+
   const data={
     name:c.name||'',
     initiative,
-    memo:c.quote||'',
+    memo,
     status,
     params,
     commands,
