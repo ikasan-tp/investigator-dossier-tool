@@ -1592,9 +1592,9 @@ body.readonly .add-card{display:none}
           <input type="text" class="form-input" id="f-color-hex" value="#3c3428" style="width:100px" oninput="if(/^#[0-9A-F]{6}$/i.test(this.value))document.getElementById('f-color').value=this.value">
         </div>
       </div>
-      <div class="form-row">
+<div class="form-row">
         <label class="form-lbl">マーク</label>
-        <input type="text" class="form-input" id="f-emoji" placeholder="👓" maxlength="4" style="width:80px;font-size:22px;text-align:center;padding:2px 6px">
+        <input type="text" class="form-input" id="f-emoji" placeholder="例: 🔍" maxlength="4" style="width:100px;">
       </div>
     </div>
     <div class="form-section">基本能力値</div>
@@ -1980,6 +1980,7 @@ function showView(n){
   if(n==='setup')initSetupView();
 }
 function showTab(n){
+  const _sy=window.scrollY;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelector(`.tab-btn[onclick="showTab('${n}')"]`).classList.add('active');
@@ -1989,6 +1990,7 @@ function showTab(n){
   if(n==='skills')loadSkillsTab();
   if(n==='combat')loadCombatTab();
   if(n==='items')loadItemsTab();
+  requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'}));
 }
 
 /* ════ LIST ════ */
@@ -3266,7 +3268,18 @@ function _updatePtBar(c){
     occBase=sMap[formula]||edu*4;
     intBase=int_*2;
   } else {
-    occBase=edu*20;
+    const formula6=c.occFormula||'EDU20';
+    const sMap6={
+      EDU20:edu*20,
+      EDU10STR10:edu*10+(parseInt(stats.STR)||0)*10,
+      EDU10DEX10:edu*10+(parseInt(stats.DEX)||0)*10,
+      EDU10INT10:edu*10+int_*10,
+      EDU10CON10:edu*10+(parseInt(stats.CON)||0)*10,
+      EDU10POW10:edu*10+(parseInt(stats.POW)||0)*10,
+      EDU10APP10:edu*10+(parseInt(stats.APP)||0)*10,
+      EDU10SIZ10:edu*10+(parseInt(stats.SIZ)||0)*10
+    };
+    occBase=sMap6[formula6]||edu*20;
     intBase=int_*10;
   }
   const occMax=occBase+occBonus, intMax=intBase+intBonus;
@@ -3899,10 +3912,62 @@ function changeSkillSub(defName,newSub){
 }
 function setSkillBaseOverride(name,val){const ch=getChar();if(!ch)return;if(!ch.skillBaseOverrides)ch.skillBaseOverrides={};const num=val===''?null:parseInt(val);if(num===null)delete ch.skillBaseOverrides[name];else ch.skillBaseOverrides[name]=num;debounce('base_'+name,()=>saveCharToSupa(ch),600);}
 
+function _pinnedSkillHit(ch, skillKey){
+  const stats=ch.stats||{};
+  const skills=ch.skills||{};
+  const overrides=ch.skillBaseOverrides||{};
+  const ver=getSkillVer(ch);
+  const defs=ver==='7'?SKILL_DEFS_7:SKILL_DEFS_6;
+  let def=defs.find(d=>d.name===skillKey);
+  let subName;
+  if(!def){
+    const subMatch=skillKey.match(/^(.+?)（(.+)）$/);
+    if(subMatch){
+      const parentName=subMatch[1];subName=subMatch[2];
+      def=defs.find(d=>d.name===parentName);
+    }
+  }
+  if(!def) return '—';
+  const base=getSkillBase(def,stats,overrides,subName);
+  const sk=skills[skillKey]||{};
+  const total=base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
+  return total;
+}
+
 function loadCombatTab(){
   const pane=document.getElementById('tab-combat');if(!pane)return;
   const ch=getChar();if(!ch)return;
   const wp=ch.weapons||[],ar=ch.armors||[];
+
+// ── 固定武器──
+  const ver=getSkillVer(ch);
+  const pinnedDefs = ver === '7'
+    ? [{label:'近接戦闘（格闘）', skillKey:'近接戦闘（格闘）', damage:'1d3+{DB}', range:'タッチ'}]
+    : [{label:'こぶし（パンチ）', skillKey:'こぶし（パンチ）', damage:'1d3+{DB}', range:'タッチ'}];
+
+const pinnedRows=pinnedDefs.map(p=>{
+    const hit=_pinnedSkillHit(ch,p.skillKey);
+    const hitDisp=hit==='—'?'—':`${hit}<span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ink-muted);margin-left:2px">%</span>`;
+    return '<div class="combat-card" style="border-left:3px solid var(--rule-dark)">'
+      +'<div class="combat-card-head">'
+      +'<div class="combat-card-fields">'
+      +'<div class="combat-field combat-field-lg"><span class="combat-lbl">武器名</span>'
+      +'<span style="font-family:\'Noto Serif JP\',serif;font-size:13px;color:var(--ink-body);padding:4px 2px;display:block">'+_esc(p.label)+'</span></div>'
+      +'<div class="combat-field combat-field-lg"><span class="combat-lbl">技能名</span>'
+      +'<span style="font-family:\'Noto Serif JP\',serif;font-size:13px;color:var(--ink-body);padding:4px 2px;display:block">'+_esc(p.skillKey)+'</span></div>'
+      +'</div>'
+      +'<span style="font-family:\'Share Tech Mono\',monospace;font-size:8px;letter-spacing:2px;color:var(--ink-faint);padding:4px 8px;align-self:center">FIXED</span>'
+      +'</div>'
+      +'<div class="combat-card-fields">'
+      +'<div class="combat-field"><span class="combat-lbl">成功率</span>'
+      +'<span style="font-family:\'Noto Serif JP\',serif;font-size:13px;color:var(--ink-body);padding:4px 2px;display:block">'+hitDisp+'</span></div>'
+      +'<div class="combat-field"><span class="combat-lbl">ダメージ</span>'
+      +'<span style="font-family:\'Noto Serif JP\',serif;font-size:13px;color:var(--ink-body);padding:4px 2px;display:block">'+_esc(p.damage)+'</span></div>'
+      +'<div class="combat-field"><span class="combat-lbl">射程</span>'
+      +'<span style="font-family:\'Noto Serif JP\',serif;font-size:13px;color:var(--ink-body);padding:4px 2px;display:block">'+_esc(p.range)+'</span></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
 
   const wr=wp.map((w,i)=>{
     const n=_esc(w.name||''),sk=_esc(w.skill||''),ht=_esc(w.hit||'');
@@ -3916,7 +3981,7 @@ function loadCombatTab(){
       +'</div>'
       +'<button class="combat-del edit-only" onclick="delWeapon('+i+')">✕</button>'
       +'</div>'
-      +'<div class="combat-card-fields">'
+　　　+'<div class="combat-card-fields">'
       +'<div class="combat-field"><span class="combat-lbl">成功率</span><input class="combat-in" type="text" value="'+ht+'" placeholder="—" oninput="updWeapon('+i+',\'hit\',this.value)"></div>'
       +'<div class="combat-field"><span class="combat-lbl">ダメージ</span><input class="combat-in" type="text" value="'+dm+'" placeholder="—" oninput="updWeapon('+i+',\'damage\',this.value)"></div>'
       +'<div class="combat-field"><span class="combat-lbl">射程</span><input class="combat-in" type="text" value="'+rg+'" placeholder="—" oninput="updWeapon('+i+',\'range\',this.value)"></div>'
@@ -3932,6 +3997,11 @@ function loadCombatTab(){
   const ar2=ar.map((a,i)=>{
     const n=_esc(a.name||''),lc=_esc(a.location||'');
     const av=_esc(a.armor||''),hp=_esc(a.hp||''),nt=_esc(a.note||'');
+    const armorVal=parseInt(a.armor);
+    const armorIsZero=a.armor===''||a.armor==='0'||armorVal===0;
+    const armorDisplay=armorIsZero
+      ?'<span style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:1px">防具なし</span>'
+      :'';
     return '<div class="combat-card">'
       +'<div class="combat-card-head">'
       +'<div class="combat-card-fields">'
@@ -3941,19 +4011,24 @@ function loadCombatTab(){
       +'<button class="combat-del edit-only" onclick="delArmor('+i+')">✕</button>'
       +'</div>'
       +'<div class="combat-card-fields">'
-      +'<div class="combat-field"><span class="combat-lbl">装甲</span><input class="combat-in" type="text" value="'+av+'" placeholder="—" oninput="updArmor('+i+',\'armor\',this.value)"></div>'
+      +'<div class="combat-field"><span class="combat-lbl">装甲</span><input class="combat-in" type="text" value="'+av+'" placeholder="防具なし" oninput="updArmor('+i+',\'armor\',this.value)">'+armorDisplay+'</div>'
       +'<div class="combat-field"><span class="combat-lbl">耐久値</span><input class="combat-in" type="text" value="'+hp+'" placeholder="—" oninput="updArmor('+i+',\'hp\',this.value)"></div>'
       +'<div class="combat-field combat-field-lg"><span class="combat-lbl">備考</span><input class="combat-in" type="text" value="'+nt+'" placeholder="—" oninput="updArmor('+i+',\'note\',this.value)"></div>'
       +'</div>'
       +'</div>';
   }).join('');
 
+  const armorEmptyMsg=ar.length===0
+    ?'<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:2px;text-align:center;padding:14px 0">防具なし</div>'
+    :'';
+
   pane.innerHTML=
     '<div class="combat-section"><div class="combat-section-title">武器</div>'
-    +'<div class="combat-cards">'+wr+'</div>'
+    +'<div class="combat-cards">'+pinnedRows+wr+'</div>'
     +'<button class="combat-add edit-only" onclick="addWeapon()">＋ 武器を追加</button></div>'
     +'<div class="combat-section"><div class="combat-section-title">防具</div>'
     +'<div class="combat-cards">'+ar2+'</div>'
+    +armorEmptyMsg
     +'<button class="combat-add edit-only" onclick="addArmor()">＋ 防具を追加</button></div>';
 }
 function addWeapon(){const ch=getChar();if(!ch)return;if(!ch.weapons)ch.weapons=[];ch.weapons.push({name:'',skill:'',hit:'',damage:'',range:'',shots:'',ammo:'',hp:'',mal:'',note:''});saveCharToSupa(ch).then(()=>loadCombatTab());}
