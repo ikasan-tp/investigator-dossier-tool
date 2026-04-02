@@ -96,6 +96,15 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .btn-danger:hover{background:var(--danger-bg);border-color:var(--danger);color:var(--danger)}
 .btn-sm{padding:5px 12px;font-size:9px}
 
+/* ── 一括移動 ── */
+.bulk-bar { display:none; align-items:center; gap:10px; background:var(--paper-warm); border:1px solid var(--rule-mid); padding:8px 14px; margin-bottom:16px; }
+.bulk-bar.active { display:flex; }
+.bulk-cb { position:absolute; top:8px; left:8px; width:16px; height:16px; z-index:10; cursor:pointer; accent-color:var(--action-dark); display:none; }
+.bulk-mode .bulk-cb { display:block; }
+.bulk-mode .npc-card::before { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.4); z-index:5; pointer-events:none; }
+.bulk-mode .npc-card.selected::before { display:none; }
+.bulk-mode .npc-card { border-color:var(--action-mid); }
+
 /* GRID */
 .npc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:18px}
 .npc-card{
@@ -427,11 +436,20 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   </div>
 
   <!-- NPC一覧 -->
-  <div id="view-list" class="view">
+<div id="view-list" class="view">
     <div class="sec-head">
       <div class="sh-title">NPC ROSTER</div>
+      <button class="btn btn-ghost btn-sm" id="bulk-toggle-btn" onclick="toggleBulkMode()" style="margin-left:12px;font-size:8px;letter-spacing:1px">一括移動</button>
       <div class="sh-fill"></div>
       <div class="sh-sub" id="npc-count-sub">— 件</div>
+    </div>
+    <div class="bulk-bar" id="bulk-bar">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dark);letter-spacing:1px">移動先:</span>
+      <select class="form-input" id="bulk-scenario-sel" style="width:auto;padding:4px 8px;font-size:11px;"></select>
+      <button class="btn btn-primary btn-sm" onclick="executeBulkMove()">実行</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleBulkMode()">キャンセル</button>
+      <div class="hfill"></div>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:1px" id="bulk-count">0 SELECTED</span>
     </div>
     <div class="npc-container" id="npc-grid"></div>
   </div>
@@ -594,6 +612,73 @@ function showView(name){
   if(name==='detail')renderDetail();
 }
 
+/* ════ BULK MOVE ════ */
+let isBulkMode = false;
+let bulkSelected = new Set();
+
+function toggleBulkMode() {
+  isBulkMode = !isBulkMode;
+  bulkSelected.clear();
+  document.getElementById('bulk-bar').classList.toggle('active', isBulkMode);
+  const btn = document.getElementById('bulk-toggle-btn');
+  if(isBulkMode){
+    btn.classList.replace('btn-ghost', 'btn-primary');
+    populateScenarioSelect('bulk-scenario-sel', '');
+    document.getElementById('bulk-count').textContent = '0 SELECTED';
+  } else {
+    btn.classList.replace('btn-primary', 'btn-ghost');
+  }
+  document.getElementById('npc-grid').classList.toggle('bulk-mode', isBulkMode);
+  renderList();
+}
+
+function handleCardClick(n, cardEl) {
+  if (isBulkMode) {
+    if (bulkSelected.has(n.id)) {
+      bulkSelected.delete(n.id);
+      cardEl.classList.remove('selected');
+      cardEl.querySelector('.bulk-cb').checked = false;
+    } else {
+      bulkSelected.add(n.id);
+      cardEl.classList.add('selected');
+      cardEl.querySelector('.bulk-cb').checked = true;
+    }
+    document.getElementById('bulk-count').textContent = `${bulkSelected.size} SELECTED`;
+  } else {
+    curId = n.id;
+    showView('detail');
+  }
+}
+
+async function executeBulkMove() {
+  if (bulkSelected.size === 0) { toast('NPCを選択してください'); return; }
+  const targetId = document.getElementById('bulk-scenario-sel').value;
+  const btn = document.querySelector('#bulk-bar .btn-primary');
+  btn.disabled = true; btn.textContent = '実行中…';
+  
+  try {
+    const promises = [];
+    for (const id of bulkSelected) {
+      const n = npcs.find(x => x.id === id);
+      if (n && n.scenarioId !== targetId) {
+        n.scenarioId = targetId;
+        promises.push(sbUpsert('npcs', { id: n.id, data: npcToData(n) }));
+      }
+    }
+    if (promises.length > 0) {
+      await Promise.all(promises);
+      toast(`${promises.length}件のNPCを移動しました`);
+    } else {
+      toast('移動が必要なNPCがありませんでした');
+    }
+    toggleBulkMode();
+  } catch (e) {
+    toast('エラー: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '実行';
+  }
+}
+
 /* ════ LIST ════ */
 function renderList(){
   const container=document.getElementById('npc-grid');
@@ -626,8 +711,10 @@ function renderList(){
 
 function makeNpcCard(n){
   const el=document.createElement('div');el.className='npc-card';
+  if(isBulkMode && bulkSelected.has(n.id)) el.classList.add('selected');
   const bustUrl=n.bust_path?storageUrl(n.bust_path):'';
   el.innerHTML=`
+    <input type="checkbox" class="bulk-cb" ${isBulkMode && bulkSelected.has(n.id) ? 'checked' : ''} tabindex="-1">
     <div class="card-color-line" style="background:${n.color||'var(--seal-mid)'}"></div>
     <div class="card-photo">
       ${bustUrl?`<img src="${bustUrl}" alt="${n.name}">`:`<div class="card-photo-ph">NO PHOTO</div>`}
@@ -637,7 +724,10 @@ function makeNpcCard(n){
       <div class="card-meta">${n.memo||'—'}</div>
       ${n.scenarioId?(()=>{const s=scenarios.find(x=>x.id===n.scenarioId);return s?`<div class="card-scenario">${s.name}</div>`:''})():''}
     </div>`;
-  el.onclick=()=>{curId=n.id;showView('detail');};
+  el.onclick=(e)=>{
+    if(e.target.classList.contains('bulk-cb')) e.preventDefault();
+    handleCardClick(n, el);
+  };
   return el;
 }
 
