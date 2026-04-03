@@ -617,6 +617,37 @@ body::before{
 }
 .dbox-key{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;color:var(--ink-dim);display:block;margin-bottom:2px;font-weight:bold}
 .dbox-val{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--ink-dark);letter-spacing:-0.5px;line-height:1.2}
+/* クトゥルフ神話上限警告 */
+.mythos-warn{
+  display:flex;align-items:center;gap:8px;
+  margin-top:8px;padding:6px 12px;
+  background:rgba(106,16,16,.08);
+  border:1px solid rgba(168,32,32,.3);
+  border-left:3px solid var(--seal-body);
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:var(--seal-body);letter-spacing:1px;line-height:1.6;
+}
+.mythos-warn-ico{font-size:14px;flex-shrink:0}
+/* 怪我・負傷ステータス */
+.condition-row{
+  display:flex;flex-wrap:wrap;gap:6px;
+  padding:10px 0 4px;
+  border-top:1px dashed var(--rule-light);
+  margin-top:8px;
+}
+.cond-btn{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
+  padding:4px 10px;cursor:pointer;
+  background:var(--paper-base);
+  border:1px solid var(--rule-mid);
+  color:var(--ink-dim);
+  transition:all .2s;text-transform:uppercase;
+}
+.cond-btn:hover{border-color:var(--rule-dark);color:var(--ink-body)}
+.cond-btn.active-major{background:rgba(168,32,32,.12);border-color:var(--seal-body);color:var(--seal-body)}
+.cond-btn.active-dying{background:rgba(168,32,32,.25);border-color:var(--seal-body);color:var(--seal-body);font-weight:bold}
+.cond-btn.active-tmp-insane{background:rgba(90,74,16,.12);border-color:#8a7a10;color:#8a7a10}
+.cond-btn.active-indef-insane{background:rgba(90,74,16,.22);border-color:#8a7a10;color:#8a7a10;font-weight:bold}
 .ssbox-in.cur{font-size:21px;width:38px}
 .ssbox-in.max{font-size:12px;width:30px;color:var(--ink-muted)}
 .ssbox-slash{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--rule-dark)}
@@ -2013,6 +2044,15 @@ async function renderList(){
         <div class="card-name">${c.name}</div>
         <div class="card-meta">${[c.job,c.age].filter(Boolean).join(' / ')||'—'}</div>
         ${c.scenario?`<div class="card-scenario">${c.scenario}</div>`:''}
+        ${(()=>{
+          const cond=c.conditions||{};
+          const badges=[];
+          if(cond.indefInsane) badges.push('<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;background:#8a7a10;color:#f4efe6;padding:1px 5px;letter-spacing:1px">不定狂気</span>');
+          else if(cond.tmpInsane) badges.push('<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;background:#b0a020;color:#f4efe6;padding:1px 5px;letter-spacing:1px">一時狂気</span>');
+          if(cond.dying) badges.push('<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;background:#8a1818;color:#f4efe6;padding:1px 5px;letter-spacing:1px">瀕死</span>');
+          else if(cond.major) badges.push('<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;background:#c84040;color:#f4efe6;padding:1px 5px;letter-spacing:1px">重傷</span>');
+          return badges.length?`<div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">${badges.join('')}</div>`:'';
+        })()}
       </div>`;
     el.onclick=()=>{curId=c.id;_ccfCmdCache=null;showView('detail');};
     g.appendChild(el);
@@ -2156,6 +2196,7 @@ function updStat(k,inp){
 function updSec(k,f,v){
   const c=getChar();if(!c)return;if(!c.secondary)c.secondary={};if(!c.secondary[k])c.secondary[k]={};
   c.secondary[k][f]=parseInt(v)||0;
+  renderDerivedStats(c);
   debounce('sec',()=>saveCharToSupa(c),800);
 }
 function updQuote(v){const c=getChar();if(!c)return;c.quote=v;debounce('quote',()=>saveCharToSupa(c),800);}
@@ -2207,42 +2248,71 @@ function renderDerivedStats(c){
   const el=document.getElementById('derived-stats-block');
   if(!el)return;
   const st=c.stats||{};
-  const der=c.derived||{};
-  const str=parseInt(st.STR)||0, con=parseInt(st.CON)||0,
-        pow=parseInt(st.POW)||0, dex=parseInt(st.DEX)||0,
-        siz=parseInt(st.SIZ)||0, int_=parseInt(st.INT)||0,
-        edu=parseInt(st.EDU)||0;
+  const sec=c.secondary||{};
+  const str=parseInt(st.STR)||0, pow=parseInt(st.POW)||0, dex=parseInt(st.DEX)||0,
+        siz=parseInt(st.SIZ)||0, int_=parseInt(st.INT)||0, edu=parseInt(st.EDU)||0;
   const ver=getSkillVer(c);
   const dbox=(key,val)=>`<div class="dbox"><span class="dbox-key">${key}</span><span class="dbox-val">${val}</span></div>`;
 
+  // 導出ステータス
   const agePen=_ageMovPenalty(c.age||'');
+  let derivedHtml='';
   if(ver==='7'){
-    const sum=str+siz;
-    const {db,build}=_calcDBBuild7(sum);
+    const {db,build}=_calcDBBuild7(str+siz);
     const movBase=(str||dex||siz)?_calcMOV7(str,dex,siz):0;
     const mov=movBase?(movBase+agePen):'—';
-    const idea=int_||'—';
-    const know=edu||'—';
-    const luck=pow||'—';
-    el.innerHTML=
-      dbox('DB',      db)+
-      dbox('ビルド',  build)+
-      dbox('MOV',     mov)+
-      dbox('アイデア',idea)+
-      dbox('知識',    know)+
-      dbox('幸運',    luck);
+    derivedHtml=dbox('DB',db)+dbox('ビルド',build)+dbox('MOV',mov)+dbox('アイデア',int_||'—')+dbox('知識',edu||'—')+dbox('幸運',pow||'—');
   } else {
-    const sum=str+siz;
-    const db=(str||siz)?_calcDB6(sum):'—';
-    const idea=int_?int_*5:'—';
-    const know=edu?edu*5:'—';
-    const luck=pow?pow*5:'—';
-    el.innerHTML=
-      dbox('DB',      db)+
-      dbox('アイデア',idea)+
-      dbox('知識',    know)+
-      dbox('幸運',    luck);
+    const db=(str||siz)?_calcDB6(str+siz):'—';
+    derivedHtml=dbox('DB',db)+dbox('アイデア',int_?int_*5:'—')+dbox('知識',edu?edu*5:'—')+dbox('幸運',pow?pow*5:'—');
   }
+
+  // ── クトゥルフ神話技能の上限警告 ──
+  const skills=c.skills||{};
+  const customSkills=c.customSkills||[];
+  // 神話技能の合計値を計算（標準定義 + カスタム）
+  function getMythosTotal(){
+    const defs=ver==='7'?SKILL_DEFS_7:SKILL_DEFS_6;
+    const def=defs.find(d=>d.name==='クトゥルフ神話');
+    if(!def)return 0;
+    const base=def.base??0;
+    const sk=skills['クトゥルフ神話']||{};
+    return base+(parseInt(sk.occ)||0)+(parseInt(sk.int)||0)+(parseInt(sk.grow)||0)+(parseInt(sk.etc)||0);
+  }
+  const mythosVal=getMythosTotal();
+  const sanMaxCap=99-mythosVal;
+  const sanMax=parseInt((sec['san']||{}).max)||0;
+  let mythosWarnHtml='';
+  if(mythosVal>0){
+    const over=sanMax>sanMaxCap;
+    mythosWarnHtml=`<div class="mythos-warn">
+      <span class="mythos-warn-ico">${over?'⚠':'📖'}</span>
+      <span>神話技能 <strong>${mythosVal}</strong> → SAN最大値の上限 <strong>${sanMaxCap}</strong>${over?`（現在 ${sanMax}、<strong>${sanMax-sanMaxCap}超過</strong>）`:''}</span>
+    </div>`;
+  }
+
+  // ── 怪我・負傷コンディション ──
+  const cond=c.conditions||{};
+  const condDefs=[
+    {key:'major',    label:'重傷',         activeClass:'active-major'},
+    {key:'dying',    label:'瀕死',         activeClass:'active-dying'},
+    {key:'tmpInsane',label:'一時的狂気',   activeClass:'active-tmp-insane'},
+    {key:'indefInsane',label:'不定の狂気', activeClass:'active-indef-insane'},
+  ];
+  const condHtml=`<div class="condition-row edit-only">${
+    condDefs.map(d=>`<button class="cond-btn ${cond[d.key]?d.activeClass:''}"
+      onclick="toggleCondition('${d.key}')" title="${d.label}">${cond[d.key]?'● ':' '}${d.label}</button>`).join('')
+  }</div>`;
+
+  el.innerHTML=derivedHtml+mythosWarnHtml+condHtml;
+}
+
+function toggleCondition(key){
+  const c=getChar();if(!c)return;
+  if(!c.conditions)c.conditions={};
+  c.conditions[key]=!c.conditions[key];
+  renderDerivedStats(c);
+  debounce('cond',()=>saveCharToSupa(c),600);
 }
 /* ════ モーダル導出ステータス自動入力 ════ */
 function autoFillDerivedFields(){
@@ -2703,7 +2773,7 @@ async function saveChar(){
   const d=collectForm();if(!d.name){toast('探索者名を入力してください');return;}
   const btn=document.getElementById('char-save-btn');btn.disabled=true;btn.textContent='保存中…';
   const id=Date.now().toString();
-  const c={id,...d,memo:'',quote:'',bg:{},bust_path:'',full_path:'',hidden:false};
+  const c={id,...d,memo:'',quote:'',bg:{},bust_path:'',full_path:'',hidden:false,conditions:{}};
   try{
     if(bustImg){
       const ext=bustImg.name.split('.').pop().toLowerCase()||'jpg';
@@ -3240,6 +3310,8 @@ function setSkillPts(name, col, val){
   debounce('skill_'+name, ()=>saveCharToSupa(c), 600);
   // ポイントバーのみリアルタイム更新
   _updatePtBar(c);
+  // クトゥルフ神話技能が変わった場合は警告も更新
+  if(name==='クトゥルフ神話') renderDerivedStats(c);
 }
 
 function setSkillOcc(name, checked){
@@ -3521,6 +3593,7 @@ function buildCcfoliaParams(c){
 function buildDefaultCommands(c, includeBase){
   const st=c.stats||{},sec=c.secondary||{};
   const ver=getSkillVer(c);
+  const cmd=ver==='7'?'CC':'CCB';  // ← 6版はCCB、7版はCC
   const defs=ver==='7'?SKILL_DEFS_7:SKILL_DEFS_6;
   const skills=c.skills||{};
   const customSkills=c.customSkills||[];
@@ -3549,7 +3622,7 @@ function buildDefaultCommands(c, includeBase){
 
   // ── 最上部：SAN・アイデア・幸運・知識 ──
   const sanMax=parseInt((sec['san']||{}).max)||0;
-  if(sanMax>0) L.push('CC<={SAN} 【正気度ロール】');
+  if(sanMax>0) L.push(`${cmd}<={SAN} 【正気度ロール】`);
   if(ver==='7'){
     if(int_>0) L.push(`CC<=${int_} 【アイデア】`);
     L.push('CC<={幸運} 【幸運】');
@@ -3566,7 +3639,7 @@ function buildDefaultCommands(c, includeBase){
   // ── 能力値 ──
   L.push('── 能力値 ──');
   for(const k of ['STR','CON','POW','DEX','APP','SIZ','INT','EDU']){
-    if(parseInt(st[k])||0) L.push(`CC<={${k}} 【${k}】`);
+    if(parseInt(st[k])||0) L.push(ver==='7'?`CC<={${k}} 【${k}】`:`CCB<={${k}}*5 【${k}×5】`);
   }
 
   // ── 武器 ──
@@ -3574,7 +3647,7 @@ function buildDefaultCommands(c, includeBase){
   for(const w of weapons){
     if(!w.name) continue;
     const hit=parseInt(w.hit)||0;
-    if(hit>0||w.hit) weaponLines.push(`CC<=${hit||w.hit} 【${w.name}】`);
+    if(hit>0||w.hit) weaponLines.push(`${cmd}<=${hit||w.hit} 【${w.name}】`);
     if(w.damage)     weaponLines.push(`${w.damage} 【${w.name}】`);
   }
   if(weaponLines.length){ L.push('── 武器 ──'); L.push(...weaponLines); }
@@ -3591,17 +3664,16 @@ function buildDefaultCommands(c, includeBase){
     const catLines=[];
     for(const def of catDefs){
       if(def.sub&&def.sub.length&&!def.isCustom){
-        // sub技能: selectedSubがあるものだけ
         const savedSub=(skills[def.name]||{}).selectedSub||def.defaultSub||'';
         if(!savedSub||!hasPoints(def,savedSub)) continue;
         const total=skillTotal(def,savedSub);
         const fullName=`${def.name}（${savedSub}）`;
-        catLines.push(`CC<=${total} 【${fullName}】`);
+        catLines.push(`${cmd}<=${total} 【${fullName}】`);
         if(def.name==='近接戦闘') catLines.push(`1d3+{DB} 【${fullName}】`);
       } else {
         if(!hasPoints(def)) continue;
         const total=skillTotal(def);
-        catLines.push(`CC<=${total} 【${def.name}】`);
+        catLines.push(`${cmd}<=${total} 【${def.name}】`);
       }
     }
     if(catLines.length){
@@ -3618,16 +3690,16 @@ function buildDefaultCommands(c, includeBase){
         const defaultSub=def.defaultSub||def.sub[0]?.name||'';
         const base=getSkillBase(def,st,c.skillBaseOverrides,defaultSub);
         const nm=defaultSub?`${def.name}（${defaultSub}）`:def.name;
-        L.push(`CC<=${base} 【${nm}】`);
+        L.push(`${cmd}<=${base} 【${nm}】`);
         if(def.name==='近接戦闘') L.push(`1d3+{DB} 【${nm}】`);
       } else {
         const base=getSkillBase(def,st,c.skillBaseOverrides);
-        L.push(`CC<=${base} 【${def.name}】`);
+        L.push(`${cmd}<=${base} 【${def.name}】`);
       }
     }
     for(const def of customSkills){
       const base=getSkillBase(def,st,c.skillBaseOverrides);
-      L.push(`CC<=${base} 【${def.name}】`);
+      L.push(`${cmd}<=${base} 【${def.name}】`);
     }
   }
 
@@ -3901,8 +3973,10 @@ function rerender(){
 function toggleSkillEditMode(){if(IS_READONLY)return;skillEditMode=!skillEditMode;loadSkillsTab();}
 function setSkillFree(name,val){const ch=getChar();if(!ch)return;if(!ch.skills)ch.skills={};if(!ch.skills[name])ch.skills[name]={};ch.skills[name].freeNote=val;debounce('free_'+name,()=>saveCharToSupa(ch),600);}
 function changeSkillSub(defName,newSub){
-  const ch=getChar();if(!ch)return;if(!ch.skills)ch.skills={};if(!ch.skills[defName])ch.skills[defName]={};
-  const oldSub=ch.skills[defName].selectedSub;
+  const ch=getChar();if(!ch)return;
+  if(!ch.skills)ch.skills={};
+  if(!ch.skills[defName])ch.skills[defName]={};
+  const oldSub=ch.skills[defName].selectedSub||'';
   const of2=oldSub?`${defName}（${oldSub}）`:null;
   const nf=`${defName}（${newSub}）`;
   if(of2&&ch.skills[of2]){ch.skills[nf]=ch.skills[of2];delete ch.skills[of2];}

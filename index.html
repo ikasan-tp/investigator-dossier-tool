@@ -143,6 +143,87 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .recent-color{width:3px;height:1.2em;flex-shrink:0;border-radius:1px;}
 .recent-empty{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:3px;padding:20px 0;text-align:center;}
 
+/* ══ INITIAL SETUP ══ */
+.setup-section{
+  margin-bottom:40px;
+  border:1px solid var(--rule-mid);
+  border-top:3px solid var(--seal-body);
+  background:var(--paper-base);
+  box-shadow:2px 3px 10px rgba(100,80,50,.12);
+}
+.setup-section.is-connected{
+  border-top-color:var(--rule-mid);
+  background:var(--paper-warm);
+}
+.setup-head{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 20px;
+  cursor:pointer;user-select:none;
+}
+.setup-head-title{
+  font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700;
+  color:var(--ink-dark);letter-spacing:2px;flex:1;
+}
+.setup-head-badge{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;
+  padding:2px 8px;border:1px solid var(--seal-body);color:var(--seal-body);
+}
+.setup-head-badge.ok{border-color:#4a8a4a;color:#4a8a4a;}
+.setup-toggle{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ink-dim);letter-spacing:1px;transition:transform .2s;display:inline-block;}
+.setup-body{padding:0 20px 24px;border-top:1px solid var(--rule-light);}
+.setup-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:20px 0;}
+.setup-step{
+  background:var(--paper-warm);border:1px solid var(--rule-light);
+  padding:16px;position:relative;
+}
+.step-num{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  color:var(--seal-mid);font-weight:bold;margin-bottom:8px;display:block;
+}
+.step-title{
+  font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;
+  color:var(--ink-dark);margin-bottom:6px;
+}
+.step-desc{font-family:'Noto Serif JP',serif;font-size:12px;color:var(--ink-muted);line-height:1.8;}
+.step-desc a{color:var(--action);text-decoration:none;}
+.step-desc a:hover{text-decoration:underline;}
+.step-desc code{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  background:var(--paper-aged);padding:1px 5px;color:var(--ink-dark);
+}
+.sql-block{
+  background:var(--paper-aged);border:1px solid var(--rule-mid);
+  border-left:3px solid var(--seal-mid);
+  padding:10px 12px;margin-top:10px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:var(--ink-body);line-height:1.9;white-space:pre;
+  overflow-x:auto;position:relative;
+}
+.sql-copy-btn{
+  position:absolute;top:6px;right:6px;
+  font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;
+  background:var(--paper-warm);border:1px solid var(--rule-mid);
+  color:var(--ink-dim);cursor:pointer;padding:2px 7px;transition:all .15s;
+}
+.sql-copy-btn:hover{background:var(--seal-mid);color:var(--paper-base);border-color:var(--seal-mid);}
+.setup-go-btn{
+  display:inline-block;margin-top:16px;
+  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
+  padding:8px 20px;background:var(--action-dark);border:1px solid var(--action-mid);
+  color:#d8e8f4;text-decoration:none;transition:all .2s;
+}
+.setup-go-btn:hover{background:var(--action-mid);color:#e8f2fc;}
+.setup-note{
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  color:var(--ink-dim);letter-spacing:1px;line-height:1.8;
+  margin-top:12px;padding:8px 12px;
+  background:var(--paper-warm);border-left:3px solid var(--rule-mid);
+}
+@media(max-width:600px){
+  .setup-steps{grid-template-columns:1fr;}
+  .setup-head-title{font-size:12px}
+}
+
 /* ══ MOBILE ══ */
 @media(max-width:600px){
   .site-header{padding:6px 10px;height:auto;min-height:52px;gap:6px;flex-wrap:wrap;align-items:center;}
@@ -198,6 +279,94 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
     <div class="db-dot" id="db-dot"></div>
     <span class="db-url-txt" id="db-url-txt">データベース未接続</span>
     <a class="db-setup-link" href="charactorsheet.html">⚙ DB設定</a>
+    <button class="db-setup-link" id="db-reconnect-btn" onclick="reconnectDB()" style="display:none;background:none;border-color:var(--seal-mid);color:var(--seal-mid);cursor:pointer">↺ 再接続</button>
+  </div>
+
+  <!-- INITIAL SETUP -->
+  <div class="setup-section" id="setup-section">
+    <div class="setup-head" onclick="toggleSetup()">
+      <div class="setup-head-title">INITIAL SETUP</div>
+      <span class="setup-head-badge" id="setup-badge">REQUIRED</span>
+      <span class="setup-toggle" id="setup-toggle">▼</span>
+    </div>
+    <div class="setup-body" id="setup-body">
+      <div class="setup-steps">
+
+        <div class="setup-step">
+          <span class="step-num">STEP 01</span>
+          <div class="step-title">Supabase プロジェクトを作成</div>
+          <div class="step-desc">
+            <a href="https://supabase.com" target="_blank">supabase.com</a> で無料アカウントを作成し、新しいプロジェクトを作成してください。<br><br>
+            プロジェクト作成後、<strong>Settings → API</strong> から以下をメモします：<br>
+            <code>Project URL</code>（https://xxxx.supabase.co）<br>
+            <code>anon public</code> キー
+          </div>
+        </div>
+
+        <div class="setup-step">
+          <span class="step-num">STEP 02</span>
+          <div class="step-title">テーブルを作成（SQL）</div>
+          <div class="step-desc">
+            Supabase の <strong>SQL Editor</strong> を開き、以下のSQLを実行してください。
+            <div class="sql-block" id="sql-tables">CREATE TABLE characters (
+  id TEXT PRIMARY KEY,
+  data JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE expressions (
+  id TEXT PRIMARY KEY,
+  char_id TEXT REFERENCES characters(id) ON DELETE CASCADE,
+  label TEXT,
+  category TEXT,
+  image_path TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE npcs (
+  id TEXT PRIMARY KEY,
+  data JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE npc_expressions (
+  id TEXT PRIMARY KEY,
+  npc_id TEXT REFERENCES npcs(id) ON DELETE CASCADE,
+  label TEXT,
+  image_path TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);<button class="sql-copy-btn" onclick="copySql('sql-tables',this)">COPY</button></div>
+          </div>
+        </div>
+
+        <div class="setup-step">
+          <span class="step-num">STEP 03</span>
+          <div class="step-title">Storage バケットを作成</div>
+          <div class="step-desc">
+            Supabase の <strong>Storage</strong> メニューから新しいバケットを作成します。<br><br>
+            バケット名：<code>images</code><br>
+            Public bucket：<strong>ON</strong>（チェックを入れる）<br><br>
+            次に <strong>Storage → Policies</strong> から以下のSQLを実行します：
+            <div class="sql-block" id="sql-storage">-- images バケットへの読み書きを許可
+CREATE POLICY "allow all" ON storage.objects
+  FOR ALL USING (bucket_id = 'images')
+  WITH CHECK (bucket_id = 'images');<button class="sql-copy-btn" onclick="copySql('sql-storage',this)">COPY</button></div>
+          </div>
+        </div>
+
+        <div class="setup-step">
+          <span class="step-num">STEP 04</span>
+          <div class="step-title">URLとキーを入力して接続</div>
+          <div class="step-desc">
+            探索者記録簿のページを開き、右上の <code>⚙ 設定</code> から<strong>Project URL</strong> と <strong>Anon Key</strong> を入力して「接続する」を押してください。<br><br>
+            設定はブラウザに保存されるため、次回以降は自動接続されます。
+          </div>
+          <a class="setup-go-btn" href="charactorsheet.html">⚙ DB設定を開く →</a>
+        </div>
+
+      </div>
+      <div class="setup-note">
+        ※ Supabase の無料プランで動作します（月500MB ストレージ・50,000行まで）。<br>
+        ※ データはお使いのSupabaseプロジェクトに保存されます。このツール自体はデータを収集しません。
+      </div>
+    </div>
   </div>
 
   <div class="hero">
@@ -272,6 +441,54 @@ function renderEmpty(id) {
   document.getElementById(id).innerHTML = `<div class="recent-empty">NO DATA</div>`;
 }
 
+/* ── セットアップ表示制御 ── */
+let _setupOpen = true;
+function toggleSetup(){
+  _setupOpen = !_setupOpen;
+  document.getElementById('setup-body').style.display = _setupOpen ? '' : 'none';
+  document.getElementById('setup-toggle').textContent = _setupOpen ? '▼' : '▶';
+}
+function setSetupConnected(url){
+  const sec = document.getElementById('setup-section');
+  const badge = document.getElementById('setup-badge');
+  sec.classList.add('is-connected');
+  badge.textContent = 'CONNECTED';
+  badge.classList.add('ok');
+  // 接続済みは初期折りたたみ
+  _setupOpen = false;
+  document.getElementById('setup-body').style.display = 'none';
+  document.getElementById('setup-toggle').textContent = '▶';
+  document.getElementById('db-reconnect-btn').style.display = '';
+}
+
+/* ── SQLコピー ── */
+function copySql(blockId, btn){
+  const block = document.getElementById(blockId);
+  // ボタン自身のテキストを除いたコードのみ取得
+  const text = block.innerText.replace(/COPY\s*$/, '').trim();
+  navigator.clipboard ? navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent = 'COPIED!';
+    setTimeout(()=>btn.textContent='COPY', 1500);
+  }) : (()=>{
+    const t=document.createElement('textarea');t.value=text;
+    document.body.appendChild(t);t.select();document.execCommand('copy');
+    document.body.removeChild(t);
+    btn.textContent='COPIED!';setTimeout(()=>btn.textContent='COPY',1500);
+  })();
+}
+
+/* ── 再接続 ── */
+async function reconnectDB(){
+  const btn = document.getElementById('db-reconnect-btn');
+  btn.textContent = '…';
+  try {
+    const H = {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
+    const r = await fetch(`${SUPA_URL}/rest/v1/characters?limit=1`,{headers:H});
+    if(r.ok){ btn.textContent='↺ 再接続'; alert('接続成功！'); location.reload(); }
+    else throw new Error(r.status);
+  } catch(e){ btn.textContent='✗ 失敗'; setTimeout(()=>btn.textContent='↺ 再接続',2000); }
+}
+
 function renderRecentChars(chars) {
   const el = document.getElementById('recent-chars');
   if (!chars.length) { renderEmpty('recent-chars'); return; }
@@ -279,12 +496,22 @@ function renderRecentChars(chars) {
   chars.forEach(c => {
     const a = document.createElement('a');
     a.className = 'recent-row'; a.href = `charactorsheet.html?char=${c.id}`;
+    const cond = c.conditions||{};
+    const condBadges = [
+      cond.dying      ? '<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;background:#8a1818;color:#f4efe6;padding:1px 4px">瀕死</span>' : '',
+      cond.major      ? '<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;background:#c84040;color:#f4efe6;padding:1px 4px">重傷</span>' : '',
+      cond.indefInsane? '<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;background:#8a7a10;color:#f4efe6;padding:1px 4px">不定狂気</span>' : '',
+      cond.tmpInsane  ? '<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;background:#b0a020;color:#f4efe6;padding:1px 4px">一時狂気</span>' : '',
+    ].filter(Boolean).join('');
     a.innerHTML = `
       <div class="recent-thumb">${c.bust_path ? `<img src="${storageUrl(c.bust_path)}" alt="">` : SVG_PH}</div>
       <div class="recent-color" style="background:${c.color || 'var(--seal-mid)'}"></div>
       <div style="flex:1;min-width:0">
         <div class="recent-name">${c.emoji ? `<span style="margin-right:4px">${c.emoji}</span>` : ''}${c.name || '—'}</div>
-        <div class="recent-sub">${[c.job, c.age].filter(Boolean).join(' / ') || '—'}</div>
+        <div class="recent-sub" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+          <span>${[c.job, c.age].filter(Boolean).join(' / ') || '—'}</span>
+          ${condBadges}
+        </div>
       </div>
       <div class="recent-sub">${c.scenario || ''}</div>`;
     el.appendChild(a);
@@ -316,7 +543,7 @@ async function init() {
   const txt = document.getElementById('db-url-txt');
 
   if (!SUPA_URL || !SUPA_KEY) {
-    txt.textContent = 'データベース未接続 — 探索者記録簿ページから設定してください';
+    txt.textContent = 'データベース未接続 — STEP 04 の設定を行ってください';
     renderEmpty('recent-chars');
     renderEmpty('recent-npcs');
     document.getElementById('cs-count').textContent = '—';
@@ -326,6 +553,7 @@ async function init() {
 
   dot.className = 'db-dot connected';
   txt.textContent = SUPA_URL;
+  setSetupConnected(SUPA_URL);
   const H = { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
 
   // 探索者
