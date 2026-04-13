@@ -3871,19 +3871,19 @@ let skillEditMode=true;
 const _params=new URLSearchParams(location.search);
 const IS_READONLY=_params.get('view')==='1';
 
-// Vercel環境変数/URL/保存データから接続情報を取得（変数の重複を避けるためここだけで完結）
-const SUPA_URL = _params.get('url') || localStorage.getItem('SUPA_URL') || 'https://ahytjvhtvgpvbpoldnsy.supabase.co';
-const SUPA_KEY = _params.get('key') || localStorage.getItem('SUPA_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
+// 『const』を消して、既存の変数に代入（上書き）します
+SUPA_URL = _params.get('url') || localStorage.getItem('SUPA_URL') || 'https://ahytjvhtvgpvbpoldnsy.supabase.co';
+SUPA_KEY = _params.get('key') || localStorage.getItem('SUPA_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
 
-// IDをURLパラメータ、または Vercelの /view/ID パスから取得
-const _charParam = _params.get('char') || window.location.pathname.split('/').pop() || '';
+// _charParam も宣言（let/const）を外して代入します
+_charParam = _params.get('char') || window.location.pathname.split('/').pop() || '';
 
-// 新しい接続情報がURLにあれば保存しておく
 if (_params.get('url')) {
     localStorage.setItem('SUPA_URL', _params.get('url'));
     localStorage.setItem('SUPA_KEY', _params.get('key'));
 }
 
+// もしこの直後に loadSupaConfig(); があれば、必ず消すかコメントアウトしてください
 let _charParam=_params.get('char')||'';
 
 if(IS_READONLY){
