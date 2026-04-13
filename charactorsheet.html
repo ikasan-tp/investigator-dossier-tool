@@ -1534,6 +1534,8 @@ body.readonly .add-card{display:none}
     <div class="sec-head">
       <div class="sh-title">登録済み探索者</div>
       <div class="sh-fill"></div>
+      <button class="btn btn-ghost btn-sm edit-only" onclick="document.getElementById('txt-import-file').click()" style="font-size:8px;letter-spacing:2px" title="いあきゃらTXTからインポート">TXTインポート</button>
+      <input type="file" id="txt-import-file" accept=".txt,text/plain" style="display:none" onchange="importIaCharaTxt(event)">
       <div class="sh-sub" id="char-count-sub"></div>
     </div>
     <div class="chars-grid" id="chars-grid"></div>
@@ -4166,6 +4168,141 @@ function openPrintSheet(){
     +'&key='+encodeURIComponent(SUPA_KEY)
     +'&char='+encodeURIComponent(c.id);
   window.open(url,'_blank');
+}
+
+/* ════ いあきゃら TXT インポート ════ */
+function _parseIaCharaTxt(text){
+  // ── 基本情報 ──
+  const nameM=text.match(/名前:\s*(.+?)\s*\(([^)]+)\)/);
+  const name=(nameM?nameM[1]:'').trim().replace(/\s+/g,' ');
+  const ruby=(nameM?nameM[2]:'').trim();
+
+  const field=key=>{ const m=text.match(new RegExp(key+':\\s*([^\\n\\/]+)')); return m?m[1].trim():''; };
+  const job=field('職業');
+  const age=field('年齢');
+  const gender=field('性別');
+  const height=field('身長');
+  const weight=field('体重');
+
+  const tagM=text.match(/タグ:\s*([^\n]+)/);
+  const tags=tagM?tagM[1].trim().split(/[、,，]/).map(t=>t.trim()).filter(Boolean):[];
+
+  // ── 能力値 ──
+  const statKeys=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
+  const stats={};
+  for(const k of statKeys){
+    const m=text.match(new RegExp('^'+k+'\\s+(\\d+)','m'));
+    if(m)stats[k]=parseInt(m[1]);
+  }
+
+  // ── 二次ステータス ──
+  const secondary={};
+  const secDefs=[['hp','HP'],['mp','MP'],['san','SAN'],['luk','幸運']];
+  for(const [sk,tk] of secDefs){
+    const m=text.match(new RegExp('^'+tk+'\\s+(\\d+)\\s+(\\d+)','m'));
+    if(m)secondary[sk]={cur:parseInt(m[1]),max:parseInt(m[2])};
+  }
+
+  // ── 技能値 ──
+  // フォーマット: 技能名  合計  初期値  職業P  興味P  成長分  その他
+  const skillsObj={};
+  // 能力値・ステータス名を除外
+  const excludeNames=new Set([...statKeys,'HP','MP','SAN','幸運','知識','アイデア',
+    'DB','MOV','ビルド','技能名','合計','初期値','職業P','興味P','成長分','その他']);
+
+  const skillSection=text.match(/【技能値】([\s\S]+?)(?=【|$)/);
+  if(skillSection){
+    const lines=skillSection[1].split('\n');
+    for(const line of lines){
+      // 技能名（漢字・仮名・英数・記号含む）に続いて数値が6列
+      const m=line.match(/^([\S].+?)\s{2,}(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
+      if(!m)continue;
+      const sname=m[1].trim();
+      if(!sname||excludeNames.has(sname))continue;
+      const occP=parseInt(m[4]);
+      const intP=parseInt(m[5]);
+      const growP=parseInt(m[6]);
+      const etcP=parseInt(m[7]);
+      if(occP||intP||growP||etcP){
+        skillsObj[sname]={};
+        if(occP)skillsObj[sname].occ=occP;
+        if(intP)skillsObj[sname].int=intP;
+        if(growP)skillsObj[sname].grow=growP;
+        if(etcP)skillsObj[sname].etc=etcP;
+      }
+    }
+  }
+
+  // ── 出身 → bg.origin ──
+  const bg={};
+  const originM=text.match(/出身:\s*([^\n\/]+)/);
+  if(originM)bg.origin=originM[1].trim();
+
+  return{name,ruby,job,age,gender,height,weight,tags,stats,secondary,bg,skills:skillsObj};
+}
+
+async function importIaCharaTxt(e){
+  const file=e.target.files[0];
+  e.target.value=''; // リセット（同ファイル再選択を許可）
+  if(!file)return;
+  if(!SUPA_URL||!SUPA_KEY){toast('DB設定が見つかりません');return;}
+
+  let text;
+  try{
+    text=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=ev=>res(ev.target.result);
+      r.onerror=()=>rej(r.error);
+      r.readAsText(file,'UTF-8');
+    });
+  }catch(err){toast('ファイル読み込みエラー: '+err.message);return;}
+
+  const d=_parseIaCharaTxt(text);
+  if(!d.name){toast('探索者名が取得できませんでした。ファイルを確認してください');return;}
+
+  if(!confirm(`「${d.name}」をインポートしますか？`))return;
+
+  const id=Date.now().toString();
+  const c={
+    id,
+    name:d.name,
+    ruby:d.ruby,
+    job:d.job,
+    age:d.age,
+    gender:d.gender,
+    height:d.height,
+    weight:d.weight,
+    birthday:'',
+    scenario:'',
+    emoji:'',
+    color:'#3c3428',
+    tags:d.tags,
+    stats:d.stats,
+    secondary:d.secondary,
+    derived:{db:'',build:'',mov:'',idea:'',know:'',luck:''},
+    skillVer:'6',
+    occFormula:'EDU20',
+    occBonus:0,
+    intBonus:0,
+    skills:d.skills,
+    customSkills:[],
+    bg:d.bg,
+    memo:'',
+    quote:'',
+    bust_path:'',
+    full_path:'',
+    hidden:false,
+    conditions:{},
+  };
+
+  try{
+    await saveCharToSupa(c);
+    chars.push(c);
+    toast(`「${d.name}」をインポートしました`);
+    renderList();
+  }catch(err){
+    toast('インポートエラー: '+err.message);
+  }
 }
 
 init();
