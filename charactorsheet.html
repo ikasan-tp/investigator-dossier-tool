@@ -3870,9 +3870,12 @@ const VERSION='1.0.0';
 let skillEditMode=true;
 const _params=new URLSearchParams(location.search);
 const IS_READONLY=_params.get('view')==='1';
-let SUPA_URL = _params.get('url') || localStorage.getItem('SUPA_URL') || 'https://ahytjvhtvgpvbpoldnsy.supabase.co';
-let SUPA_KEY = _params.get('key') || localStorage.getItem('SUPA_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
-let _charParam = _params.get('char') || window.location.pathname.split('/').pop() || '';
+
+SUPA_URL = _params.get('url') || localStorage.getItem('SUPA_URL') || 'https://ahytjvhtvgpvbpoldnsy.supabase.co';
+SUPA_KEY = _params.get('key') || localStorage.getItem('SUPA_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
+
+_charParam = _params.get('char') || window.location.pathname.split('/').pop() || '';
+
 if (_params.get('url')) localStorage.setItem('SUPA_URL', _params.get('url'));
 if (_params.get('key')) localStorage.setItem('SUPA_KEY', _params.get('key'));
 
