@@ -1920,16 +1920,6 @@ body.readonly .add-card{display:none}
 <div class="toast" id="toast-el"></div>
 
 <script>
-const _charParam = (() => {
-  const url = new URL(window.location.href);
-
-  const query = url.searchParams.get("char");
-  const match = url.pathname.match(/\/view\/([^\/]+)/);
-  const path = match ? match[1] : null;
-
-  return path || query || localStorage.getItem("char") || null;
-})();
-
 /* ════ SUPABASE 設定（動的） ════ */
 const OWNER_URL='https://ahytjvhtvgpvbpoldnsy.supabase.co';
 const OWNER_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
@@ -2074,7 +2064,7 @@ async function renderList(){
     add.innerHTML=`<div class="add-ico">+</div><div class="add-lbl">新規ファイルを作成</div>`;
     add.onclick=openAddModal;g.appendChild(add);
   }
-  if(_charParam){const tgt=chars.find(c=>c.id===_charParam);if(tgt){curId=tgt.id;_ccfCmdCache=null; showView('detail');}}
+  if(_charParam){const tgt=chars.find(c=>c.id===_charParam);if(tgt){curId=tgt.id;_ccfCmdCache=null;_charParam='';showView('detail');}}
 }
 
 /* ════ DETAIL ════ */
@@ -3315,10 +3305,14 @@ function setSkillPts(name, col, val){
   const num = val===''||val===null ? undefined : parseInt(val)||0;
   if(num === undefined) delete c.skills[name][col];
   else c.skills[name][col] = num;
+  // 全列空＆職業チェックなしなら削除
   const sk = c.skills[name];
   if(sk && !sk.occ && !sk.int && !sk.grow && !sk.etc && !sk.isOcc) delete c.skills[name];
+  // 技能ごとに個別キーでdebounce（共通キーだと複数マス入力時に上書きされる）
   debounce('skill_'+name, ()=>saveCharToSupa(c), 600);
+  // ポイントバーのみリアルタイム更新
   _updatePtBar(c);
+  // クトゥルフ神話技能が変わった場合は警告も更新
   if(name==='クトゥルフ神話') renderDerivedStats(c);
 }
 
@@ -3877,13 +3871,13 @@ let skillEditMode=true;
 const _params=new URLSearchParams(location.search);
 const IS_READONLY=_params.get('view')==='1';
 
-SUPA_URL = _params.get('url') || localStorage.getItem('SUPA_URL') || 'https://ahytjvhtvgpvbpoldnsy.supabase.co';
-SUPA_KEY = _params.get('key') || localStorage.getItem('SUPA_KEY') || '（そのまま）';
+let SUPA_URL = _params.get('url') || localStorage.getItem('SUPA_URL') || 'https://ahytjvhtvgpvbpoldnsy.supabase.co';
+let SUPA_KEY = _params.get('key') || localStorage.getItem('SUPA_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
 
-if (_params.get('url')) {
-    localStorage.setItem('SUPA_URL', _params.get('url'));
-    localStorage.setItem('SUPA_KEY', _params.get('key'));
-}
+if (_params.get('url')) localStorage.setItem('SUPA_URL', _params.get('url'));
+if (_params.get('key')) localStorage.setItem('SUPA_KEY', _params.get('key'));
+
+let _charParam=_params.get('char')||'';
 
 if(IS_READONLY){
   document.body.classList.add('readonly');
@@ -3891,10 +3885,11 @@ if(IS_READONLY){
   skillEditMode=false;
 }
 function copyViewUrl(){
-  const shareUrl = `${window.location.origin}/view/${_charParam}`;
-  
-  navigator.clipboard?navigator.clipboard.writeText(shareUrl).then(()=>toast(_charParam?'このキャラの閲覧用URLをコピーしました':'閲覧用URLをコピーしました')):
-    (()=>{const t=document.createElement('textarea');t.value=shareUrl;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('閲覧用URLをコピーしました');})();
+  const base=location.href.split('?')[0];
+  let url=base+'?view=1&url='+encodeURIComponent(SUPA_URL)+'&key='+encodeURIComponent(SUPA_KEY);
+  if(curId) url+='&char='+encodeURIComponent(curId);
+  navigator.clipboard?navigator.clipboard.writeText(url).then(()=>toast(curId?'このキャラの閲覧用URLをコピーしました':'閲覧用URLをコピーしました')):
+    (()=>{const t=document.createElement('textarea');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('閲覧用URLをコピーしました');})();
 }
 
 /* ════ 起動 ════ */
@@ -3950,17 +3945,13 @@ function clearSetup(){
 }
 
 async function init(){
+  loadSupaConfig();
   if(!IS_READONLY&&(!SUPA_URL||!SUPA_KEY)){
     document.getElementById('db-loading').style.display='none';
     showView('setup');
     return;
   }
   try{
-    if(IS_READONLY && _charParam){
-      loadCharacter(_charParam);
-      return;
-    }
-
     const rows=await sbSelect('characters','order=created_at.asc');
     chars=rows.map(r=>({...r.data,id:r.id}));
     document.getElementById('db-loading').style.display='none';
