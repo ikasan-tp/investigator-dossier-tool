@@ -3951,13 +3951,17 @@ function clearSetup(){
 }
 
 async function init(){
-  loadSupaConfig();
   if(!IS_READONLY&&(!SUPA_URL||!SUPA_KEY)){
     document.getElementById('db-loading').style.display='none';
     showView('setup');
     return;
   }
   try{
+    if(IS_READONLY && _charParam){
+      loadCharacter(_charParam);
+      return;
+    }
+
     const rows=await sbSelect('characters','order=created_at.asc');
     chars=rows.map(r=>({...r.data,id:r.id}));
     document.getElementById('db-loading').style.display='none';
