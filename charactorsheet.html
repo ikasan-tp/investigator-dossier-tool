@@ -1920,6 +1920,16 @@ body.readonly .add-card{display:none}
 <div class="toast" id="toast-el"></div>
 
 <script>
+const _charParam = (() => {
+  const url = new URL(window.location.href);
+
+  const query = url.searchParams.get("char");
+  const match = url.pathname.match(/\/view\/([^\/]+)/);
+  const path = match ? match[1] : null;
+
+  return path || query || localStorage.getItem("char") || null;
+})();
+
 /* ════ SUPABASE 設定（動的） ════ */
 const OWNER_URL='https://ahytjvhtvgpvbpoldnsy.supabase.co';
 const OWNER_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
@@ -3305,14 +3315,10 @@ function setSkillPts(name, col, val){
   const num = val===''||val===null ? undefined : parseInt(val)||0;
   if(num === undefined) delete c.skills[name][col];
   else c.skills[name][col] = num;
-  // 全列空＆職業チェックなしなら削除
   const sk = c.skills[name];
   if(sk && !sk.occ && !sk.int && !sk.grow && !sk.etc && !sk.isOcc) delete c.skills[name];
-  // 技能ごとに個別キーでdebounce（共通キーだと複数マス入力時に上書きされる）
   debounce('skill_'+name, ()=>saveCharToSupa(c), 600);
-  // ポイントバーのみリアルタイム更新
   _updatePtBar(c);
-  // クトゥルフ神話技能が変わった場合は警告も更新
   if(name==='クトゥルフ神話') renderDerivedStats(c);
 }
 
