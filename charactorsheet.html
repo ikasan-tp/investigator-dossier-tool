@@ -2147,6 +2147,8 @@ async function renderDetail(){
       <div class="derived-row" id="derived-stats-block"></div>
     </div>`;
 
+  const is7 = getSkillVer(c) === '7';
+
   document.getElementById('tab-memo').innerHTML=`
     <div class="memo-wrap">
       <div class="memo-label">背景情報</div>
@@ -2157,6 +2159,7 @@ async function renderDetail(){
         <div class="bg-field"><label class="bg-lbl">意味のある場所</label><textarea class="bg-ta" rows="2" oninput="updBg('place',this.value)" placeholder="思い出の場所、帰る場所…">${(c.bg||{}).place||''}</textarea></div>
         <div class="bg-field"><label class="bg-lbl">宝物 · 大切なもの</label><textarea class="bg-ta" rows="2" oninput="updBg('treasure',this.value)" placeholder="形見、お守り、愛用品…">${(c.bg||{}).treasure||''}</textarea></div>
         <div class="bg-field"><label class="bg-lbl">特徴 · 癖</label><textarea class="bg-ta" rows="2" oninput="updBg('trait',this.value)" placeholder="口癖、行動の癖、見た目の特徴…">${(c.bg||{}).trait||''}</textarea></div>
+        <div class="bg-field"><label class="bg-lbl">${is7 ? '経験値パッケージ' : '特徴表'}</label><textarea class="bg-ta" rows="2" oninput="updBg('feature',this.value)" placeholder="${is7 ? 'パッケージの履歴や内容…' : 'ダイスで得た特徴など…'}">${(c.bg||{}).feature||''}</textarea></div>
       </div>
     </div>
     <div class="memo-wrap" style="margin-top:14px">
@@ -2167,7 +2170,6 @@ async function renderDetail(){
   loadExprTab();
   renderDerivedStats(c);
 }
-
 async function onDetailPortrait(e){
   if(IS_READONLY)return;
   const f=e.target.files[0];if(!f)return;const c=getChar();if(!c)return;
