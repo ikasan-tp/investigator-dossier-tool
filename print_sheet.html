@@ -216,7 +216,19 @@ body{font-family:'Noto Sans JP',sans-serif;background:#999;color:var(--ink2);
 
 <script>
 const P=new URLSearchParams(location.search);
-const SU=P.get('url')||'',SK=P.get('key')||'',CID=P.get('char')||'';
+// JWT再構築ヘルパー（短縮URL対応）
+function buildSupaKey(ref,iat,sig){
+  const header='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+  const exp=iat+315576000;
+  const payloadJson='{"iss":"supabase","ref":"'+ref+'","role":"anon","iat":'+iat+',"exp":'+exp+'}';
+  const payload=btoa(payloadJson).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return header+'.'+payload+'.'+sig;
+}
+// 短縮形式(ref+iat+sig) → 旧形式(url+key) の順で解決
+const _ref=P.get('ref')||'',_iat=P.get('iat')||'',_sig=P.get('sig')||'';
+const SU=_ref?'https://'+_ref+'.supabase.co':(P.get('url')||'');
+const SK=_ref?buildSupaKey(_ref,parseInt(_iat),_sig):(P.get('key')||'');
+const CID=P.get('char')||'';
 const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 

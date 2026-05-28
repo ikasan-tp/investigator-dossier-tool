@@ -1920,6 +1920,16 @@ body.readonly .add-card{display:none}
 <div class="toast" id="toast-el"></div>
 
 <script>
+/* ════ JWT 再構築ヘルパー ════ */
+// Supabase Anon Key の固定部分を省いて ref+iat+sig だけから完全なJWTを復元する
+function buildSupaKey(ref,iat,sig){
+  const header='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'; // 全プロジェクト共通・固定
+  const exp=iat+315576000; // Supabase標準: iat + 10年
+  const payloadJson='{"iss":"supabase","ref":"'+ref+'","role":"anon","iat":'+iat+',"exp":'+exp+'}';
+  const payload=btoa(payloadJson).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return header+'.'+payload+'.'+sig;
+}
+
 /* ════ SUPABASE 設定（動的） ════ */
 const OWNER_URL='https://ahytjvhtvgpvbpoldnsy.supabase.co';
 const OWNER_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
@@ -1929,9 +1939,14 @@ let H={};
 
 function loadSupaConfig(){
   if(IS_READONLY){
-    // 閲覧モード: URLパラメータ優先、なければオーナーのDB
-    SUPA_URL=_urlParam||OWNER_URL;
-    SUPA_KEY=_keyParam||OWNER_KEY;
+    // 閲覧モード: 短縮形式(ref+iat+sig) → 旧形式(url+key) → オーナーDB の順で優先
+    if(_refParam&&_iatParam&&_sigParam){
+      SUPA_URL='https://'+_refParam+'.supabase.co';
+      SUPA_KEY=buildSupaKey(_refParam,parseInt(_iatParam),_sigParam);
+    }else{
+      SUPA_URL=_urlParam||OWNER_URL;
+      SUPA_KEY=_keyParam||OWNER_KEY;
+    }
   }else{
     SUPA_URL=localStorage.getItem('supa_url')||'';
     SUPA_KEY=localStorage.getItem('supa_key')||'';
@@ -3874,6 +3889,10 @@ const _params=new URLSearchParams(location.search);
 const IS_READONLY=_params.get('view')==='1';
 const _urlParam=_params.get('url')||'';
 const _keyParam=_params.get('key')||'';
+// 短縮URL用パラメータ（ref=プロジェクトID, iat=発行時刻, sig=JWT署名）
+const _refParam=_params.get('ref')||'';
+const _iatParam=_params.get('iat')||'';
+const _sigParam=_params.get('sig')||'';
 let _charParam=_params.get('char')||'';
 loadSupaConfig(); // IS_READONLY 確定後に接続設定を読み込む
 
@@ -3884,7 +3903,16 @@ if(IS_READONLY){
 }
 function copyViewUrl(){
   const base=location.href.split('?')[0];
-  let url=base+'?view=1&url='+encodeURIComponent(SUPA_URL)+'&key='+encodeURIComponent(SUPA_KEY);
+  // SUPA_URL から ref を抽出、SUPA_KEY から iat と sig を抽出して短縮URLを生成
+  const ref=SUPA_URL.replace('https://','').replace('.supabase.co','');
+  const jwtParts=SUPA_KEY.split('.');
+  let iat=0,sig='';
+  try{
+    const pl=JSON.parse(atob(jwtParts[1].replace(/-/g,'+').replace(/_/g,'/')));
+    iat=pl.iat||0;
+  }catch(e){}
+  sig=jwtParts[2]||'';
+  let url=base+'?view=1&ref='+ref+'&iat='+iat+'&sig='+sig;
   if(curId) url+='&char='+encodeURIComponent(curId);
   navigator.clipboard?navigator.clipboard.writeText(url).then(()=>toast(curId?'このキャラの閲覧用URLをコピーしました':'閲覧用URLをコピーしました')):
     (()=>{const t=document.createElement('textarea');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('閲覧用URLをコピーしました');})();
@@ -4165,9 +4193,16 @@ function updItem(i,k,v){const ch=getChar();if(!ch||!ch.items||!ch.items[i])retur
 function openPrintSheet(){
   const c=getChar();if(!c){toast('キャラクターが見つかりません');return;}
   if(!SUPA_URL||!SUPA_KEY){toast('DB設定が見つかりません');return;}
+  // 短縮URL形式でprint_sheetに渡す
+  const ref=SUPA_URL.replace('https://','').replace('.supabase.co','');
+  const jwtParts=SUPA_KEY.split('.');
+  let iat=0,sig='';
+  try{const pl=JSON.parse(atob(jwtParts[1].replace(/-/g,'+').replace(/_/g,'/')));iat=pl.iat||0;}catch(e){}
+  sig=jwtParts[2]||'';
   const url='print_sheet.html'
-    +'?url='+encodeURIComponent(SUPA_URL)
-    +'&key='+encodeURIComponent(SUPA_KEY)
+    +'?ref='+ref
+    +'&iat='+iat
+    +'&sig='+encodeURIComponent(sig)
     +'&char='+encodeURIComponent(c.id);
   window.open(url,'_blank');
 }
