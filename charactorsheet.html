@@ -1543,7 +1543,7 @@ body.readonly .add-card{display:none}
 
   <!-- DETAIL -->
   <div id="view-detail" class="view">
-    <button class="back-btn" onclick="showView('list')">← 一覧へ戻る</button>
+    <button class="back-btn edit-only" onclick="showView('list')">← 一覧へ戻る</button>
     <div class="case-file" id="d-casefile"></div>
     <div class="tabs-row">
       <button class="tab-btn active" onclick="showTab('expr')">表情差分</button>
@@ -2151,7 +2151,6 @@ async function renderList(){
     add.innerHTML=`<div class="add-ico">+</div><div class="add-lbl">新規ファイルを作成</div>`;
     add.onclick=openAddModal;g.appendChild(add);
   }
-  if(_charParam){const tgt=chars.find(c=>c.id===_charParam);if(tgt){curId=tgt.id;_ccfCmdCache=null;_charParam='';showView('detail');}}
 }
 
 /* ════ DETAIL ════ */
@@ -4054,13 +4053,31 @@ async function init(){
     showView('setup');
     return;
   }
+  // 閲覧モードで char 指定がない場合は一覧を見せず、エラー表示にする
+  if(IS_READONLY&&!_charParam){
+    document.getElementById('db-loading').innerHTML=`<div style="color:var(--seal-body);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;text-align:center;padding:20px">INVALID URL<br><span style="opacity:.5;font-size:9px">このURLでは閲覧できません</span></div>`;
+    return;
+  }
   try{
     const rows=await sbSelect('characters','order=created_at.asc');
     chars=rows.map(r=>({...r.data,id:r.id}));
-    document.getElementById('db-loading').style.display='none';
-    renderList();
+    if(IS_READONLY){
+      // 閲覧モードでは対象キャラが見つかった場合のみ詳細を表示する
+      const tgt=chars.find(c=>c.id===_charParam);
+      document.getElementById('db-loading').style.display='none';
+      if(tgt){
+        curId=tgt.id;_ccfCmdCache=null;_charParam='';showView('detail');
+      }else{
+        document.getElementById('db-loading').style.display='';
+        document.getElementById('db-loading').innerHTML=`<div style="color:var(--seal-body);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;text-align:center;padding:20px">NOT FOUND<br><span style="opacity:.5;font-size:9px">このキャラクターは見つかりませんでした</span></div>`;
+      }
+    }else{
+      document.getElementById('db-loading').style.display='none';
+      renderList();
+    }
   }catch(err){
-    document.getElementById('db-loading').innerHTML=`<div style="color:var(--seal-body);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;text-align:center;padding:20px">CONNECTION ERROR<br><span style="opacity:.5;font-size:9px">${err.message}</span><br><br><button class="btn btn-ghost btn-sm" onclick="showView('setup')">設定を確認する</button></div>`;
+    document.getElementById('db-loading').style.display='';
+    document.getElementById('db-loading').innerHTML=`<div style="color:var(--seal-body);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;text-align:center;padding:20px">CONNECTION ERROR<br><span style="opacity:.5;font-size:9px">${err.message}</span><br><br>${IS_READONLY?'':`<button class="btn btn-ghost btn-sm" onclick="showView('setup')">設定を確認する</button>`}</div>`;
   }
 }
 /* ═══ 追加機能 ═══ */
