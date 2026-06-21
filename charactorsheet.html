@@ -1568,32 +1568,20 @@ body.readonly .add-card{display:none}
     <div class="sec-head">
       <div class="sh-title">INITIAL SETUP</div>
     </div>
-    <div style="max-width:560px;margin:32px auto;padding:0 16px">
-      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--ink-dim);margin-bottom:24px;line-height:2.2">
-        Firebaseのプロジェクト設定を入力してください。<br>
-        設定はこのブラウザにのみ保存されます。<br>
-        <span style="color:var(--ink-faint)">Firebase Console → プロジェクト設定 → マイアプリ → SDK の設定と構成</span>
+    <div style="max-width:520px;margin:32px auto;padding:0 16px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--ink-dim);margin-bottom:24px;line-height:2">
+        Supabaseのプロジェクト情報を入力してください。<br>
+        設定はこのブラウザにのみ保存されます。
       </div>
-      <div class="form-row" style="margin-bottom:12px">
-        <label class="form-lbl">API Key</label>
-        <input type="text" class="form-input" id="setup-apiKey" placeholder="AIzaSy...">
-      </div>
-      <div class="form-row" style="margin-bottom:12px">
-        <label class="form-lbl">Project ID</label>
-        <input type="text" class="form-input" id="setup-projectId" placeholder="my-coc-sheet">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);margin-top:4px">共有URLに使用されます（例: yourapp.vercel.app?view=1&proj=my-coc-sheet&char=id）</div>
-      </div>
-      <div class="form-row" style="margin-bottom:12px">
-        <label class="form-lbl">Auth Domain</label>
-        <input type="text" class="form-input" id="setup-authDomain" placeholder="my-coc-sheet.firebaseapp.com">
-      </div>
-      <div class="form-row" style="margin-bottom:12px">
-        <label class="form-lbl">Storage Bucket</label>
-        <input type="text" class="form-input" id="setup-storageBucket" placeholder="my-coc-sheet.firebasestorage.app">
+      <div class="form-row" style="margin-bottom:16px">
+        <label class="form-lbl">Project URL</label>
+        <input type="text" class="form-input" id="setup-url" placeholder="https://xxxxxxxxxx.supabase.co">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);margin-top:4px">Supabase → Settings → Data API → API URL</div>
       </div>
       <div class="form-row" style="margin-bottom:24px">
-        <label class="form-lbl">App ID</label>
-        <input type="text" class="form-input" id="setup-appId" placeholder="1:123456789:web:abcdef...">
+        <label class="form-lbl">Anon Key</label>
+        <input type="text" class="form-input" id="setup-key" placeholder="eyJhbGci...">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ink-faint);margin-top:4px">Supabase → Settings → API Keys → Legacy anon, service_role API keys → anon public</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <button class="btn btn-primary" onclick="saveSetup()">接続する</button>
@@ -1740,7 +1728,7 @@ body.readonly .add-card{display:none}
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-char')">キャンセル</button>
-      <button class="btn btn-primary" id="char-save-btn" onclick="createChar()">ファイルを作成</button>
+      <button class="btn btn-primary" id="char-save-btn" onclick="saveChar()">ファイルを作成</button>
     </div>
   </div>
 </div>
@@ -1931,136 +1919,139 @@ body.readonly .add-card{display:none}
 </div>
 <div class="toast" id="toast-el"></div>
 
-<script type="module">
-/* ════ Firebase SDK（CDN） ════ */
-import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
-import{getFirestore,doc,getDocs,setDoc,deleteDoc,collection,query,where}from'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
-import{getStorage,ref as sRef,uploadBytes,getDownloadURL,deleteObject}from'https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js';
-
-/* ════════════════════════════════════════════
-   Firebase 接続
-   ────────────────────────────────────────────
-   ・各ユーザーは自分のFirebaseプロジェクトを持つ
-   ・設定は localStorage の 'firebase_config' に保存
-   ・閲覧用URL（?view=1&proj=...&key=...）には
-     projectId / apiKey / storageBucket を含める
-     （FirebaseのAPIキーはクライアント公開前提のため問題なし。
-       実際のアクセス制御はFirestore/Storageのセキュリティルールで行う）
-   ════════════════════════════════════════════ */
-let _fbApp=null,_db=null,_storage=null,_fbConfig=null;
-
-function buildFbConfig(projectId,apiKey,storageBucket){
-  return {
-    apiKey,
-    projectId,
-    authDomain:projectId+'.firebaseapp.com',
-    storageBucket:storageBucket||(projectId+'.firebasestorage.app'),
-  };
+<script>
+/* ════ JWT 再構築ヘルパー ════ */
+// Supabase Anon Key の固定部分を省いて ref+iat+sig だけから完全なJWTを復元する
+function buildSupaKey(ref,iat,sig){
+  const header='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'; // 全プロジェクト共通・固定
+  const exp=iat+315576000; // Supabase標準: iat + 10年
+  const payloadJson='{"iss":"supabase","ref":"'+ref+'","role":"anon","iat":'+iat+',"exp":'+exp+'}';
+  const payload=btoa(payloadJson).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return header+'.'+payload+'.'+sig;
+}
+// 現在接続中の SUPA_URL/SUPA_KEY から ref/iat/sig を抽出する
+function extractRefIatSig(){
+  const ref=SUPA_URL.replace('https://','').replace('.supabase.co','');
+  const jwtParts=SUPA_KEY.split('.');
+  let iat=0;
+  try{
+    const pl=JSON.parse(atob(jwtParts[1].replace(/-/g,'+').replace(/_/g,'/')));
+    iat=pl.iat||0;
+  }catch(e){}
+  const sig=jwtParts[2]||'';
+  return {ref,iat,sig};
 }
 
-function initFirebase(){
+/* ════ 短縮リンク（link テーブル） ════
+   アプリ作者の固定DB（OWNER_URL/OWNER_KEY）内に link テーブルを1つ持ち、
+   各ユーザーの (ref,iat,sig) を短いランダムIDに対応付けて保存する。
+   共有URLにはこの短いIDだけを乗せる： ?view=1&lk=Xk9pQ2&char=abc123
+   閲覧者は lk から link テーブルを検索 → ref/iat/sig を取得 → 接続先を復元する。
+*/
+function genShortId(len=6){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  let s='';
+  for(let i=0;i<len;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+// オーナーDB(link テーブル)へ問い合わせる専用フェッチ（SUPA_URL/SUPA_KEYに依存しない）
+async function ownerFetch(path,opts={}){
+  const r=await fetch(`${OWNER_URL}${path}`,{
+    ...opts,
+    headers:{'Content-Type':'application/json','apikey':OWNER_KEY,'Authorization':'Bearer '+OWNER_KEY,...(opts.headers||{})}
+  });
+  if(!r.ok)throw new Error(await r.text());
+  return r;
+}
+// 現在の接続先(ref,iat,sig)に対応する短縮IDを取得 or 新規発行する
+async function getOrCreateShortLink(){
+  const {ref,iat,sig}=extractRefIatSig();
+  if(!ref||!sig)throw new Error('接続情報が見つかりません');
+  // 既に同じ ref を発行済みなら再利用する
+  try{
+    const r=await ownerFetch(`/rest/v1/link?ref=eq.${encodeURIComponent(ref)}&select=id&limit=1`,{headers:{'Prefer':'return=representation'}});
+    const rows=await r.json();
+    if(rows.length) return rows[0].id;
+  }catch(e){/* テーブル未作成などは新規発行にフォールバック */}
+  // 新規発行（IDの衝突は極めて低確率だが軽くリトライする）
+  for(let i=0;i<3;i++){
+    const id=genShortId(6);
+    try{
+      await ownerFetch('/rest/v1/link',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify({id,ref,iat,sig})});
+      return id;
+    }catch(e){
+      if(String(e.message).includes('duplicate')) continue;
+      throw e;
+    }
+  }
+  throw new Error('短縮IDの発行に失敗しました');
+}
+// 短縮ID(lk)から ref/iat/sig を取得する
+async function resolveShortLink(lk){
+  const r=await ownerFetch(`/rest/v1/link?id=eq.${encodeURIComponent(lk)}&select=ref,iat,sig&limit=1`,{headers:{'Prefer':'return=representation'}});
+  const rows=await r.json();
+  if(!rows.length)throw new Error('リンクが見つかりません');
+  return rows[0];
+}
+
+/* ════ SUPABASE 設定（動的） ════ */
+const OWNER_URL='https://ahytjvhtvgpvbpoldnsy.supabase.co';
+const OWNER_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeXRqdmh0dmdwdmJwb2xkbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMTI0NTMsImV4cCI6MjA4ODc4ODQ1M30.zhv9dNPTUOOjtWEIYfA85wqIIKkRP_VYh6muAlNVGhE';
+let SUPA_URL='';
+let SUPA_KEY='';
+let H={};
+
+async function loadSupaConfig(){
   if(IS_READONLY){
-    // 閲覧モード：URLパラメータがあれば最優先（共有URL経由）
-    const projId=_params.get('proj')||'';
-    const apiKey=_params.get('key')||'';
-    const sb=_params.get('sb')||'';
-    if(projId&&apiKey){
-      _fbConfig=buildFbConfig(projId,apiKey,sb);
+    // 閲覧モード: 最短形式(lk) → 短縮形式(ref+iat+sig) → 旧形式(url+key) → オーナーDB の順で優先
+    if(_lkParam){
+      try{
+        const {ref,iat,sig}=await resolveShortLink(_lkParam);
+        SUPA_URL='https://'+ref+'.supabase.co';
+        SUPA_KEY=buildSupaKey(ref,iat,sig);
+      }catch(e){
+        SUPA_URL=OWNER_URL;SUPA_KEY=OWNER_KEY;
+      }
+    }else if(_refParam&&_iatParam&&_sigParam){
+      SUPA_URL='https://'+_refParam+'.supabase.co';
+      SUPA_KEY=buildSupaKey(_refParam,parseInt(_iatParam),_sigParam);
     }else{
-      // パラメータがない場合はローカル設定（オーナー自身が閲覧モードを試す時など）
-      _fbConfig=readLocalFbConfig();
+      SUPA_URL=_urlParam||OWNER_URL;
+      SUPA_KEY=_keyParam||OWNER_KEY;
     }
   }else{
-    _fbConfig=readLocalFbConfig();
+    SUPA_URL=localStorage.getItem('supa_url')||'';
+    SUPA_KEY=localStorage.getItem('supa_key')||'';
   }
-
-  if(!_fbConfig||!_fbConfig.apiKey||!_fbConfig.projectId)return;
-
-  try{
-    const existing=getApps().find(a=>a.name===_fbConfig.projectId);
-    _fbApp=existing||initializeApp(_fbConfig,_fbConfig.projectId);
-    _db=getFirestore(_fbApp);
-    _storage=getStorage(_fbApp);
-  }catch(e){
-    console.warn('Firebase init failed:',e.message);
-  }
+  H={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
 }
+// loadSupaConfig() は IS_READONLY 確定後、init() 内から呼ぶ（非同期のため await が必要）
 
-function readLocalFbConfig(){
-  const saved=localStorage.getItem('firebase_config');
-  if(!saved)return null;
-  try{return JSON.parse(saved);}catch(e){return null;}
-}
-
-/* ════ Firestore データアクセス ════
-   characters/{charId}      … キャラクター本体（フィールド: data = キャラJSON）
-   expressions/{exprId}     … 差分画像メタ（char_id, label, category, image_path）
-*/
+/* REST ヘルパー */
 async function sbSelect(table,filter=''){
-  if(!_db)throw new Error('Firebaseが未接続です');
-  if(table==='characters'){
-    const snap=await getDocs(collection(_db,'characters'));
-    return snap.docs.map(d=>({id:d.id,data:d.data().data}));
-  }
-  if(table==='expressions'){
-    const idMatch=filter.match(/id=eq\.([^&]+)/);
-    const charIdMatch=filter.match(/char_id=eq\.([^&]+)/);
-    if(idMatch){
-      const snap=await getDocs(query(collection(_db,'expressions'),where('__name__','==',idMatch[1])));
-      return snap.docs.map(d=>({id:d.id,...d.data()}));
-    }
-    if(charIdMatch){
-      const snap=await getDocs(query(collection(_db,'expressions'),where('char_id','==',charIdMatch[1])));
-      return snap.docs.map(d=>({id:d.id,...d.data()}));
-    }
-    const snap=await getDocs(collection(_db,'expressions'));
-    return snap.docs.map(d=>({id:d.id,...d.data()}));
-  }
-  return [];
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${filter}&limit=10000`,{headers:{...H,'Prefer':'return=representation'}});
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
 }
-
 async function sbUpsert(table,body){
-  if(!_db)throw new Error('Firebaseが未接続です');
-  if(table==='characters'){
-    await setDoc(doc(_db,'characters',body.id),{data:body.data});
-  }else if(table==='expressions'){
-    const {id,...rest}=body;
-    await setDoc(doc(_db,'expressions',id),rest,{merge:true});
-  }
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}`,{method:'POST',headers:{...H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(await r.text());
 }
-
 async function sbDelete(table,filter){
-  if(!_db)throw new Error('Firebaseが未接続です');
-  const idMatch=filter.match(/id=eq\.([^&]+)/);
-  if(!idMatch)return;
-  await deleteDoc(doc(_db,table,idMatch[1]));
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:H});
+  if(!r.ok)throw new Error(await r.text());
 }
 
-/* ════ Firebase Storage（画像） ════ */
+/* Storage ヘルパー */
 async function storageUpload(path,blob){
-  if(!_storage)throw new Error('Firebaseが未接続です');
-  await uploadBytes(sRef(_storage,'images/'+path),blob,{contentType:blob.type||'image/jpeg'});
+  const r=await fetch(`${SUPA_URL}/storage/v1/object/images/${path}`,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':blob.type||'image/jpeg','x-upsert':'true'},body:blob});
+  if(!r.ok)throw new Error(await r.text());
 }
-
 async function storageDelete(paths){
-  if(!_storage)return;
-  await Promise.all(paths.map(p=>deleteObject(sRef(_storage,'images/'+p)).catch(()=>{})));
+  const r=await fetch(`${SUPA_URL}/storage/v1/object/images`,{method:'DELETE',headers:{...H},body:JSON.stringify({prefixes:paths})});
+  if(!r.ok)throw new Error(await r.text());
 }
-
-async function storageUrl(path){
-  if(!_storage||!path)return '';
-  return await getDownloadURL(sRef(_storage,'images/'+path));
-}
-
-/* data-img-path 属性を持つ<img>を非同期で解決して描画する
-   （Storageの署名URL取得が非同期のため、まずプレースホルダーで描画→後から差し込む） */
-function resolveImgs(root){
-  (root||document).querySelectorAll('[data-img-path]').forEach(async el=>{
-    const path=el.getAttribute('data-img-path');
-    if(!path)return;
-    try{el.src=await storageUrl(path);}catch(e){}
-  });
-}
+function storageUrl(path){return `${SUPA_URL}/storage/v1/object/public/images/${path}`;}
 
 /* dataURL → Blob */
 function dataUrlToBlob(du){
@@ -2078,8 +2069,8 @@ let filt='all',sq='',sortMode='num'; // 番号順デフォルト
 let lbExprs=[],lbIdx=0;
 const getChar=()=>chars.find(c=>c.id===curId);
 
-/* キャラクターをFirestoreへ保存 */
-async function saveChar(c){
+/* キャラクターをSupabaseへ保存 */
+async function saveCharToSupa(c){
   _ccfCmdCache=null; // 技能・能力値変更時にコマンドキャッシュをリセット
   await sbUpsert('characters',{id:c.id,data:c});
 }
@@ -2132,10 +2123,11 @@ async function renderList(){
     const el=document.createElement('div');
     el.className='char-card'+(c.hidden?' is-hidden':'');
     const bustPath=c.bust_path;
+    const img=bustPath?storageUrl(bustPath):'';
     el.innerHTML=`
       ${c.hidden&&!IS_READONLY?'<div class="hidden-badge">HIDDEN</div>':''}
       <div class="card-photo">
-        ${bustPath?`<img data-img-path="${bustPath}" alt="${c.name}">`:`<div class="card-photo-ph">NO PHOTO</div>`}
+        ${img?`<img src="${img}" alt="${c.name}">`:`<div class="card-photo-ph">NO PHOTO</div>`}
       </div>
       <div class="card-body">
         <div class="card-name">${c.name}</div>
@@ -2159,7 +2151,6 @@ async function renderList(){
     add.innerHTML=`<div class="add-ico">+</div><div class="add-lbl">新規ファイルを作成</div>`;
     add.onclick=openAddModal;g.appendChild(add);
   }
-  resolveImgs(g);
   if(_charParam){const tgt=chars.find(c=>c.id===_charParam);if(tgt){curId=tgt.id;_ccfCmdCache=null;_charParam='';showView('detail');}}
 }
 
@@ -2170,7 +2161,7 @@ async function renderDetail(){
   const sdefs=[{k:'STR',jp:'筋力'},{k:'CON',jp:'体力'},{k:'POW',jp:'精神'},{k:'DEX',jp:'敏捷'},{k:'APP',jp:'外見'},{k:'SIZ',jp:'体格'},{k:'INT',jp:'知性'},{k:'EDU',jp:'教育'}];
   const scol={hp:'#8a1818',mp:'#1a3a5a',san:'#5a4a10',luk:'#1a4a2a'};
   const slbl={hp:'HP',mp:'MP',san:'SAN',luk:'幸運'};
-  const bustPath=c.bust_path||'';
+  const bustUrl=c.bust_path?storageUrl(c.bust_path):'';
 
   const p8=sdefs.map(({k})=>{
     const v=st[k]||'';
@@ -2195,7 +2186,7 @@ async function renderDetail(){
     <div class="case-inner">
       <div class="portrait-col">
         <div class="photo-frame" id="bust-frame">
-          ${bustPath?`<img data-img-path="${bustPath}" alt="${c.name}">`:`<div class="photo-frame-ph">NO<br>PHOTO</div>`}
+          ${bustUrl?`<img src="${bustUrl}" alt="${c.name}">`:`<div class="photo-frame-ph">NO<br>PHOTO</div>`}
         </div>
         <button class="upload-under-btn edit-only" onclick="document.getElementById('detail-bust-file').click()">▲ 変更</button>
         <input type="file" id="detail-bust-file" accept="image/*" style="display:none" onchange="onDetailPortrait(event)" ${IS_READONLY?'disabled':''}>
@@ -2265,26 +2256,24 @@ async function renderDetail(){
     </div>`;
   loadExprTab();
   renderDerivedStats(c);
-  resolveImgs(document.getElementById('d-casefile'));
 }
 async function onDetailPortrait(e){
   if(IS_READONLY)return;
   const f=e.target.files[0];if(!f)return;const c=getChar();if(!c)return;
   toast('アップロード中…');
   try{
+    // 拡張子に関わらず bust.jpg で固定（上書き保証）
     const ext=f.name.split('.').pop().toLowerCase()||'jpg';
     const path=`${c.id}/bust.${ext}`;
+    // 古いパスが違う拡張子なら先に削除
     if(c.bust_path && c.bust_path!==path){
       try{await storageDelete([c.bust_path]);}catch(e){}
     }
     await storageUpload(path,f);
     c.bust_path=path;
-    await saveChar(c);
+    await saveCharToSupa(c);
     const fr=document.getElementById('bust-frame');
-    if(fr){
-      const url=await storageUrl(path);
-      fr.innerHTML=`<img src="${url}?t=${Date.now()}" alt="">`;
-    }
+    if(fr)fr.innerHTML=`<img src="${storageUrl(path)}?t=${Date.now()}" alt="">`;
     toast('バストアップ画像を更新しました');
   }catch(err){toast('アップロード失敗: '+err.message);}
 }
@@ -2293,17 +2282,17 @@ function updStat(k,inp){
   const c=getChar();if(!c)return;if(!c.stats)c.stats={};
   const v=parseInt(inp.value)||0;c.stats[k]=v;
   renderDerivedStats(c);
-  debounce('stat',()=>saveChar(c),800);
+  debounce('stat',()=>saveCharToSupa(c),800);
 }
 function updSec(k,f,v){
   const c=getChar();if(!c)return;if(!c.secondary)c.secondary={};if(!c.secondary[k])c.secondary[k]={};
   c.secondary[k][f]=parseInt(v)||0;
   renderDerivedStats(c);
-  debounce('sec',()=>saveChar(c),800);
+  debounce('sec',()=>saveCharToSupa(c),800);
 }
-function updQuote(v){const c=getChar();if(!c)return;c.quote=v;debounce('quote',()=>saveChar(c),800);}
-function updBg(k,v){const c=getChar();if(!c)return;if(!c.bg)c.bg={};c.bg[k]=v;debounce('bg_'+k,()=>saveChar(c),800);}
-async function saveMemo(){const c=getChar();if(!c)return;c.memo=document.getElementById('memo-text').value;await saveChar(c);toast('保存しました');}
+function updQuote(v){const c=getChar();if(!c)return;c.quote=v;debounce('quote',()=>saveCharToSupa(c),800);}
+function updBg(k,v){const c=getChar();if(!c)return;if(!c.bg)c.bg={};c.bg[k]=v;debounce('bg_'+k,()=>saveCharToSupa(c),800);}
+async function saveMemo(){const c=getChar();if(!c)return;c.memo=document.getElementById('memo-text').value;await saveCharToSupa(c);toast('保存しました');}
 
 /* デバウンス（入力中の連続保存を防ぐ） */
 const _dt={};
@@ -2414,7 +2403,7 @@ function toggleCondition(key){
   if(!c.conditions)c.conditions={};
   c.conditions[key]=!c.conditions[key];
   renderDerivedStats(c);
-  debounce('cond',()=>saveChar(c),600);
+  debounce('cond',()=>saveCharToSupa(c),600);
 }
 /* ════ モーダル導出ステータス自動入力 ════ */
 function autoFillDerivedFields(){
@@ -2464,21 +2453,20 @@ async function loadExprTab(){
 async function loadFullTab(){
   const pane=document.getElementById('tab-full');if(!pane)return;
   const c=getChar();if(!c)return;
-  const fullPath=c.full_path||'';
+  const fullUrl=c.full_path?storageUrl(c.full_path):'';
   pane.innerHTML=`
     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0">
       <div id="fullbody-display" style="${IS_READONLY?'':'cursor:pointer'}" ${IS_READONLY?'':'onclick="document.getElementById(\'fullbody-file-input\').click()"'} title="${IS_READONLY?'':'クリックで変更'}">
-        ${fullPath
-          ?`<img data-img-path="${fullPath}" style="max-width:min(360px,80vw);object-fit:contain;display:block;border:1px solid var(--rule-light);box-shadow:2px 4px 14px rgba(100,80,50,.15);padding:16px;background:var(--paper-warm);box-sizing:border-box">`
+        ${fullUrl
+          ?`<img src="${fullUrl}" style="max-width:min(360px,80vw);object-fit:contain;display:block;border:1px solid var(--rule-light);box-shadow:2px 4px 14px rgba(100,80,50,.15);padding:16px;background:var(--paper-warm);box-sizing:border-box">`
           :`<div style="width:200px;height:320px;border:1px dashed var(--rule-mid);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--paper-warm)">
               <div style="font-size:28px;color:var(--ink-faint)">${IS_READONLY?'　':'＋'}</div>
               <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--ink-faint);text-transform:uppercase">${IS_READONLY?'NO IMAGE':'UPLOAD'}</div>
             </div>`}
       </div>
       <input type="file" id="fullbody-file-input" accept="image/*" style="display:none" onchange="onFullbodyUpload(event)" ${IS_READONLY?'disabled':''}>
-      ${!IS_READONLY && fullPath?`<button style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--ink-dim);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-transform:uppercase" onclick="deleteFullImg()">✕ 削除</button>`:''}
+      ${!IS_READONLY && fullUrl?`<button style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--ink-dim);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-transform:uppercase" onclick="deleteFullImg()">✕ 削除</button>`:''}
     </div>`;
-  resolveImgs(pane);
 }
 
 async function onFullbodyUpload(e){
@@ -2489,7 +2477,7 @@ async function onFullbodyUpload(e){
     const path=`${c.id}/full.${f.name.split('.').pop()}`;
     await storageUpload(path,f);
     c.full_path=path;
-    await saveChar(c);
+    await saveCharToSupa(c);
     loadFullTab();
     toast('全身立ち絵を更新しました');
   }catch(err){toast('アップロード失敗: '+err.message);}
@@ -2498,7 +2486,7 @@ async function deleteFullImg(){
   if(!confirm('全身立ち絵を削除しますか？'))return;
   const c=getChar();if(!c)return;
   if(c.full_path){try{await storageDelete([c.full_path]);}catch(e){}}
-  c.full_path='';await saveChar(c);loadFullTab();toast('削除しました');
+  c.full_path='';await saveCharToSupa(c);loadFullTab();toast('削除しました');
 }
 
 /* ════ EXPR RENDER ════ */
@@ -2525,11 +2513,11 @@ function renderExprPane(exprs){
       const isMain=getChar()?.mainExprId===e.id;
       const sl=(e.label||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
       const sc=(e.category||'通常').replace(/'/g,"\\'");
-      const imgUrl=e.image_path||'';
+      const imgUrl=e.image_path?storageUrl(e.image_path):'';
       const checked=selectedExprs.has(e.id)?'checked':'';
       grid+=`<div class="expr-card${selectedExprs.has(e.id)?' selected':''}" id="ec-${e.id}">
         ${IS_READONLY?'':`<input type="checkbox" class="expr-check edit-only" ${checked} onchange="toggleExprSel('${e.id}',this.checked)">`}
-        <div class="expr-img" onclick="openLb(${i})">${imgUrl?`<img data-img-path="${imgUrl}" alt="${e.label||''}" loading="lazy">`:`<div class="expr-img-ph">NO IMAGE</div>`}</div>
+        <div class="expr-img" onclick="openLb(${i})">${imgUrl?`<img src="${imgUrl}" alt="${e.label||''}" loading="lazy">`:`<div class="expr-img-ph">NO IMAGE</div>`}</div>
         <div class="expr-name-bar" onclick="openLb(${i})">
           <div class="expr-name" id="name-${e.id}">${e.label||'（名前なし）'}</div>
           <div class="expr-cat">${e.category||''}</div>
@@ -2572,7 +2560,6 @@ function renderExprPane(exprs){
       <button class="btn btn-primary btn-sm edit-only" onclick="openExprModal()">＋ 差分を追加</button>
     </div>
     <div class="expr-grid">${grid}</div>`;
-  resolveImgs(pane);
 }
 
 function toggleSelectAll(ids){
@@ -2703,10 +2690,10 @@ function copyLblByEl(e,lbl,nameId){
 }
 
 function openLb(i){lbIdx=i;showLbAt(i);document.getElementById('lightbox').classList.add('open');}
-async function showLbAt(i){
+function showLbAt(i){
   if(!lbExprs[i])return;
-  const path=lbExprs[i].image_path||'';
-  document.getElementById('lb-img').src=path?await storageUrl(path).catch(()=>''):'';
+  const url=lbExprs[i].image_path?storageUrl(lbExprs[i].image_path):'';
+  document.getElementById('lb-img').src=url;
   document.getElementById('lb-name').textContent=lbExprs[i].label||'';
 }
 function lbNav(d){lbIdx=(lbIdx+d+lbExprs.length)%lbExprs.length;showLbAt(lbIdx);}
@@ -2723,7 +2710,9 @@ async function setMainExpr(id){
     const rows=await sbSelect('expressions',`id=eq.${id}`);
     if(!rows.length)return;
     const ex=rows[0];
-    if(ex.image_path){c.bust_path=ex.image_path;c.mainExprId=id;await saveChar(c);loadExprTab();toast('メイン画像を更新しました');}
+    const imgUrl=ex.image_path?storageUrl(ex.image_path):'';
+    // バストアップとして保存（StorageのURLをbust_pathに）
+    if(ex.image_path){c.bust_path=ex.image_path;c.mainExprId=id;await saveCharToSupa(c);loadExprTab();toast('メイン画像を更新しました');}
   }catch(e){toast('エラー: '+e.message);}
 }
 
@@ -2822,13 +2811,7 @@ async function openEditModal(){
   document.getElementById('f-tags').value=(c.tags||[]).join(', ');
   STATS.forEach(s=>document.getElementById('f-'+s).value=(c.stats||{})[s]||'');
   ['hp','mp','san','luk'].forEach(k=>{const s=(c.secondary||{})[k]||{};document.getElementById('f-'+k+'-cur').value=s.cur||'';document.getElementById('f-'+k+'-max').value=s.max||'';});
-  if(c.bust_path){
-    storageUrl(c.bust_path).then(url=>{
-      document.getElementById('main-prev').src=url;
-      document.getElementById('main-prev').style.display='block';
-      document.getElementById('main-ph').style.display='none';
-    }).catch(()=>{});
-  }
+  if(c.bust_path){document.getElementById('main-prev').src=storageUrl(c.bust_path);document.getElementById('main-prev').style.display='block';document.getElementById('main-ph').style.display='none';}
   else{document.getElementById('main-prev').style.display='none';document.getElementById('main-ph').style.display='block';}
   selectVer(c.skillVer||'6');
   autoFillDerivedFields();
@@ -2877,7 +2860,7 @@ function collectForm(){
     intBonus:parseInt(document.getElementById('f-int-bonus').value)||0,
   };
 }
-async function createChar(){
+async function saveChar(){
   const d=collectForm();if(!d.name){toast('探索者名を入力してください');return;}
   const btn=document.getElementById('char-save-btn');btn.disabled=true;btn.textContent='保存中…';
   const id=Date.now().toString();
@@ -2888,7 +2871,7 @@ async function createChar(){
       const path=`${id}/bust.${ext}`;
       await storageUpload(path,bustImg);c.bust_path=path;
     }
-    await saveChar(c);
+    await saveCharToSupa(c);
     chars.push(c);
     closeModal('modal-char');toast(`「${d.name}」を登録しました`);renderList();
   }catch(e){toast('エラー: '+e.message);}
@@ -2908,7 +2891,7 @@ async function updChar(id){
       }
       await storageUpload(path,bustImg);c.bust_path=path;
     }
-    await saveChar(c);
+    await saveCharToSupa(c);
     closeModal('modal-char');toast('更新しました');renderDetail();
   }catch(e){toast('エラー: '+e.message);}
   btn.disabled=false;btn.textContent='保存する';
@@ -2917,7 +2900,7 @@ async function toggleHidden(){
   const c=getChar();if(!c)return;
   c.hidden=!c.hidden;
   try{
-    await saveChar(c);
+    await saveCharToSupa(c);
     const btn=document.getElementById('hidden-toggle-btn');
     if(btn){
       btn.textContent=c.hidden?'非表示中':'非表示';
@@ -3399,7 +3382,7 @@ const searchIn = document.createElement('input'); searchIn.className='skills-sea
 function setSkillVer(v){
   const c = getChar(); if(!c) return;
   c.skillVer = v;
-  debounce('skillver', ()=>saveChar(c), 500);
+  debounce('skillver', ()=>saveCharToSupa(c), 500);
   loadSkillsTab();
 }
 
@@ -3415,7 +3398,7 @@ function setSkillPts(name, col, val){
   const sk = c.skills[name];
   if(sk && !sk.occ && !sk.int && !sk.grow && !sk.etc && !sk.isOcc) delete c.skills[name];
   // 技能ごとに個別キーでdebounce（共通キーだと複数マス入力時に上書きされる）
-  debounce('skill_'+name, ()=>saveChar(c), 600);
+  debounce('skill_'+name, ()=>saveCharToSupa(c), 600);
   // ポイントバーのみリアルタイム更新
   _updatePtBar(c);
   // クトゥルフ神話技能が変わった場合は警告も更新
@@ -3429,7 +3412,7 @@ function setSkillOcc(name, checked){
   c.skills[name].isOcc = checked;
   if(!checked && !c.skills[name].occ && !c.skills[name].int && !c.skills[name].grow && !c.skills[name].etc)
     delete c.skills[name];
-  debounce('skill_'+name, ()=>saveChar(c), 600);
+  debounce('skill_'+name, ()=>saveCharToSupa(c), 600);
 }
 
 /* ポイントバーのみ差分更新（全再描画なし） */
@@ -3511,7 +3494,7 @@ function endSkillRename(oldName, inp, isCustom){
     c.skills[newName] = c.skills[oldName];
     delete c.skills[oldName];
   }
-  debounce('skillrename', ()=>{ saveChar(c); loadSkillsTab(); }, 300);
+  debounce('skillrename', ()=>{ saveCharToSupa(c); loadSkillsTab(); }, 300);
 }
 
 /* ════ 技能追加モーダル ════ */
@@ -3588,7 +3571,7 @@ function submitAddSkill(){
     );
     loadSkillsTab();
     closeModal('modal-add-skill');
-    saveChar(c).then(()=>toast(`「${name}」を追加しました`)).catch(e=>toast('保存エラー: '+e.message));
+    saveCharToSupa(c).then(()=>toast(`「${name}」を追加しました`)).catch(e=>toast('保存エラー: '+e.message));
 
   } else {
     const rows = [...document.querySelectorAll('#skill-sub-list .skill-sub-row')];
@@ -3611,7 +3594,7 @@ function submitAddSkill(){
     if(!addCount){ toast('追加できる技能がありませんでした'); return; }
     loadSkillsTab();
     closeModal('modal-add-skill');
-    saveChar(c).then(()=>toast(`${addCount}件の技能を追加しました`)).catch(e=>toast('保存エラー: '+e.message));
+    saveCharToSupa(c).then(()=>toast(`${addCount}件の技能を追加しました`)).catch(e=>toast('保存エラー: '+e.message));
   }
 }
 
@@ -3623,7 +3606,7 @@ function deleteCustomSkill(name){
   const c = getChar(); if(!c) return;
   c.customSkills = (c.customSkills||[]).filter(d=>d.name!==name);
   if(c.skills && c.skills[name]) delete c.skills[name];
-  saveChar(c).then(()=>loadSkillsTab());
+  saveCharToSupa(c).then(()=>loadSkillsTab());
 }
 
 /* 能力値参照式を計算 */
@@ -3871,15 +3854,15 @@ function renderCcfoliaFaces(){
     return;
   }
   list.innerHTML=_ccfExprs.map((e)=>{
+    const imgUrl=e.image_path?storageUrl(e.image_path):'';
     return `<div class="ccfolia-face-row">
       <div class="ccfolia-face-thumb">
-        ${e.image_path?`<img data-img-path="${e.image_path}" alt="" loading="lazy">`:`<div class="ccfolia-face-thumb-ph">NO<br>IMG</div>`}
+        ${imgUrl?`<img src="${imgUrl}" alt="" loading="lazy">`:`<div class="ccfolia-face-thumb-ph">NO<br>IMG</div>`}
       </div>
       <span class="ccfolia-face-label">${e.label||'（名前なし）'}</span>
       <span class="ccfolia-face-cat">${e.category||''}</span>
     </div>`;
   }).join('');
-  resolveImgs(list);
 }
 
 function onToggleCcfIcon(){
@@ -3889,21 +3872,22 @@ function onToggleCcfIcon(){
   debounce('ccfPreview',updateCcfoliaPreview,100);
 }
 
-async function buildCcfoliaJson(){
+function buildCcfoliaJson(){
   const c=getChar();if(!c)return null;
   const {status,params}=buildCcfoliaParams(c);
   const commands=document.getElementById('ccf-commands').value.trim();
   const includeIcon=document.getElementById('ccf-include-icon')?.checked!==false;
 
-  const faces=await Promise.all(_ccfExprs
+  // faces（画像リンク出力チェック時のみiconUrl付き）
+  const faces=_ccfExprs
     .filter(e=>e.label)
-    .map(async e=>{
-      const imgUrl=includeIcon&&e.image_path?await storageUrl(e.image_path).catch(()=>null):null;
+    .map(e=>{
+      const imgUrl=includeIcon&&e.image_path?storageUrl(e.image_path):null;
       return {iconUrl:imgUrl, label:e.label};
-    }));
+    });
 
   const firstWithImg=includeIcon?_ccfExprs.find(e=>e.image_path):null;
-  const iconUrl=firstWithImg?await storageUrl(firstWithImg.image_path).catch(()=>null):null;
+  const iconUrl=firstWithImg?storageUrl(firstWithImg.image_path):null;
 
   // initiative = DEX
   const initiative=parseInt((c.stats||{}).DEX)||0;
@@ -3931,15 +3915,15 @@ async function buildCcfoliaJson(){
   return {kind:'character',data};
 }
 
-async function updateCcfoliaPreview(){
-  const obj=await buildCcfoliaJson();
+function updateCcfoliaPreview(){
+  const obj=buildCcfoliaJson();
   const el=document.getElementById('ccf-json-preview');
   if(!obj){el.textContent='—';return;}
   el.textContent=JSON.stringify(obj,null,2);
 }
 
 async function copyCcfoliaJson(){
-  const obj=await buildCcfoliaJson();
+  const obj=buildCcfoliaJson();
   if(!obj){toast('データを取得できませんでした');return;}
   const text=JSON.stringify(obj);
   try{
@@ -3975,58 +3959,52 @@ const VERSION='1.0.0';
 let skillEditMode=true;
 const _params=new URLSearchParams(location.search);
 const IS_READONLY=_params.get('view')==='1';
+const _urlParam=_params.get('url')||'';
+const _keyParam=_params.get('key')||'';
+// 短縮URL用パラメータ（ref=プロジェクトID, iat=発行時刻, sig=JWT署名）※後方互換用
+const _refParam=_params.get('ref')||'';
+const _iatParam=_params.get('iat')||'';
+const _sigParam=_params.get('sig')||'';
+// 最短URL用パラメータ（lk=リンクテーブルの短縮ID）
+const _lkParam=_params.get('lk')||'';
 let _charParam=_params.get('char')||'';
-initFirebase(); // IS_READONLY 確定後に接続設定を読み込む
+// ※ loadSupaConfig() の呼び出しは init() 内で行う（lk解決が非同期のため）
 
 if(IS_READONLY){
   document.body.classList.add('readonly');
   document.getElementById('view-mode-badge').style.display='';
   skillEditMode=false;
 }
-/* 共有閲覧URLを生成（projectId / apiKey / storageBucket / charId を含む） */
-function buildShareUrl(charId){
-  if(!_fbConfig||!_fbConfig.projectId)return null;
+async function copyViewUrl(){
   const base=location.href.split('?')[0];
-  const q=new URLSearchParams({
-    view:'1',
-    proj:_fbConfig.projectId,
-    key:_fbConfig.apiKey||'',
-    sb:_fbConfig.storageBucket||'',
-  });
-  if(charId) q.set('char',charId);
-  return base+'?'+q.toString();
-}
-
-function copyToClipboard(text){
-  if(navigator.clipboard){
-    return navigator.clipboard.writeText(text);
+  toast('URLを発行中…');
+  try{
+    const lk=await getOrCreateShortLink();
+    let url=base+'?view=1&lk='+lk;
+    if(curId) url+='&char='+encodeURIComponent(curId);
+    await copyUrlToClipboard(url);
+    toast(curId?'このキャラの閲覧用URLをコピーしました':'閲覧用URLをコピーしました');
+  }catch(e){
+    toast('短縮URLの発行に失敗しました: '+e.message);
   }
-  const t=document.createElement('textarea');
-  t.value=text;document.body.appendChild(t);t.select();
-  document.execCommand('copy');document.body.removeChild(t);
-  return Promise.resolve();
 }
-
-function copyViewUrl(){
-  const url=buildShareUrl(curId);
-  if(!url){toast('Firebase設定がありません');return;}
-  copyToClipboard(url).then(()=>toast(curId?'このキャラの閲覧用URLをコピーしました':'閲覧用URLをコピーしました'));
+function copyUrlToClipboard(url){
+  if(navigator.clipboard) return navigator.clipboard.writeText(url);
+  const t=document.createElement('textarea');
+  t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);
+  return Promise.resolve();
 }
 
 /* ════ 起動 ════ */
 function initSetupView(){
-  const saved=localStorage.getItem('firebase_config');
-  let cfg={};
-  if(saved){try{cfg=JSON.parse(saved);}catch(e){}}
-  document.getElementById('setup-apiKey').value=cfg.apiKey||'';
-  document.getElementById('setup-projectId').value=cfg.projectId||'';
-  document.getElementById('setup-authDomain').value=cfg.authDomain||'';
-  document.getElementById('setup-storageBucket').value=cfg.storageBucket||'';
-  document.getElementById('setup-appId').value=cfg.appId||'';
+  const url=localStorage.getItem('supa_url')||'';
+  const key=localStorage.getItem('supa_key')||'';
+  document.getElementById('setup-url').value=url;
+  document.getElementById('setup-key').value=key;
   const cur=document.getElementById('setup-current');
-  if(cfg.projectId){
+  if(url){
     cur.style.display='block';
-    document.getElementById('setup-current-url').textContent='Project: '+cfg.projectId;
+    document.getElementById('setup-current-url').textContent=url;
   }else{
     cur.style.display='none';
   }
@@ -4034,25 +4012,23 @@ function initSetupView(){
 }
 
 async function saveSetup(){
-  const apiKey=document.getElementById('setup-apiKey').value.trim();
-  const projectId=document.getElementById('setup-projectId').value.trim();
-  const authDomain=document.getElementById('setup-authDomain').value.trim();
-  const storageBucket=document.getElementById('setup-storageBucket').value.trim();
-  const appId=document.getElementById('setup-appId').value.trim();
+  const url=document.getElementById('setup-url').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('setup-key').value.trim();
   const status=document.getElementById('setup-status');
-  if(!apiKey||!projectId){status.textContent='API KeyとProject IDを入力してください';return;}
+  if(!url||!key){status.textContent='URLとKeyを入力してください';return;}
   status.textContent='接続確認中…';
-  const cfg={apiKey,projectId,authDomain:authDomain||projectId+'.firebaseapp.com',storageBucket:storageBucket||projectId+'.firebasestorage.app',appId};
-  localStorage.setItem('firebase_config',JSON.stringify(cfg));
-  initFirebase();
-  // 接続テスト: characters コレクションにアクセス
+  // 接続テスト
   try{
-    await getDocs(collection(_db,'characters'));
+    const r=await fetch(`${url}/rest/v1/characters?limit=1`,{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+    if(!r.ok)throw new Error('接続失敗: '+r.status);
+    localStorage.setItem('supa_url',url);
+    localStorage.setItem('supa_key',key);
+    await loadSupaConfig();
     status.textContent='接続成功！';
     setTimeout(async()=>{
       chars=[];
       try{
-        const rows=await sbSelect('characters','');
+        const rows=await sbSelect('characters','order=created_at.asc');
         chars=rows.map(r=>({...r.data,id:r.id}));
         showView('list');
       }catch(e){
@@ -4066,19 +4042,20 @@ async function saveSetup(){
 
 function clearSetup(){
   if(!confirm('接続設定を削除しますか？'))return;
-  localStorage.removeItem('firebase_config');
+  localStorage.removeItem('supa_url');
+  localStorage.removeItem('supa_key');
   location.reload();
 }
 
 async function init(){
-  initFirebase();
-  if(!IS_READONLY&&(!_fbConfig||!_fbConfig.apiKey)){
+  await loadSupaConfig();
+  if(!IS_READONLY&&(!SUPA_URL||!SUPA_KEY)){
     document.getElementById('db-loading').style.display='none';
     showView('setup');
     return;
   }
   try{
-    const rows=await sbSelect('characters','');
+    const rows=await sbSelect('characters','order=created_at.asc');
     chars=rows.map(r=>({...r.data,id:r.id}));
     document.getElementById('db-loading').style.display='none';
     renderList();
@@ -4103,7 +4080,7 @@ function rerender(){
 }
 
 function toggleSkillEditMode(){if(IS_READONLY)return;skillEditMode=!skillEditMode;loadSkillsTab();}
-function setSkillFree(name,val){const ch=getChar();if(!ch)return;if(!ch.skills)ch.skills={};if(!ch.skills[name])ch.skills[name]={};ch.skills[name].freeNote=val;debounce('free_'+name,()=>saveChar(ch),600);}
+function setSkillFree(name,val){const ch=getChar();if(!ch)return;if(!ch.skills)ch.skills={};if(!ch.skills[name])ch.skills[name]={};ch.skills[name].freeNote=val;debounce('free_'+name,()=>saveCharToSupa(ch),600);}
 function changeSkillSub(defName,newSub){
   const ch=getChar();if(!ch)return;
   if(!ch.skills)ch.skills={};
@@ -4113,10 +4090,10 @@ function changeSkillSub(defName,newSub){
   const nf=`${defName}（${newSub}）`;
   if(of2&&ch.skills[of2]){ch.skills[nf]=ch.skills[of2];delete ch.skills[of2];}
   ch.skills[defName].selectedSub=newSub;
-  debounce('sub_'+defName,()=>saveChar(ch),400);
+  debounce('sub_'+defName,()=>saveCharToSupa(ch),400);
   loadSkillsTab();
 }
-function setSkillBaseOverride(name,val){const ch=getChar();if(!ch)return;if(!ch.skillBaseOverrides)ch.skillBaseOverrides={};const num=val===''?null:parseInt(val);if(num===null)delete ch.skillBaseOverrides[name];else ch.skillBaseOverrides[name]=num;debounce('base_'+name,()=>saveChar(ch),600);}
+function setSkillBaseOverride(name,val){const ch=getChar();if(!ch)return;if(!ch.skillBaseOverrides)ch.skillBaseOverrides={};const num=val===''?null:parseInt(val);if(num===null)delete ch.skillBaseOverrides[name];else ch.skillBaseOverrides[name]=num;debounce('base_'+name,()=>saveCharToSupa(ch),600);}
 
 function _pinnedSkillHit(ch, skillKey){
   const stats=ch.stats||{};
@@ -4237,12 +4214,12 @@ const pinnedRows=pinnedDefs.map(p=>{
     +armorEmptyMsg
     +'<button class="combat-add edit-only" onclick="addArmor()">＋ 防具を追加</button></div>';
 }
-function addWeapon(){const ch=getChar();if(!ch)return;if(!ch.weapons)ch.weapons=[];ch.weapons.push({name:'',skill:'',hit:'',damage:'',range:'',shots:'',ammo:'',hp:'',mal:'',note:''});saveChar(ch).then(()=>loadCombatTab());}
-function delWeapon(i){const ch=getChar();if(!ch)return;ch.weapons.splice(i,1);saveChar(ch).then(()=>loadCombatTab());}
-function updWeapon(i,k,v){const ch=getChar();if(!ch||!ch.weapons||!ch.weapons[i])return;ch.weapons[i][k]=v;debounce('w'+i,()=>saveChar(ch),600);}
-function addArmor(){const ch=getChar();if(!ch)return;if(!ch.armors)ch.armors=[];ch.armors.push({name:'',location:'',armor:'',hp:'',note:''});saveChar(ch).then(()=>loadCombatTab());}
-function delArmor(i){const ch=getChar();if(!ch)return;ch.armors.splice(i,1);saveChar(ch).then(()=>loadCombatTab());}
-function updArmor(i,k,v){const ch=getChar();if(!ch||!ch.armors||!ch.armors[i])return;ch.armors[i][k]=v;debounce('a'+i,()=>saveChar(ch),600);}
+function addWeapon(){const ch=getChar();if(!ch)return;if(!ch.weapons)ch.weapons=[];ch.weapons.push({name:'',skill:'',hit:'',damage:'',range:'',shots:'',ammo:'',hp:'',mal:'',note:''});saveCharToSupa(ch).then(()=>loadCombatTab());}
+function delWeapon(i){const ch=getChar();if(!ch)return;ch.weapons.splice(i,1);saveCharToSupa(ch).then(()=>loadCombatTab());}
+function updWeapon(i,k,v){const ch=getChar();if(!ch||!ch.weapons||!ch.weapons[i])return;ch.weapons[i][k]=v;debounce('w'+i,()=>saveCharToSupa(ch),600);}
+function addArmor(){const ch=getChar();if(!ch)return;if(!ch.armors)ch.armors=[];ch.armors.push({name:'',location:'',armor:'',hp:'',note:''});saveCharToSupa(ch).then(()=>loadCombatTab());}
+function delArmor(i){const ch=getChar();if(!ch)return;ch.armors.splice(i,1);saveCharToSupa(ch).then(()=>loadCombatTab());}
+function updArmor(i,k,v){const ch=getChar();if(!ch||!ch.armors||!ch.armors[i])return;ch.armors[i][k]=v;debounce('a'+i,()=>saveCharToSupa(ch),600);}
 
 
 
@@ -4284,19 +4261,22 @@ function loadItemsTab(){
     +'<button class="combat-add edit-only" onclick="addItem()">＋ 追加</button>'
     +'</div>';
 }
-function updAssets(k,v){const ch=getChar();if(!ch)return;if(!ch.assets)ch.assets={};ch.assets[k]=v;debounce('assets',()=>saveChar(ch),600);}
-function addItem(){const ch=getChar();if(!ch)return;if(!ch.items)ch.items=[];ch.items.push({name:'',price:'',qty:'',total:'',note:''});saveChar(ch).then(()=>loadItemsTab());}
-function delItem(i){const ch=getChar();if(!ch)return;ch.items.splice(i,1);saveChar(ch).then(()=>loadItemsTab());}
-function updItem(i,k,v){const ch=getChar();if(!ch||!ch.items||!ch.items[i])return;ch.items[i][k]=v;debounce('it'+i,()=>saveChar(ch),600);}
+function updAssets(k,v){const ch=getChar();if(!ch)return;if(!ch.assets)ch.assets={};ch.assets[k]=v;debounce('assets',()=>saveCharToSupa(ch),600);}
+function addItem(){const ch=getChar();if(!ch)return;if(!ch.items)ch.items=[];ch.items.push({name:'',price:'',qty:'',total:'',note:''});saveCharToSupa(ch).then(()=>loadItemsTab());}
+function delItem(i){const ch=getChar();if(!ch)return;ch.items.splice(i,1);saveCharToSupa(ch).then(()=>loadItemsTab());}
+function updItem(i,k,v){const ch=getChar();if(!ch||!ch.items||!ch.items[i])return;ch.items[i][k]=v;debounce('it'+i,()=>saveCharToSupa(ch),600);}
 
 /* ════ PDF エクスポート ════ */
-function openPrintSheet(){
+async function openPrintSheet(){
   const c=getChar();if(!c){toast('キャラクターが見つかりません');return;}
-  const shareUrl=buildShareUrl(c.id);
-  if(!shareUrl){toast('Firebase設定が見つかりません');return;}
-  // print_sheet.html 用に view パラメータの代わりにそのまま proj/key/sb/char を渡す
-  const q=shareUrl.split('?')[1];
-  window.open('print_sheet.html?'+q,'_blank');
+  if(!SUPA_URL||!SUPA_KEY){toast('DB設定が見つかりません');return;}
+  try{
+    const lk=await getOrCreateShortLink();
+    const url='print_sheet.html?lk='+lk+'&char='+encodeURIComponent(c.id);
+    window.open(url,'_blank');
+  }catch(e){
+    toast('短縮URLの発行に失敗しました: '+e.message);
+  }
 }
 
 /* ════ いあきゃら TXT インポート ════ */
@@ -4374,7 +4354,7 @@ async function importIaCharaTxt(e){
   const file=e.target.files[0];
   e.target.value=''; // リセット（同ファイル再選択を許可）
   if(!file)return;
-  if(!_fbConfig||!_fbConfig.apiKey){toast('Firebase設定が見つかりません');return;}
+  if(!SUPA_URL||!SUPA_KEY){toast('DB設定が見つかりません');return;}
 
   let text;
   try{
@@ -4425,7 +4405,7 @@ async function importIaCharaTxt(e){
   };
 
   try{
-    await saveChar(c);
+    await saveCharToSupa(c);
     chars.push(c);
     toast(`「${d.name}」をインポートしました`);
     renderList();
@@ -4435,31 +4415,6 @@ async function importIaCharaTxt(e){
 }
 
 init();
-
-/* ════ グローバル公開（type="module" 内の関数をonclick等から呼ぶため） ════ */
-Object.assign(window,{
-  showView,showTab,renderList,renderDetail,
-  openAddModal,openEditModal,createChar,updChar,deleteChar,toggleHidden,
-  saveSetup,clearSetup,initSetupView,
-  saveMemo,updStat,updSec,updQuote,updBg,
-  loadExprTab,loadFullTab,loadSkillsTab,loadCombatTab,loadItemsTab,
-  openExprModal,saveExpr,delExpr,openEditExpr,saveEditExpr,setMainExpr,
-  onExprImg,onMainImg,onDetailPortrait,onFullbodyUpload,deleteFullImg,
-  openLb,lbNav,closeLightbox,
-  setFilt,setSort,toggleExprSel,toggleSelectAll,clearAllChecks,
-  openBulkCatModal,bulkChangeCat,bulkDeleteExprs,
-  addTagCand,refreshTagCands,copyLblByEl,
-  selectVer,autoFillDerivedFields,
-  setSkillVer,setSkillPts,setSkillOcc,setSkillFree,setSkillBaseOverride,
-  changeSkillSub,startSkillRename,endSkillRename,
-  openAddSkillModal,switchSkillAddMode,submitAddSkill,addCustomSkill,deleteCustomSkill,
-  toggleSkillEditMode,rerender,
-  addWeapon,delWeapon,updWeapon,addArmor,delArmor,updArmor,
-  addItem,delItem,updItem,updAssets,
-  openCcfoliaModal,copyCcfoliaJson,onToggleCcfBase,onToggleCcfIcon,
-  openPrintSheet,importIaCharaTxt,copyViewUrl,
-  closeModal,toast,toggleCondition,
-});
 </script>
 </body>
 </html>
